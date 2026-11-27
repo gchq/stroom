@@ -1,0 +1,828 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.ToolArgs;
+import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolDefinition;
+import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueFromMapping;
+import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.generation.FieldsLeftOut;
+import stroom.ai.impl.tools.generation.RebuiltMapping;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.generation.XsltReader;
+import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.TranslationInputText;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
+
+/// `rebuild_mapping` - rebuilds the mapping kept with a translation XSLT from the XSLT itself, when it was lost (its
+/// Documentation tab cleared) or no longer matches the XSLT (changed by hand in Stroom). The mapping is read back from
+/// the XSLT ([XsltReader]), the XSLT regenerated from it, and both stepped over the sample streams: it is saved only
+/// when every record's output is the same (or the user accepts the differences shown), after the user confirms, and the
+/// XSLT is then the one regenerated from it.
+class RebuildMappingTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RebuildMappingTool.class);
+
+    static final String NAME = "rebuild_mapping";
+    // An Unknown action element in an event's output, with or without a prefix.
+    private static final Pattern UNKNOWN = Pattern.compile("<(?:[\\w.-]+:)?Unknown[\\s>/]");
+    static final String UUID_ARG = "uuid";
+    static final String STREAM_IDS_ARG = "stream_ids";
+    static final String PIPELINE_UUID_ARG = "pipeline_uuid";
+    static final String CHANGE_ARG = "change";
+    static final String ACCEPT_DIFFERENCES_ARG = "accept_differences";
+    static final String ACCEPT_UNREAD_ARG = "accept_unread";
+
+    /// The most records stepped each way.
+    static final int PROVE_RECORDS = 200;
+
+    private final TranslationDocs translationDocs;
+    private final WriteGuard guard;
+    private final EventVersions eventVersions;
+    private final Consent consent;
+    private final PipelineStepping stepping;
+    private final PipelineShapes pipelineShapes;
+    private final PipelineIndex pipelineIndex;
+    private final SampleStreams sampleStreams;
+    private final Provider<DocFinder> docFinderProvider;
+    private final DocumentAccess documentAccess;
+    // The build's catalogue of event types; none in tests that make the tool themselves.
+    private Provider<CatalogueNotes> catalogueNotesProvider;
+    // The build records: whether a build started from an existing pipeline; none in tests that make the tool
+    // themselves.
+    private Provider<BuildRecords> buildRecordsProvider;
+    // Tells each XSLT's stage; none in tests that make the tool themselves.
+    private XsltStages xsltStages;
+
+    @Inject
+    RebuildMappingTool(final TranslationDocs translationDocs,
+                       final WriteGuard guard,
+                       final EventVersions eventVersions,
+                       final Consent consent,
+                       final PipelineStepping stepping,
+                       final PipelineShapes pipelineShapes,
+                       final PipelineIndex pipelineIndex,
+                       final SampleStreams sampleStreams,
+                       final Provider<DocFinder> docFinderProvider,
+                       final DocumentAccess documentAccess) {
+        this.translationDocs = translationDocs;
+        this.guard = guard;
+        this.eventVersions = eventVersions;
+        this.consent = consent;
+        this.stepping = stepping;
+        this.pipelineShapes = pipelineShapes;
+        this.pipelineIndex = pipelineIndex;
+        this.sampleStreams = sampleStreams;
+        this.docFinderProvider = docFinderProvider;
+        this.documentAccess = documentAccess;
+    }
+
+    /// Where the build's catalogue of event types is kept (set by injection; none in tests that make the tool
+    /// themselves): the rules read back from a hand-edited XSLT are read back into it.
+    ///
+    /// @param catalogueNotes The build's catalogue.
+    @Inject
+    void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
+        this.catalogueNotesProvider = catalogueNotes;
+    }
+
+    /// The build records (set by injection; none in tests that make the tool themselves): a build that started from an
+    /// existing pipeline is told how that pipeline ran over the sample, and its catalogue read back is put to the user
+    /// to confirm.
+    ///
+    /// @param buildRecords The build records.
+    @Inject
+    void setBuildRecords(final Provider<BuildRecords> buildRecords) {
+        this.buildRecordsProvider = buildRecords;
+    }
+
+    /// Tells each XSLT's stage (set by injection; none in tests that make the tool themselves): an XSLT that isn't
+    /// its pipeline's translation (a pre-processor before it, a decorator after it, an indexing XSLT) is refused,
+    /// naming the translation.
+    ///
+    /// @param xsltStages The stage classification.
+    @Inject
+    void setXsltStages(final XsltStages xsltStages) {
+        this.xsltStages = xsltStages;
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        // It saves the mapping and the XSLT regenerated from it, once the user confirms.
+        return false;
+    }
+
+    @Override
+    public boolean confirmsItself() {
+        // The user confirms the save in a form, with what the rebuilt mapping keeps, adds and removes.
+        return true;
+    }
+
+    @Override
+    public boolean usesRunSlot() {
+        // It steps up to 200 records twice.
+        return true;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .unlockedBy(AppPermission.STEPPING_PERMISSION)
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.EDIT)
+                .note("The XSLT, its pipeline and the XSLTs it imports are read as the user, the pipeline stepped "
+                      + "as the user (Stepping), and the XSLT saved as the user (Edit), only once they confirm.")
+                .build();
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
+                .name(NAME)
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Rebuild the mapping kept with a translation XSLT, from the XSLT itself: when it was "
+                             + "lost (its Documentation tab cleared; build_status says so) or no longer matches the "
+                             + "XSLT (changed by hand in Stroom; build_status shows what differs). With the kept "
+                             + "mapping, every element that still reads as it generates keeps its entry exactly, "
+                             + "and the hand edits become new or removed entries; without one, the mapping is read "
+                             + "from the XSLT whole (fields, key=value extractions, maps, time formats, defaults, "
+                             + "reference data lookups, dictionaries, the shared templates and functions of the "
+                             + "XSLTs it imports, read from Stroom by name; anything else as an xpath entry). The "
+                             + "XSLT regenerated from it is then stepped beside the XSLT over the pipeline's "
+                             + "original sample streams (or stream_ids given), and only when every record's output "
+                             + "is the same, and the user confirms, are the mapping and the regenerated XSLT saved. "
+                             + "The sample's fields a hand-written XSLT never reads go in ignored_fields (left_out), "
+                             + "as it leaves them out. Then step_sample, and write_documentation again. Reads "
+                             + "Stroom until it saves; saves only an XSLT in a build (a new version's, "
+                             + "copy_pipeline, for a promoted one).")
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(UUID_ARG, "The translation XSLT whose mapping to rebuild.")
+                        .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(
+                                "The raw streams to prove the rebuilt mapping on: both the XSLT and the one "
+                                + "regenerated from it are stepped over them, and the mapping is only saved when "
+                                + "every record's output is the same. Leave out for the pipeline's original sample "
+                                + "streams (else its feed's newest raw streams); the reply says which."))
+                        .addStringProperty(PIPELINE_UUID_ARG, "The pipeline that runs the XSLT; found from the XSLT "
+                                                              + "when only one does.")
+                        .addStringProperty(CHANGE_ARG, "For the version history: what was rebuilt and why, e.g. "
+                                                       + "'Mapping rebuilt after the Documentation tab was "
+                                                       + "cleared'.")
+                        .addBooleanProperty(ACCEPT_DIFFERENCES_ARG, "Save even though the regenerated XSLT writes "
+                                                                    + "some records differently (shown in "
+                                                                    + "differences): only when the user, shown "
+                                                                    + "them, accepts what the mapping writes "
+                                                                    + "instead.")
+                        .addBooleanProperty(ACCEPT_UNREAD_ARG, "Rebuild even though parts of the XSLT's events "
+                                                               + "couldn't be read (shown in unread), so the "
+                                                               + "mapping leaves them out: only when the user, "
+                                                               + "shown them, agrees to lose them.")
+                        .required(UUID_ARG)
+                        .build())
+                .build();
+    }
+
+    @Override
+    public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+        try {
+            return JsonResults.of(rebuild(call, context));
+        } catch (final ToolRefusal | PipelineUnreadableException e) {
+            return JsonResults.refused(e.getMessage());
+        }
+    }
+
+    private Map<String, Object> rebuild(final ToolCall call, final ToolCallContext context) {
+        final String uuid = stringArg(call, UUID_ARG);
+        if (uuid == null) {
+            throw new ToolRefusal("Give uuid: the translation XSLT whose mapping to rebuild.");
+        }
+        final XsltDoc xslt = translationDocs.readXslt(uuid);
+        final DocRef ref = new DocRef(XsltDoc.TYPE, uuid, xslt.getName());
+        guard.checkManaged(context.session(), ref);
+        refuseOtherStage(call, uuid, xslt.getName());
+        final String code = NullSafe.string(xslt.getData());
+        final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(xslt.getDescription());
+        if (kept.isPresent() && !KeptMapping.TRANSLATION.equals(kept.get().kind())) {
+            throw new ToolRefusal("XSLT '" + xslt.getName() + "' keeps a " + kept.get().kind() + " plan, not a "
+                                  + "translation mapping: rebuild_mapping is for translations (for CEF, "
+                                  + "draft_cef_mapping pipeline_uuid=... reviews what it writes)");
+        }
+        final String version = eventVersions.translationVersion(kept.map(k -> KeptCode.keptVersion(k.payload()))
+                .orElse(null), code);
+        final EventSchema schema = eventVersions.keptSchema(context, null,
+                kept.map(KeptMapping.Kept::payload).orElse(null), version);
+        final TranslationMapping base = kept.map(k -> TranslationMapping.parse(k.payload().get("mapping")))
+                .orElse(null);
+        final String baseCode = base == null
+                ? null
+                : XsltGenerator.generate(base, schema, version).xslt();
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("xslt", refMap(ref));
+        if (baseCode != null && XsltCode.normalise(baseCode).equals(XsltCode.normalise(code))) {
+            result.put("status", "in_step");
+            result.put("hint", "The XSLT is what its kept mapping generates: nothing to rebuild.");
+            return result;
+        }
+        final RebuiltMapping rebuilt = XsltReader.rebuild(code, base, baseCode, base == null
+                ? imported(code)
+                : Map.of(), schema);
+        // Nothing new or removed: the XSLT reads as the mapping, written by an earlier generator, not changed by
+        // hand.
+        final boolean upgraded = base != null && rebuilt.added().isEmpty() && rebuilt.removed().isEmpty()
+                                 && rebuilt.raw().isEmpty();
+        result.put("mode", upgraded
+                ? "written by an earlier generator"
+                : base != null
+                        ? "out of step with the kept mapping"
+                        : "mapping lost");
+        result.put("rebuilt", rebuilt.summary());
+        if (rebuilt.mapping() == null || !rebuilt.problems().isEmpty()) {
+            result.put("saved", null);
+            // Seen in testing: an XSLT rewritten by hand outside the generator's layout read back as nothing, and the
+            // agent took it for an empty mapping and the edit for one no mapping can express.
+            final boolean unlaid = rebuilt.notes().stream().anyMatch(note -> note.startsWith("no record template"));
+            result.put("hint", unlaid && base != null
+                    ? "The XSLT isn't laid out as the generator writes one (a template per rule), so nothing in it "
+                      + "could be read back: the kept mapping is still there. Carry the hand edit into it with "
+                      + "build_translation_xslt uuid=<this XSLT> changes= only the entries that change (repeat: "
+                      + "true writes one element per value; data_parent writes Data in a named Data; an xpath "
+                      + "computes a value, e.g. one with the mentions taken out), then step_sample: the generated "
+                      + "XSLT replaces the hand-written one."
+                    : "The mapping couldn't be read back: give build_translation_xslt the whole mapping "
+                      + "instead (draft_translation_mapping drafts one from the samples).");
+            if (base == null) {
+                unreadable(ref, whyNotRead(rebuilt), result);
+            }
+            return result;
+        }
+        if (!rebuilt.lost().isEmpty() && !ToolArgs.flag(call, ACCEPT_UNREAD_ARG)) {
+            // Seen in testing: a construct the reader doesn't know (an xsl:iterate making users distinct, say) was left
+            // out, and the proof by stepping showed nothing when no sample record reached it.
+            result.put("saved", null);
+            result.put("unread", rebuilt.lost());
+            result.put("hint", "Parts of the XSLT's events couldn't be read back (unread): a mapping rebuilt from "
+                               + "it leaves them out, and the regenerated XSLT would lose them for the whole feed, "
+                               + "whether or not the sample's records reach them. Nothing was saved. Show the user "
+                               + "what they are: to keep the XSLT as it is, leave the mapping as it is; to rebuild "
+                               + "without them all the same, call again with " + ACCEPT_UNREAD_ARG + "=true.");
+            return result;
+        }
+        final XsltGenerator.Generated regenerated = XsltGenerator.generate(rebuilt.mapping(), schema, version);
+        if (!regenerated.ok()) {
+            result.put("saved", null);
+            result.put("problems", regenerated.problems().subList(0, Math.min(10, regenerated.problems().size())));
+            result.put("hint", "The mapping read back from the XSLT doesn't generate: the XSLT writes something a "
+                               + "mapping can't (the problems say what). Fix the XSLT or give build_translation_xslt "
+                               + "the whole mapping.");
+            if (base == null) {
+                unreadable(ref, "the mapping read back from it doesn't generate: " + String.join("; ",
+                        first(regenerated.problems(), 3)), result);
+            }
+            return result;
+        }
+        final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
+        final Runs runs = pipelineUuid != null
+                ? new Runs(pipelineUuid, elementIn(pipelineUuid, uuid, xslt.getName()))
+                : pipelineOf(uuid);
+        List<Long> ids = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
+        String samples = "the streams given";
+        if (ids.isEmpty()) {
+            final SampleStreams.Found found = sampleStreams.sampleStreams(runs.pipelineUuid());
+            ids = found.streamIds();
+            samples = found.which();
+        }
+        final Proof proof = prove(context, runs, ids, regenerated.xslt());
+        final Map<String, Object> proven = new LinkedHashMap<>();
+        proven.put("records", proof.records());
+        proven.put("streams", ids);
+        proven.put("which", samples);
+        result.put("proven_on", proven);
+        if (inducting(ref)) {
+            result.put("existing_run", proof.existingRun());
+        }
+        if (proof.records() == 0) {
+            result.put("saved", null);
+            result.put("hint", "Stepping gave no records: check stream_ids are the pipeline's raw streams.");
+            return result;
+        }
+        final boolean accept = ToolArgs.flag(call, ACCEPT_DIFFERENCES_ARG);
+        if (!proof.differences().isEmpty()) {
+            result.put("differences", proof.differences().subList(0, Math.min(20, proof.differences().size())));
+            if (!accept) {
+                result.put("saved", null);
+                result.put("hint", "The regenerated XSLT writes these records differently from the XSLT: nothing "
+                                   + "was saved. Usually an edit a mapping can't express (an element written when "
+                                   + "its value is empty, a choose inside an event). Show the user the differences: "
+                                   + "to keep the XSLT as it is, leave the mapping as it is; if they accept what the "
+                                   + "mapping writes, call again with accept_differences=true.");
+                return result;
+            }
+        }
+        // Read back from a hand-written translation: the sample's fields it never reads are left out on purpose, so
+        // the regenerated XSLT logs what it did (decided by the user, 2026-11-25; seen in eval case 105).
+        final List<String> leftOut = base == null
+                ? FieldsLeftOut.of(code, rebuilt.mapping(), TranslationInputText.fieldNames(proof.inputs()))
+                : List.of();
+        final XsltGenerator.Generated ignoring = leftOut.isEmpty()
+                ? null
+                : XsltGenerator.generate(FieldsLeftOut.ignoring(rebuilt.mapping(), leftOut), schema, version);
+        if (ignoring == null || !ignoring.ok()) {
+            return save(call, context, result, new Rebuild(ref, base, upgraded, rebuilt, rebuilt.mapping(),
+                    regenerated.xslt(), proof, List.of()));
+        }
+        result.put("left_out", FieldsLeftOut.said(leftOut) + " (the sample's fields it never reads, in the "
+                               + "mapping's ignored_fields: the regenerated XSLT doesn't log them, as the original "
+                               + "didn't; map one only when the user asks for it)");
+        return save(call, context, result, new Rebuild(ref, base, upgraded, rebuilt, FieldsLeftOut.ignoring(
+                rebuilt.mapping(), leftOut), ignoring.xslt(), proof, leftOut));
+    }
+
+    // Asked, then saved: the mapping, and the XSLT regenerated from it. The hand edit is carried by the rebuilt
+    // mapping, proven on the sample (or its differences accepted).
+    private Map<String, Object> save(final ToolCall call,
+                                     final ToolCallContext context,
+                                     final Map<String, Object> result,
+                                     final Rebuild rebuild) {
+        final boolean lost = rebuild.base() == null;
+        final String mode = lost
+                ? "mapping lost"
+                : rebuild.upgraded()
+                        ? "the mapping unchanged: the XSLT written by an earlier generator"
+                        : "carrying hand edits into the mapping";
+        final String said = NullSafe.nonBlankStringElse(stringArg(call, CHANGE_ARG), lost
+                ? "Mapping rebuilt from the XSLT, after its Documentation tab was cleared"
+                : rebuild.upgraded()
+                        ? "Regenerated from its mapping (written by an earlier generator)"
+                        : "Mapping rebuilt from the XSLT, carrying in its hand edits");
+        final RebuiltMapping rebuilt = rebuild.rebuilt();
+        final List<Map<String, Object>> differences = rebuild.proof().differences();
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("kept entries", rebuilt.reused());
+        details.put("new entries", first(rebuilt.added(), 20));
+        details.put("removed entries", first(rebuilt.removed(), 20));
+        details.put("kept as xpath", first(rebuilt.raw(), 20));
+        if (!rebuilt.importedCalls().isEmpty()) {
+            details.put("calling imported functions", first(rebuilt.importedCalls(), 20));
+        }
+        if (!rebuild.leftOut().isEmpty()) {
+            details.put("fields never read", FieldsLeftOut.said(rebuild.leftOut()));
+        }
+        if (!differences.isEmpty()) {
+            details.put("differences", differences.subList(0, Math.min(20, differences.size())).stream()
+                    .map(d -> d.get("path"))
+                    .toList());
+        }
+        final Optional<CatalogueReadBack> catalogue = catalogueReadBack(rebuild);
+        catalogue.filter(read -> !read.fromMapping().said().isEmpty())
+                .ifPresent(read -> details.put("event types", read.fromMapping().said()));
+        consent.require(call, context, Consent.Request.confirmation(NAME,
+                "Save the mapping rebuilt from XSLT '" + rebuild.ref().getName() + "' (" + mode + "), and the XSLT "
+                + "regenerated from it: " + (differences.isEmpty()
+                        ? "it wrote the same output as the XSLT for all " + rebuild.proof().records()
+                          + " records stepped"
+                        : differences.size() + " output paths differ, as shown"), details));
+        final Map<String, Object> saved = translationDocs.updateXslt(call, context, rebuild.ref().getUuid(),
+                rebuild.regenerated(), null, TranslationDocs.Source.of(rebuild.mapping()), said, true, null);
+        final Map<String, Object> summary = new LinkedHashMap<>();
+        for (final String key : List.of("type", "uuid", "name", "version")) {
+            summary.put(key, saved.get(key));
+        }
+        result.put("saved", summary);
+        catalogue.ifPresent(read -> result.put("catalogue", catalogueSaved(context, read)));
+        result.put("next", "step_sample the pipeline over its sample streams (its code changed to what the mapping "
+                           + "generates), then write_documentation again: its Field mapping section comes from the "
+                           + "rebuilt mapping. From now on, change the mapping (build_translation_xslt changes=), not "
+                           + "the XSLT.");
+        return result;
+    }
+
+    // The rules read back into the build's catalogue of event types, so the catalogue stays the source of truth
+    // (DESIGN.md, Event type catalogue, After the first build); empty for an XSLT in no build.
+    private Optional<CatalogueReadBack> catalogueReadBack(final Rebuild rebuild) {
+        if (catalogueNotesProvider == null || rebuild.rebuilt().mapping() == null) {
+            return Optional.empty();
+        }
+        final Optional<String> build = guard.buildOf(rebuild.ref());
+        if (build.isEmpty()) {
+            return Optional.empty();
+        }
+        final Catalogue before = catalogueNotesProvider.get().catalogue(build.get()).orElse(null);
+        final CatalogueFromMapping.FromMapping read = CatalogueFromMapping.read(rebuild.rebuilt().mapping(), before);
+        if (!inducting(rebuild.ref())) {
+            return Optional.of(new CatalogueReadBack(build.get(), before, read));
+        }
+        // A build starting from an existing pipeline: the event types read back from its XSLT are proposed, put to
+        // the user by catalogue_event_types with its check against the sample (decided by the user, 2026-11-24).
+        final Set<String> known = new HashSet<>();
+        if (before != null) {
+            before.eventTypes().stream().filter(EventType::confirmed).map(EventType::typeId).forEach(known::add);
+        }
+        final List<EventType> types = read.catalogue().eventTypes().stream()
+                .map(type -> known.contains(type.typeId())
+                        ? type
+                        : type.readBack())
+                .toList();
+        return Optional.of(new CatalogueReadBack(build.get(), before, new CatalogueFromMapping.FromMapping(
+                read.catalogue().withEventTypes(types), read.said(), read.notRead())));
+    }
+
+    // The catalogue read back written into the build's source notes (when it changed), and what it says.
+    private Map<String, Object> catalogueSaved(final ToolCallContext context, final CatalogueReadBack read) {
+        final CatalogueFromMapping.FromMapping from = read.fromMapping();
+        final Map<String, Object> said = new LinkedHashMap<>();
+        final boolean changed = !from.catalogue().equals(read.before());
+        if (changed) {
+            catalogueNotesProvider.get().write(context.session(), read.build(), read.build(), from.catalogue());
+        }
+        said.put("written", changed
+                ? "the catalogue of event types in the build's source notes, read back from the XSLT's rules"
+                : "no change: the catalogue already says what the XSLT's rules do");
+        said.put("event_types", from.catalogue().eventTypes().stream().map(EventType::typeId).toList());
+        if (!from.said().isEmpty()) {
+            said.put("changes", from.said());
+        }
+        if (!from.notRead().isEmpty()) {
+            said.put("not_read", from.notRead());
+            said.put("note", "Edits the catalogue can't express (not_read): the XSLT keeps them, the catalogue "
+                             + "doesn't; a draft from the catalogue would lose them.");
+        }
+        return said;
+    }
+
+    // Both XSLTs stepped over the streams, and the paths whose values differ, most records first.
+    private Proof prove(final ToolCallContext context,
+                        final Runs runs,
+                        final List<Long> ids,
+                        final String regenerated) {
+        stepping.checkCanStep();
+        final SteppedPipeline loaded = stepping.load(runs.pipelineUuid());
+        final PipelineStepping.Outputs before = PipelineStepping.withinTimeLimit(context, () ->
+                stepping.outputs(context, loaded, ids, runs.element(), null, PROVE_RECORDS));
+        final PipelineStepping.Outputs after = PipelineStepping.withinTimeLimit(context, () ->
+                stepping.outputs(context, loaded, ids, runs.element(), Map.of(runs.element(), regenerated),
+                        PROVE_RECORDS));
+        stepping.audit(context, ids, "Stepped stream(s) through " + loaded.name() + " with the " + NAME + " tool");
+        final Map<String, Map<String, Object>> differences = new LinkedHashMap<>();
+        before.outputs().forEach((record, oldXml) -> {
+            final Map<String, List<String>> old = EventXml.fieldValues(NullSafe.string(oldXml));
+            final Map<String, List<String>> now = EventXml.fieldValues(NullSafe.string(
+                    after.outputs().getOrDefault(record, "")));
+            final Set<String> paths = new TreeSet<>(old.keySet());
+            paths.addAll(now.keySet());
+            for (final String path : paths) {
+                if (!Objects.equals(old.get(path), now.get(path))) {
+                    final Map<String, Object> entry = differences.computeIfAbsent(path, key -> {
+                        final Map<String, Object> made = new LinkedHashMap<>();
+                        made.put("path", key);
+                        made.put("records", 0);
+                        made.put("example", null);
+                        return made;
+                    });
+                    entry.put("records", (Integer) entry.get("records") + 1);
+                    if (entry.get("example") == null) {
+                        final Map<String, Object> example = new LinkedHashMap<>();
+                        example.put("record", record);
+                        example.put("xslt", old.get(path));
+                        example.put("rebuilt", now.get(path));
+                        entry.put("example", example);
+                    }
+                }
+            }
+        });
+        final List<Map<String, Object>> sorted = new ArrayList<>(differences.values());
+        sorted.sort(Comparator.comparingInt((Map<String, Object> d) -> -(Integer) d.get("records")));
+        return new Proof(before.outputs().size(), sorted, existingRun(before.outputs()),
+                new ArrayList<>(before.inputs().values()));
+    }
+
+    /// How the XSLT as it is (an existing pipeline's, a build starting from it) ran over the sample: the records
+    /// stepped, the Events written, and the records that wrote no Event (dropped by a rule, or failing: step_records
+    /// says which) and those kept as Unknown, each with up to 10 of them.
+    ///
+    /// @param outputs Each record's output of the XSLT as it is, by record key.
+    /// @return `records`, `events`, `no_event` (and `no_event_records`), `unknown` (and `unknown_records`) and
+    /// `note`.
+    static Map<String, Object> existingRun(final Map<String, String> outputs) {
+        final List<String> none = new ArrayList<>();
+        final List<String> unknown = new ArrayList<>();
+        int events = 0;
+        for (final Map.Entry<String, String> entry : outputs.entrySet()) {
+            final String output = NullSafe.string(entry.getValue());
+            final int count = EventXml.countEvents(output);
+            events += count;
+            if (count == 0) {
+                none.add(entry.getKey());
+            } else if (UNKNOWN.matcher(output).find()) {
+                unknown.add(entry.getKey());
+            }
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("records", outputs.size());
+        out.put("events", events);
+        out.put("no_event", none.size());
+        if (!none.isEmpty()) {
+            out.put("no_event_records", first(none, 10));
+        }
+        out.put("unknown", unknown.size());
+        if (!unknown.isEmpty()) {
+            out.put("unknown_records", first(unknown, 10));
+        }
+        out.put("note", "How the existing XSLT translates the sample now: records writing no Event were dropped by "
+                        + "a rule or failed (step_records over them says which), Unknown ones are kept as Unknown. "
+                        + "Event types the sample lacks are in " + CatalogueEventTypesTool.NAME + "'s check.");
+        return out;
+    }
+
+    /// @param rebuilt A mapping read back with none ([RebuiltMapping#mapping] null), or with problems.
+    /// @return Why it can't be used, in words: nothing in it reads as a mapping (and whether it isn't laid out as the
+    /// generator writes one), or the first problems it reads back with.
+    static String whyNotRead(final RebuiltMapping rebuilt) {
+        final boolean unlaid = rebuilt.notes().stream().anyMatch(note -> note.startsWith("no record template"));
+        return rebuilt.mapping() == null
+                ? "nothing in it reads as a mapping" + (unlaid
+                ? ": it isn't laid out as the generator writes one (a template per rule)"
+                : "")
+                : "it reads back with problems: " + String.join("; ", first(rebuilt.problems(), 3));
+    }
+
+    // A copied translation XSLT that can't be read back, in a build starting from an existing pipeline (the user's
+    // choice, or a copy made unasked): recorded, so the gate holding the catalogue and saves for the read-back lifts
+    // and the translation is drafted anew (decided by the user, 2026-11-25); the result says so.
+    private void unreadable(final DocRef ref, final String why, final Map<String, Object> result) {
+        if (buildRecordsProvider == null) {
+            return;
+        }
+        try {
+            final Optional<String> build = guard.buildOf(ref);
+            if (build.isEmpty()) {
+                return;
+            }
+            final BuildRecords records = buildRecordsProvider.get();
+            final boolean copied = records.entry(build.get(), ref.getUuid()).get("version_of") != null;
+            if (!copied && !inducting(ref)) {
+                return;
+            }
+            final Map<String, Object> xslt = new LinkedHashMap<>();
+            xslt.put("uuid", ref.getUuid());
+            xslt.put("name", ref.getName());
+            final Map<String, Object> failed = new LinkedHashMap<>();
+            failed.put("xslt", xslt);
+            failed.put("why", why);
+            failed.put("at", Instant.now().toString());
+            records.rememberReadBackFailed(build.get(), failed);
+            result.put("read_back", "failed: " + why);
+            result.put("hint", "The copy's XSLT can't be read back into a mapping (" + why + "), so build '"
+                               + build.get() + "' drafts its translation anew instead: draft_translation_mapping "
+                               + "build=" + build.get() + " (allowed now), then build_translation_xslt uuid="
+                               + ref.getUuid() + " with the mapping, replacing the copy's XSLT (the copy stays a "
+                               + "child of the same template; the original isn't touched). Say why to the user; "
+                               + "build_status says the same.");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The failed read-back of {} wasn't recorded: {}", ref,
+                    e.getMessage()), e);
+        }
+    }
+
+    // Whether the XSLT is in a build that started from an existing pipeline (decided by the user, 2026-11-24).
+    private boolean inducting(final DocRef ref) {
+        if (buildRecordsProvider == null) {
+            return false;
+        }
+        try {
+            return guard.buildOf(ref)
+                    .flatMap(build -> buildRecordsProvider.get().startFrom(build))
+                    .map(startFrom -> ExistingTranslations.EXISTING.equals(startFrom.get("choice")))
+                    .orElse(false);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("How the build of {} starts wasn't read: {}", ref, e.getMessage()));
+            return false;
+        }
+    }
+
+    // An XSLT that its pipeline runs at another stage than the translation's ([XsltStages]: a pre-processor before
+    // it, say) is refused, naming the translation XSLT to give instead; where the pipeline can't be found or the
+    // stages told, the call goes on as before.
+    private void refuseOtherStage(final ToolCall call, final String uuid, final String name) {
+        if (xsltStages == null) {
+            return;
+        }
+        final StagedXslt mine;
+        final Optional<StagedXslt> translation;
+        try {
+            final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
+            final Runs runs = pipelineUuid != null
+                    ? new Runs(pipelineUuid, elementIn(pipelineUuid, uuid, name))
+                    : pipelineOf(uuid);
+            final List<StagedXslt> staged = xsltStages.classify(pipelineShapes.merged(runs.pipelineUuid()));
+            mine = staged.stream().filter(xslt -> xslt.element().equals(runs.element())).findFirst().orElse(null);
+            translation = XsltStages.first(staged, Stage.TRANSLATION);
+        } catch (final ToolRefusal | PipelineUnreadableException e) {
+            return;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The stage of XSLT {} wasn't told: {}", uuid, e.getMessage()), e);
+            return;
+        }
+        if (mine == null || mine.stage() == Stage.TRANSLATION || mine.stage() == Stage.UNKNOWN) {
+            return;
+        }
+        throw new ToolRefusal("XSLT '" + name + "' is its pipeline's " + mine.stage().label() + " XSLT (element "
+                              + mine.element() + "), not its translation: rebuild_mapping reads a translation's "
+                              + "mapping" + translation.map(StagedXslt::xslt)
+                                      .map(found -> ". Give uuid=" + found.getUuid() + " ('" + found.getName()
+                                                    + "'), the translation")
+                                      .orElse("") + ".");
+    }
+
+    // The pipeline that runs the XSLT as its own (not through a template), and the element it is set on.
+    private Runs pipelineOf(final String uuid) {
+        final List<Runs> found = new ArrayList<>();
+        final List<String> names = new ArrayList<>();
+        for (final PipelineIndex.Entry entry : pipelineIndex.read().values()) {
+            if (!ownLayerNames(entry, uuid)) {
+                continue;
+            }
+            try {
+                final Optional<String> element = pipelineShapes.merged(entry.uuid()).translationDocs(entry.uuid())
+                        .stream()
+                        .filter(doc -> !doc.inheritedFromTemplate() && uuid.equals(doc.doc().getUuid()))
+                        .map(TranslationDoc::element)
+                        .findFirst();
+                if (element.isPresent()) {
+                    found.add(new Runs(entry.uuid(), element.get()));
+                    names.add(ToolText.repr(entry.name()));
+                }
+            } catch (final PipelineUnreadableException e) {
+                LOGGER.debug(() -> LogUtil.message("Pipeline {} can't be read: {}", entry.uuid(), e.getMessage()));
+            }
+        }
+        if (found.size() != 1) {
+            throw new ToolRefusal("Give pipeline_uuid: the pipeline that runs this XSLT, to step it over the sample ("
+                                  + (found.isEmpty()
+                    ? "none found"
+                    : "found " + String.join(", ", names)) + ")");
+        }
+        return found.getFirst();
+    }
+
+    // The element of the pipeline given that runs the XSLT.
+    private String elementIn(final String pipelineUuid, final String uuid, final String name) {
+        return pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid).stream()
+                .filter(doc -> uuid.equals(doc.doc().getUuid()))
+                .map(TranslationDoc::element)
+                .findFirst()
+                .orElseThrow(() -> new ToolRefusal("Pipeline " + pipelineUuid + " doesn't run XSLT '" + name + "'"));
+    }
+
+    // The XSLTs a lost mapping's XSLT imports, by name as Stroom resolves them: what a shared template writes is in
+    // its own XSLT.
+    private Map<String, String> imported(final String code) {
+        return imported(docFinderProvider.get(), documentAccess, code);
+    }
+
+    /// The XSLTs an XSLT imports, by name as Stroom resolves them (one XSLT of that name the user can view): what a
+    /// shared template writes is in its own XSLT.
+    ///
+    /// @param docFinder      Finds XSLTs by name.
+    /// @param documentAccess Reads them, as the user.
+    /// @param code           The XSLT's code.
+    /// @return Each import's code, by its href.
+    static Map<String, String> imported(final DocFinder docFinder,
+                                        final DocumentAccess documentAccess,
+                                        final String code) {
+        final Map<String, String> imported = new LinkedHashMap<>();
+        for (final String href : new LinkedHashSet<>(XsltReader.read(code).imports())) {
+            final List<DocRef> found = NullSafe.list(docFinder.findByName(XsltDoc.TYPE, href, false))
+                    .stream()
+                    .filter(ref -> href.equals(ref.getName()))
+                    .filter(documentAccess::canView)
+                    .toList();
+            if (found.size() == 1) {
+                // Listed, but gone or unreadable: as if not found.
+                documentAccess.read(found.getFirst(), XsltDoc.class)
+                        .ifPresent(doc -> imported.put(href, NullSafe.string(doc.getData())));
+            }
+        }
+        return imported;
+    }
+
+    // Whether a pipeline's own layer names the XSLT (where Stroom's content search found it).
+    private static boolean ownLayerNames(final PipelineIndex.Entry entry, final String uuid) {
+        if (entry.own() == null) {
+            return false;
+        }
+        try {
+            return JsonUtil.writeValueAsString(entry.own(), false).contains(uuid);
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
+    private static Map<String, Object> refMap(final DocRef ref) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("type", ref.getType());
+        map.put("uuid", ref.getUuid());
+        map.put("name", ref.getName());
+        return map;
+    }
+
+    private static <T> List<T> first(final List<T> items, final int max) {
+        return items.subList(0, Math.min(max, items.size()));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The pipeline that runs the XSLT, and the element it is set on.
+    private record Runs(String pipelineUuid, String element) {
+
+    }
+
+    // The records stepped, the output paths that differ, and how the XSLT as it is ran over them.
+    // Stepped both ways: the records, the paths whose values differ, how the XSLT as it is ran, and each record's
+    // input at the XSLT (the fields the translation reads).
+    private record Proof(int records,
+                         List<Map<String, Object>> differences,
+                         Map<String, Object> existingRun,
+                         List<String> inputs) {
+
+    }
+
+    // The rules read back into the build's catalogue: the build, its catalogue before, and what was read.
+    private record CatalogueReadBack(String build, Catalogue before, CatalogueFromMapping.FromMapping fromMapping) {
+
+    }
+
+    // What is saved, once confirmed: the mapping read back (with the sample's fields a hand-written XSLT never
+    // reads left out, those fields listed), and the XSLT regenerated from it.
+    private record Rebuild(DocRef ref,
+                           TranslationMapping base,
+                           boolean upgraded,
+                           RebuiltMapping rebuilt,
+                           TranslationMapping mapping,
+                           String regenerated,
+                           Proof proof,
+                           List<String> leftOut) {
+
+    }
+}

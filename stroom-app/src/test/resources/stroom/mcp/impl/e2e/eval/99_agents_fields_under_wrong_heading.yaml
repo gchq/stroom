@@ -1,0 +1,56 @@
+name: Fixing an AGENTS doc whose field line is under the wrong heading
+kind: instructions
+capabilities: [check_instructions, propose_instructions]
+# The AGENTS doc in /Endpoint gives the user field under '## Query Defaults', where the tools don't read it, so the
+# timeline tools fall back to guessing. The user asks why. Scored on the proposal: a change to the doc in /Endpoint
+# whose ## Fields gives the user as actor.login, the doc's other rules kept, and check_instructions finding no
+# problems in it.
+lucene_index:
+  name: Endpoint
+  folder: /Endpoint
+  events: questions/agents-endpoint.csv
+  recent: true
+  fields: {EventTime: date, actor.login: text, user.name: text, host.name: text, Action: text}
+agents_docs:
+  - folder: /Endpoint
+    text: |
+      # Standing instructions
+
+      Times are UTC.
+
+      ## Query Defaults
+      - user: actor.login
+      - Look back 7 days unless asked.
+request: >-
+  The AGENTS doc in /Endpoint says the user is actor.login, but the timeline tools don't seem to use it. Can you fix
+  the doc?
+user_knows: >
+  The user is actor.login. Keep everything else the doc says.
+expected:
+  tools_used: [propose_instructions]
+  instructions:
+    folder: /Endpoint
+    fields: {user: actor.login}
+    keeps: [Times are UTC., Look back 7 days unless asked.]
+    check_problems: 0
+reference:
+  calls:
+    - {tool: check_instructions, arguments: {folder: /Endpoint}}
+    - tool: propose_instructions
+      arguments:
+        folder: /Endpoint
+        summary: Moves the user field under '## Fields', where the tools read it.
+        markdown: |
+          # Standing instructions
+
+          Times are UTC.
+
+          ## Query Defaults
+          - Look back 7 days unless asked.
+
+          ## Fields
+
+          - user: actor.login
+  answer: >-
+    The user line was under '## Query Defaults', which the tools don't read; I've proposed moving it under
+    '## Fields'. Review and apply it.

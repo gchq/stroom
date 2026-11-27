@@ -16,11 +16,31 @@
 
 package stroom.ai.client;
 
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AskStroomAiContext;
 
+import com.google.gwt.dom.client.Element;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
+
+    /// Called when the user picks a command from the list of commands, to show its reference.
+    ///
+    /// @param command The command.
+    void onCommandPicked(AiSlashCommand command);
+
+    /// Called when the user closes the command reference.
+    void onCloseCommandReference();
+
+    /// Called when the user clicks a suggested follow-up, to ask it.
+    ///
+    /// @param text The suggestion.
+    void onFollowUp(String text);
+
+    /// Called as the user types in the box for searching the list of chats.
+    ///
+    /// @param text What is in the box.
+    void onChatSearch(String text);
 
     void setContext(AskStroomAiContext data);
 
@@ -28,13 +48,84 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
 
     void onCancelProcessing();
 
-    void onChangeConfig();
-
     void onNewChat();
 
-    void onShowHistory();
+    /**
+     * Moves the chat into a content tab, or back into the panel.
+     */
+    void onToggleTab();
 
-    void onDownloadChat();
+    /**
+     * Shows the chat's menu (rename, compact, download, settings and so on) below an element.
+     *
+     * @param target The element to show it below.
+     */
+    void onShowMenu(Element target);
 
-    void onDeleteAllMessages();
+    /**
+     * Shows the chat switcher (the user's chats, with where each has got to) below an element.
+     *
+     * @param target The element to show it below.
+     */
+    void onShowSwitcher(Element target);
+
+    /// Closes the list of chats, going back to the chat being shown.
+    void onCloseChatList();
+
+    /// Shows the overview of the chat in place of the conversation, or the conversation again.
+    void onToggleOverview();
+
+    /// Closes the overview of the chat, going back to the conversation.
+    void onCloseOverview();
+
+    /// Searches the overview of the chat: the steps that match are picked out, and the rest dimmed.
+    ///
+    /// @param query The words searched for, or blank for no search.
+    void onOverviewSearch(String query);
+
+    /// Goes to a step of the overview in the conversation, closing the overview.
+    ///
+    /// @param messageId The id of the step's message.
+    void onOverviewStep(int messageId);
+
+    /**
+     * Scrolls the conversation to the latest message, and follows new messages from then on.
+     */
+    void onJumpToLatest();
+
+    /// Called when the conversation is scrolled, to stop or start following new messages if the user scrolled it.
+    ///
+    /// @param byUser True if the user scrolled it, false if the chat or the browser did (e.g. as a section above
+    ///               closed, or the conversation got shorter).
+    void onConversationScrolled(boolean byUser);
+
+    /// Called when the user opens or closes a section of the conversation (e.g. a tool call), which they are then
+    /// reading, so new messages don't scroll it away.
+    ///
+    /// @param open True if they opened it.
+    void onSectionToggled(boolean open);
+
+    /// Called when the conversation's view changes size, e.g. as the task list above the input grows, so the latest
+    /// message can be kept in view while the conversation is being followed.
+    void onConversationResized();
+
+    /// The user chose how the agent works in the chat.
+    void onAgentModeChange(AiAgentMode mode);
+
+    /// The user clicked the auto-approve button.
+    void onToggleAutoApprove();
+
+    /**
+     * Shows how the chat's context window is used, with a way to compact it, below or above an element.
+     *
+     * @param target The context meter.
+     */
+    void onShowContextMeter(Element target);
+
+    /**
+     * Called as the user types, e.g. to suggest commands when they start with "/".
+     *
+     * @param text What is in the input box.
+     */
+    void onInputChanged(String text);
 }

@@ -1,0 +1,183 @@
+name: Microsoft Entra ID directory audit log (JSON lines, each change's targets with their old and new properties)
+template: Event Data (JSON)
+capabilities: [arrays, repeated_groups, event_types]
+# Entra ID's directory audit records as Microsoft Graph writes them (aggregated/entra-audit, made by
+# aggregated-feeds-generator.py; its first 120 lines): one record a change, its targetResources each a thing changed
+# (a user, a group), each with modifiedProperties, an old/new property-change list ({displayName, oldValue, newValue},
+# the values JSON text: "[\"Sam T\"]", "[true]", "[]" for none); additionalDetails a name/value list ({key, value}).
+# Decided by the user 2026-11-23: a change is an Update's Before and After snapshots, the changed object in each, a
+# property whose name means an element typed in both (a user's display name in User/Name), the others Data of the
+# object named by the property, its old value in Before and its new in After; a property added in After only. The
+# traps: the properties written as one Data of their JSON run together, or each property typed as an object of its
+# own (its name in an element's text); the old and new values swapped or the JSON text kept whole ("[\"Sam T\"]");
+# one object for two targets (an added member and its group).
+request: >
+  Onboard our Entra ID directory audit log (a JSON lines file on my disk, exported from Microsoft Graph). Each record
+  is one change to the directory: users updated, accounts disabled and enabled, members added to groups, groups
+  updated. Index the events.
+user_knows: >
+  activityDisplayName says what was done (Update user, Disable account, Enable account, Add member to group, Update
+  group). targetResources are the things changed: a user (its userPrincipalName is its id) or a group (its id and
+  displayName); each target's modifiedProperties are its properties changed, displayName the property, oldValue its
+  value before and newValue its value after, both as Graph writes them (JSON text). A user's DisplayName property is
+  the user's name. initiatedBy.user made the change, from its ipAddress. result is success or failure, resultReason
+  why it failed. The system is Microsoft Entra ID. In each target's modifiedProperties, oldValue holds a property's
+  value before the change and newValue its value after.
+expected:
+  records: 120
+  event_types: [Update]
+  forbidden_types: [Unknown]
+  type_ids: {min_distinct: 4}
+  catalogue: {catch_all_confirmed: true, no_overlaps: true}
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Update/After]
+  values:
+    EventSource/User/Id: [kate.jones@contoso.example, svc-batch@contoso.example, omar.haddad@contoso.example]
+    # A user's display name, typed in both snapshots: its old value in Before, its new in After, unwrapped.
+    EventDetail/Update/Before/User/Name: [Sam T, Kate Jones]
+    EventDetail/Update/After/User/Name: [Sam Taylor, Kate J]
+  # JSON text kept whole, or the property names typed: in none.
+  forbidden_texts: ['["Sam T"]', '["Sam Taylor"]', '[true]', '[false]']
+  data:
+    # The other properties are Data of the object, named by the property, each side's value.
+    - {at: "EventDetail/Update/Before/User|EventDetail/Update/Before/Object", name: AccountEnabled, value: 'true',
+       every: false}
+    - {at: "EventDetail/Update/After/User|EventDetail/Update/After/Object", name: AccountEnabled, value: 'false',
+       every: false}
+    - {at: "EventDetail/Update/After/User|EventDetail/Update/After/Object", name: JobTitle, every: false}
+  typed:
+    - select: {text: Update user}
+      paths:
+        - "Update/Before/User/Name|Update/Before/Object/Name"
+        - "Update/After/User/Name|Update/After/Object/Name"
+        - "Update/After/User/Id|Update/After/User/EmailAddress|Update/After/Object/Id"
+      # A property's name is a Data Name, never an element's text.
+      not_typed: [DisplayName, JobTitle, Department, AssignedLicense, Included Updated Properties]
+    - select: {text: Add member to group}
+      paths:
+        - "Update/After/User/Id|Update/After/User/EmailAddress|Update/After/Object/Id"
+        - "Update/After/Group/Id|Update/After/Group/Name|Update/After/Object/Name|Update/After/Object/Id"
+      not_typed: [Group.ObjectID, Group.DisplayName]
+    - select: {text: Update group}
+      paths:
+        - "Update/After/Group/Id|Update/After/Group/Name|Update/After/Object/Id|Update/After/Object/Name"
+        - "Update/After/Group/Description|Update/After/Object/Description"
+      not_typed: [Description]
+files:
+  - {name: entra-audit.json, resource: aggregated/entra-audit/entra-audit-1.json, lines: 120}
+reference:
+  # Which key of the targets' modifiedProperties holds the value before the change (user_knows), as the draft asks.
+  change_sides: ["oldValue holds the value before, newValue the value after"]
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: activityDateTime, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Microsoft Entra ID}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: loggedByService}
+      - {path: EventSource/Device/Name, value: Microsoft Entra ID}
+      - {path: EventSource/User/Id, field: initiatedBy.user.userPrincipalName}
+      - {path: EventSource/Client/IPAddress, field: initiatedBy.user.ipAddress}
+    # Each change a pair of snapshots: a group over the targets in Before and in After, the targets' properties
+    # changed read by the change form (a display name typed by name in both, the others a Data per property).
+    events:
+      - name: update_user
+        when: [{field: activityDisplayName, equals: Update user}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-User}
+          - {path: EventDetail/Description, value: A user's properties were changed}
+          - {path: EventDetail/Update/Before/User, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: userPrincipalName},
+              {path: Name, change: {list: modifiedProperties, name: DisplayName, name_key: displayName,
+                                    old_key: oldValue, new_key: newValue}},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/After/User, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: userPrincipalName},
+              {path: Name, change: {list: modifiedProperties, name: DisplayName, name_key: displayName,
+                                    old_key: oldValue, new_key: newValue}},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
+          - {path: EventDetail/Update/Outcome/Description, field: resultReason}
+          - {path: EventDetail/Update/Data, data_name: activityDisplayName, field: activityDisplayName}
+          - {path: EventDetail/Update/Data, pair: {list: additionalDetails, name_key: key, value_key: value}}
+      - name: disable_account
+        when: [{field: activityDisplayName, equals: Disable account}]
+        fields:
+          - {path: EventDetail/TypeId, value: Disable-Account}
+          - {path: EventDetail/Description, value: A user's account was disabled}
+          - {path: EventDetail/Update/Before/User, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: userPrincipalName},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/After/User, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: userPrincipalName},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
+          - {path: EventDetail/Update/Outcome/Description, field: resultReason}
+          - {path: EventDetail/Update/Data, data_name: activityDisplayName, field: activityDisplayName}
+          - {path: EventDetail/Update/Data, pair: {list: additionalDetails, name_key: key, value_key: value}}
+      - name: enable_account
+        when: [{field: activityDisplayName, equals: Enable account}]
+        fields:
+          - {path: EventDetail/TypeId, value: Enable-Account}
+          - {path: EventDetail/Description, value: A user's account was enabled}
+          - {path: EventDetail/Update/Before/User, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: userPrincipalName},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/After/User, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: userPrincipalName},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
+          - {path: EventDetail/Update/Outcome/Description, field: resultReason}
+          - {path: EventDetail/Update/Data, data_name: activityDisplayName, field: activityDisplayName}
+          - {path: EventDetail/Update/Data, pair: {list: additionalDetails, name_key: key, value_key: value}}
+      # Two targets, a user and a group: an object each, of its type, in both snapshots.
+      - name: add_member_to_group
+        when: [{field: activityDisplayName, equals: Add member to group}]
+        fields:
+          - {path: EventDetail/TypeId, value: Add-GroupMember}
+          - {path: EventDetail/Description, value: A member was added to a group}
+          - {path: EventDetail/Update/Before/Object, for_each: {array: targetResources}, as: target, fields: [
+              {path: Type, field: type},
+              {path: Id, any_of: [userPrincipalName, id]},
+              {path: Name, field: displayName},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/After/Object, for_each: {array: targetResources}, as: target, fields: [
+              {path: Type, field: type},
+              {path: Id, any_of: [userPrincipalName, id]},
+              {path: Name, field: displayName},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
+          - {path: EventDetail/Update/Outcome/Description, field: resultReason}
+          - {path: EventDetail/Update/Data, data_name: activityDisplayName, field: activityDisplayName}
+          - {path: EventDetail/Update/Data, pair: {list: additionalDetails, name_key: key, value_key: value}}
+      - name: update_group
+        when: [{field: activityDisplayName, equals: Update group}]
+        fields:
+          - {path: EventDetail/TypeId, value: Update-Group}
+          - {path: EventDetail/Description, value: A group's properties were changed}
+          - {path: EventDetail/Update/Before/Group, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: id},
+              {path: Name, field: displayName},
+              {path: Description, change: {list: modifiedProperties, name: Description, name_key: displayName,
+                                           old_key: oldValue, new_key: newValue}},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/After/Group, for_each: {array: targetResources}, as: target, fields: [
+              {path: Id, field: id},
+              {path: Name, field: displayName},
+              {path: Description, change: {list: modifiedProperties, name: Description, name_key: displayName,
+                                           old_key: oldValue, new_key: newValue}},
+              {path: Data, change: {list: modifiedProperties, name_key: displayName, old_key: oldValue,
+                                    new_key: newValue}}]}
+          - {path: EventDetail/Update/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
+          - {path: EventDetail/Update/Outcome/Description, field: resultReason}
+          - {path: EventDetail/Update/Data, data_name: activityDisplayName, field: activityDisplayName}
+          - {path: EventDetail/Update/Data, pair: {list: additionalDetails, name_key: key, value_key: value}}

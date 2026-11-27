@@ -1,0 +1,515 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.validation.HeldSchemas;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.pipeline.shared.XsltDoc;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+
+/// rebuild_mapping, the tool: the mapping read back from the XSLT, proven by stepping both XSLTs over the sample,
+/// and saved only once the outputs agree (or the user accepts the differences) and the user confirms (its flow
+/// against a live Stroom is `TestE2eRestyle`'s, in stroom-app; the reader itself is tested in stroom-ai-impl's
+/// `TestXsltReader`).
+class TestRebuildMappingTool {
+
+    private static final String BUILD = "acme-v1";
+    private static final String EVENT = "<Events xmlns=\"event-logging:3\"><Event><EventSource><Generator>vpnd"
+                                        + "</Generator></EventSource></Event></Events>";
+
+    // A hand-written JSON translation: it reads ts, action and user, never src_ip.
+    private static final String HAND_WRITTEN_JSON = """
+            <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" \
+            xpath-default-namespace="http://www.w3.org/2013/XSL/json" version="3.0">
+              <xsl:template match="/">
+                <Events Version="4.1.0"><xsl:apply-templates select="array/map"/></Events>
+              </xsl:template>
+              <xsl:template match="map[string[@key='action'] = 'login']">
+                <Event>
+                  <EventTime><TimeCreated><xsl:value-of select="string[@key='ts']"/></TimeCreated></EventTime>
+                  <EventSource>
+                    <System><Name>Example VPN</Name><Environment>Production</Environment></System>
+                    <Generator>vpnd</Generator>
+                    <Device><HostName>vpn-gw-1</HostName></Device>
+                    <User><Id><xsl:value-of select="string[@key='user']"/></Id></User>
+                  </EventSource>
+                  <EventDetail>
+                    <TypeId>vpn-login</TypeId>
+                    <Description>A user logged in to the VPN</Description>
+                    <Authenticate><Action>Logon</Action><User><Id><xsl:value-of select="string[@key='user']"/>\
+            </Id></User></Authenticate>
+                  </EventDetail>
+                </Event>
+              </xsl:template>
+              <xsl:template match="map"/>
+            </xsl:stylesheet>""";
+
+    private final TranslationWorld world = new TranslationWorld();
+    private final PipelineIndex pipelineIndex = Mockito.mock(PipelineIndex.class);
+    private final SampleStreams sampleStreams = Mockito.mock(SampleStreams.class);
+    private final RebuildMappingTool tool = new RebuildMappingTool(world.docs, world.world.guard(),
+            world.eventVersions, world.consent, world.stepping, world.world.pipelineShapes, pipelineIndex,
+            sampleStreams, () -> world.docFinder, world.world.documentAccess);
+    private String uuid;
+    private String after = EVENT;
+
+    @BeforeEach
+    void setUp() {
+        final Map<String, Object> saved = world.docs.createXslt(new ToolCall("1", SaveXsltTool.NAME, "{}"),
+                world.context(), BUILD, "ACME-Events",
+                generated(TranslationWorld.parsed()), TranslationDocs.Source.of(TranslationWorld.parsed()), null);
+        uuid = String.valueOf(saved.get("uuid"));
+        PipelineLayers.given(world.world.pipelineService, "p", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("p").property("translationFilter", "xslt",
+                        new DocRef(XsltDoc.TYPE, uuid, "ACME-Events"))));
+        final SteppedPipeline pipeline = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(pipeline.name()).thenReturn("ACME");
+        Mockito.when(world.stepping.load(anyString())).thenReturn(pipeline);
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), isNull(), anyInt())).thenAnswer(inv ->
+                new PipelineStepping.Outputs(Map.of("7:1", EVENT), false));
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), any(Map.class), anyInt()))
+                .thenAnswer(inv -> new PipelineStepping.Outputs(Map.of("7:1", after), false));
+    }
+
+    @Test
+    void anXsltThatIsWhatItsMappingGeneratesIsInStep() {
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result).containsEntry("status", "in_step");
+        assertThat(result.get("hint")).isEqualTo("The XSLT is what its kept mapping generates: nothing to rebuild.");
+        Mockito.verifyNoInteractions(world.stepping);
+    }
+
+    @Test
+    void aPreProcessorBeforeTheTranslationIsRefusedNamingTheTranslation() {
+        // A pre-processor (records in, records out) in the build too, before the translation in a second pipeline.
+        final Map<String, Object> made = world.docs.createXslt(new ToolCall("2", SaveXsltTool.NAME, "{}"),
+                world.context(), BUILD, "ACME-Unpack", generated(TranslationWorld.parsed()),
+                TranslationDocs.Source.of(TranslationWorld.parsed()), null);
+        final String pre = String.valueOf(made.get("uuid"));
+        world.editByHand(pre, code -> "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                      + "xpath-default-namespace=\"records:2\" xmlns=\"records:2\" version=\"3.0\">"
+                                      + "<xsl:template match=\"@*|node()\"><xsl:copy><xsl:apply-templates "
+                                      + "select=\"@*|node()\"/></xsl:copy></xsl:template></xsl:stylesheet>");
+        PipelineLayers.given(world.world.pipelineService, "p2", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "preFilter", "XSLTFilter",
+                        "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("p2")
+                        .property("preFilter", "xslt", new DocRef(XsltDoc.TYPE, pre, "ACME-Unpack"))
+                        .property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, uuid, "ACME-Events"))));
+        final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
+        Mockito.when(heldSchemas.forks()).thenReturn(List.of());
+        tool.setXsltStages(new XsltStages(world.world.documentAccess, heldSchemas, Mockito.mock(SteppingWalks.class)));
+
+        final Map<String, Object> refused = call(Map.of("uuid", pre, "pipeline_uuid", "p2"));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("'ACME-Unpack' is its pipeline's pre-process XSLT",
+                "Give uuid=" + uuid + " ('ACME-Events'), the translation");
+        Mockito.verifyNoInteractions(world.stepping);
+        // The translation itself goes on as before.
+        assertThat(call(Map.of("pipeline_uuid", "p2"))).containsEntry("status", "in_step");
+    }
+
+    @Test
+    void aHandEditIsProvenOnTheSampleConfirmedThenSaved() {
+        world.editByHand(uuid, TestRebuildMappingTool::environmentChanged);
+
+        final String before = world.xslt(uuid).getData();
+        // Without a form the user can't confirm it: nothing is saved.
+        final Map<String, Object> refused = call(Map.of());
+        assertThat(refused.get("error")).asString().startsWith("Not done: Save the mapping rebuilt from XSLT "
+                                                               + "'ACME-Events' (carrying hand edits into the "
+                                                               + "mapping), and the XSLT regenerated from it: it "
+                                                               + "wrote the same output as the XSLT for all 1 "
+                                                               + "records stepped");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(before);
+
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+        final Map<String, Object> done = call(Map.of());
+        assertThat(world.shown).singleElement().asString().startsWith("Save the mapping rebuilt from XSLT "
+                                                                      + "'ACME-Events'");
+        assertThat(done).containsKey("saved").containsKey("next")
+                .containsEntry("mode", "out of step with the kept mapping");
+        assertThat(done.get("proven_on")).isEqualTo(Map.of("records", 1, "streams", List.of(7), "which",
+                "the streams given"));
+        final XsltDoc saved = world.xslt(uuid);
+        // The XSLT is the one regenerated from the rebuilt mapping, kept with it: the two agree again.
+        final TranslationMapping kept = TranslationMapping.parse(KeptMapping.readMapping(saved.getDescription())
+                .orElseThrow().payload().get("mapping"));
+        assertThat(XsltCode.normalise(saved.getData())).isEqualTo(XsltCode.normalise(generated(kept)));
+        assertThat(saved.getData()).contains("<Environment>Test</Environment>");
+        assertThat(XsltCode.normalise(before)).isEqualTo(XsltCode.normalise(saved.getData()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aHandEditedRuleIsReadBackIntoTheBuildsCatalogue() {
+        tool.setCatalogueNotes(() -> new CatalogueNotes(world.world.guard(), world.world.documentAccess,
+                new DocumentWrites(world.world.documentAccess),
+                new FeedNames(() -> Mockito.mock(DocFinder.class), world.world.documentAccess)));
+        final Map<String, Object> logon = new LinkedHashMap<>();
+        logon.put("type_id", "Logon");
+        logon.put("title", "User logon");
+        logon.put("event_detail", "Authenticate");
+        logon.put("action", "Logon");
+        logon.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action", "equals", "login")))));
+        logon.put("basis", "user_confirmed");
+        logon.put("status", "confirmed");
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of(logon));
+        block.put("catch_all", Map.of("status", "confirmed"));
+        final String notes = world.inBuild(BUILD, DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\nAcme's VPN.\n\n" + SourceNotes.block(block) + "\n").build());
+        world.editByHand(uuid, code -> code.replace("'login'", "'signin'"));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).containsKey("saved");
+        assertThat(world.shown).singleElement().asString().contains("event types", "changed: event type Logon");
+        final Map<String, Object> said = (Map<String, Object>) done.get("catalogue");
+        assertThat((List<String>) said.get("changes")).singleElement().asString()
+                .startsWith("changed: event type Logon (recognised by action = signin, was action = login)");
+        final String text = ((DocumentationDoc) world.world.docs.get(notes)).getData();
+        assertThat(text).startsWith("# Acme source notes\n\nAcme's VPN.\n");
+        final Catalogue catalogue = SourceNotes.catalogue(SourceNotes.readNotes(text));
+        assertThat(catalogue.eventType("Logon").recognisedBy().getFirst().when().getFirst().equalTo())
+                .isEqualTo("signin");
+        assertThat(SourceNotes.readNotes(text)).containsEntry("source", "Acme");
+    }
+
+    @Test
+    void theCatchAllGuardHoldsAfterACatalogueMadeByTheToolIsReadBack() {
+        // From a review: the user declined the catch-all; rebuild_mapping read the XSLT back into the notes, which
+        // dropped the confirmation's state the guard took for "made by catalogue_event_types", so the next
+        // build_translation_xslt saved with the catch-all unconfirmed.
+        final Map<String, Object> made = new LinkedHashMap<>();
+        made.put(RecordSourceNotesTool.CONFIRMING, Map.of(RecordSourceNotesTool.RECORDS, Map.of("Logon", 1)));
+        final String notes = catalogueNotes("Acme source notes", made);
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+
+        readBackWithAHandEdit();
+
+        assertThat(SourceNotes.readNotes(((DocumentationDoc) world.world.docs.get(notes)).getData()))
+                .containsEntry(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.MADE_BY_TOOL);
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+    }
+
+    @Test
+    void aCatalogueMadeByTheToolSaysSoWithoutItsConfirmationsState() {
+        catalogueNotes("Acme source notes", Map.of(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.MADE_BY_TOOL));
+
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+        readBackWithAHandEdit();
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isTrue();
+    }
+
+    @Test
+    void aCatalogueReadBackFromAHandWrittenTranslationIsNotPutThroughTheGuard() {
+        final String notes = catalogueNotes("Acme source notes", Map.of());
+
+        readBackWithAHandEdit();
+
+        assertThat(SourceNotes.readNotes(((DocumentationDoc) world.world.docs.get(notes)).getData()))
+                .containsEntry(RecordSourceNotesTool.MADE_BY, RecordSourceNotesTool.MADE_BY_READ_BACK);
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isFalse();
+    }
+
+    @Test
+    void theGuardReadsTheOriginFromTheNotesTheCatalogueIsReadFrom() {
+        // The catalogue in one notes doc (read back from a hand-written translation), the confirmation's state in
+        // another: the catalogue isn't one the tool made.
+        catalogueNotes("Acme source notes", Map.of());
+        final String other = world.inBuild(BUILD, DocumentationDoc.TYPE, "Other source notes").getUuid();
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Other");
+        block.put("fields", List.of());
+        block.put(RecordSourceNotesTool.CONFIRMING, Map.of(RecordSourceNotesTool.RECORDS, Map.of("Logon", 1)));
+        world.world.docs.put(other, DocumentationDoc.builder().uuid(other).name("Other source notes").version("v0")
+                .data("# Other source notes\n\n" + SourceNotes.block(block) + "\n").build());
+
+        assertThat(world.builds.catalogueConfirmedThroughTool(BUILD)).isFalse();
+    }
+
+    // The build's source notes holding a catalogue of one event type, Logon, its catch-all not confirmed, and the
+    // block's other keys given.
+    private String catalogueNotes(final String name, final Map<String, Object> more) {
+        final Map<String, Object> logon = new LinkedHashMap<>();
+        logon.put("type_id", "Logon");
+        logon.put("title", "User logon");
+        logon.put("event_detail", "Authenticate");
+        logon.put("action", "Logon");
+        logon.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "action", "equals", "login")))));
+        logon.put("basis", "user_confirmed");
+        logon.put("status", "confirmed");
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of(logon));
+        block.put("catch_all", Map.of("status", "proposed"));
+        block.putAll(more);
+        final String notes = world.inBuild(BUILD, DocumentationDoc.TYPE, name).getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name(name).version("v0")
+                .data("# Acme source notes\n\nAcme's VPN.\n\n" + SourceNotes.block(block) + "\n").build());
+        return notes;
+    }
+
+    // The XSLT's Logon rule edited by hand, and read back into the catalogue.
+    private void readBackWithAHandEdit() {
+        tool.setCatalogueNotes(() -> new CatalogueNotes(world.world.guard(), world.world.documentAccess,
+                new DocumentWrites(world.world.documentAccess),
+                new FeedNames(() -> Mockito.mock(DocFinder.class), world.world.documentAccess)));
+        world.editByHand(uuid, code -> code.replace("'login'", "'signin'"));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+        assertThat(call(Map.of())).containsKey("saved");
+    }
+
+    @Test
+    void anXsltRewrittenOutsideTheGeneratorsLayoutSaysToCarryTheEditWithChanges() {
+        // Seen: TWITTER's XSLT, rewritten by hand with a plain template per record, read back as nothing; the agent
+        // took that for an empty kept mapping and the edit for one no mapping can express. A template per record is
+        // read now (HandLayouts, 2026-11-24); a loop over the records in the start template still isn't.
+        world.editByHand(uuid, code -> "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                       + "xmlns=\"event-logging:3\" version=\"3.0\"><xsl:template match=\"records\">"
+                                       + "<Events><xsl:for-each select=\"record\"><Event/></xsl:for-each></Events>"
+                                       + "</xsl:template></xsl:stylesheet>");
+
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result.get("saved")).isNull();
+        assertThat(String.valueOf(result.get("hint")))
+                .startsWith("The XSLT isn't laid out as the generator writes one (a template per rule)")
+                .contains("the kept mapping is still there")
+                .contains("build_translation_xslt uuid=<this XSLT> changes=")
+                .contains("data_parent writes Data in a named Data");
+    }
+
+    @Test
+    void outputsThatDifferAreShownAndNothingIsSavedUnlessAccepted() {
+        world.editByHand(uuid, TestRebuildMappingTool::environmentChanged);
+        after = EVENT.replace("vpnd", "other");
+
+        final Map<String, Object> refused = call(Map.of());
+        assertThat(refused).doesNotContainKey("saved").doesNotContainKey("status");
+        assertThat(String.valueOf(refused.get("hint"))).startsWith("The regenerated XSLT writes these records "
+                                                                   + "differently from the XSLT: nothing was saved.");
+        assertThat((List<?>) refused.get("differences")).singleElement().satisfies(difference ->
+                assertThat(((Map<?, ?>) difference).get("path") + " " + ((Map<?, ?>) difference).get("records"))
+                        .isEqualTo("Event/EventSource/Generator 1"));
+
+        // Asked in a form, which the user declines: nothing saved.
+        final String before = world.xslt(uuid).getData();
+        world.forms = true;
+        call(Map.of("accept_differences", true));
+        assertThat(world.shown).singleElement().asString().contains("1 output paths differ, as shown");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(before);
+    }
+
+    @Test
+    void whatTheReaderCantReadInAnEventIsShownAndNothingIsRebuiltUnlessAccepted() {
+        // An xsl:iterate making users distinct by login name, added by hand: the reader leaves it out, and the
+        // sample's records (stepped the same here) may never reach it, so the proof alone wouldn't show its loss.
+        world.editByHand(uuid, code -> environmentChanged(code).replace("<Environment>Test</Environment>",
+                "<Environment>Test</Environment><xsl:iterate select=\"data\"><xsl:param name=\"seen\" "
+                + "select=\"()\"/><xsl:next-iteration><xsl:with-param name=\"seen\" select=\"($seen, @value)\"/>"
+                + "</xsl:next-iteration></xsl:iterate>"));
+        final String before = world.xslt(uuid).getData();
+
+        final Map<String, Object> refused = call(Map.of());
+
+        assertThat(refused.get("saved")).isNull();
+        // In the EventSource both rules share: each rule's event loses it.
+        assertThat((List<String>) refused.get("unread")).containsExactly(
+                "rule logon: EventSource/System: iterate not read", "rule other: EventSource/System: iterate not read");
+        assertThat(String.valueOf(refused.get("hint"))).startsWith("Parts of the XSLT's events couldn't be read back")
+                .contains("accept_unread=true");
+        Mockito.verifyNoInteractions(world.stepping);
+        assertThat(world.xslt(uuid).getData()).isEqualTo(before);
+
+        // Accepted: on to the proof and the user's confirmation, as any rebuild.
+        final Map<String, Object> accepted = call(Map.of("accept_unread", true));
+        assertThat(accepted).doesNotContainKey("unread");
+        assertThat(accepted.get("error")).asString().startsWith("Not done: Save the mapping rebuilt from XSLT");
+    }
+
+    @Test
+    void aPipelineThatDoesNotRunTheXsltIsRefused() {
+        world.editByHand(uuid, TestRebuildMappingTool::environmentChanged);
+        PipelineLayers.given(world.world.pipelineService, "q", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "translationFilter", "XSLTFilter")));
+
+        assertThat(call(Map.of("pipeline_uuid", "q")).get("error"))
+                .isEqualTo("Pipeline q doesn't run XSLT 'ACME-Events'");
+    }
+
+    @Test
+    void theMappingIsRebuiltAgainstTheSchemaDocumentKeptWithIt() {
+        // Saved once the user chose doc-b of the two documents holding 4.1.0: rebuilt against it, not the first.
+        world.twoSchemaDocuments();
+        world.eventVersions.remember(world.context(), BUILD, TranslationWorld.VERSION, EventVersions.GIVEN, "doc-b");
+        final Map<String, Object> saved = world.docs.createXslt(new ToolCall("1", SaveXsltTool.NAME, "{}"),
+                world.context(), BUILD, "ACME-Events-B",
+                generated(TranslationWorld.parsed()), TranslationDocs.Source.of(TranslationWorld.parsed()), null);
+        uuid = String.valueOf(saved.get("uuid"));
+        PipelineLayers.given(world.world.pipelineService, "p", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("p").property("translationFilter", "xslt",
+                        new DocRef(XsltDoc.TYPE, uuid, "ACME-Events-B"))));
+        Mockito.clearInvocations(world.heldSchemas);
+
+        assertThat(call(Map.of())).containsEntry("status", "in_step");
+        Mockito.verify(world.heldSchemas, Mockito.atLeastOnce()).eventSchema(TranslationWorld.VERSION, "doc-b");
+        Mockito.verify(world.heldSchemas, Mockito.never()).eventSchema(TranslationWorld.VERSION);
+    }
+
+    @Test
+    void aCopysXsltThatCantBeReadBackIsRecordedSoTheBuildDraftsItAnew() {
+        // Decided by the user (2026-11-25): rebuild_mapping refusing (nothing reads back) lifts the read-back gate.
+        final BuildRecords records = world.world.records();
+        tool.setBuildRecords(() -> records);
+        unreadableByHand();
+        records.update(BUILD, new DocRef(XsltDoc.TYPE, uuid, "ACME-Events"), entry -> entry.put("version_of",
+                "prod-x"));
+
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result).containsEntry("mode", "mapping lost");
+        assertThat(String.valueOf(result.get("read_back"))).startsWith("failed: nothing in it reads as a mapping");
+        assertThat(String.valueOf(result.get("hint"))).contains("drafts its translation anew",
+                "draft_translation_mapping build=" + BUILD + " (allowed now)", "build_translation_xslt uuid=" + uuid,
+                "a child of the same template");
+        assertThat(records.readBackFailed(BUILD)).hasValueSatisfying(failed -> {
+            assertThat(failed.get("xslt")).isEqualTo(Map.of("uuid", uuid, "name", "ACME-Events"));
+            assertThat(String.valueOf(failed.get("why"))).isNotBlank();
+        });
+    }
+
+    @Test
+    void anUnreadableXsltOfABuildNotStartingFromAnExistingPipelineIsNotRecorded() {
+        final BuildRecords records = world.world.records();
+        tool.setBuildRecords(() -> records);
+        unreadableByHand();
+
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result).containsEntry("mode", "mapping lost").doesNotContainKey("read_back");
+        assertThat(records.readBackFailed(BUILD)).isEmpty();
+        assertThat(records.readBackFailed(null)).isEmpty();
+    }
+
+    @Test
+    void theSampleFieldsAHandWrittenXsltNeverReadsAreLeftOutOfTheMappingReadBack() {
+        // Decided by the user (2026-11-25; seen in eval case 105): the regenerated XSLT logs what the original did,
+        // not "No rule reads field src_ip", and the form and result say so; mapping src_ip is the user's request.
+        world.world.docs.put(uuid, world.xslt(uuid).copy().description(null).data(HAND_WRITTEN_JSON)
+                .updateUser("bob").build());
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), isNull(), anyInt())).thenAnswer(inv ->
+                new PipelineStepping.Outputs(Map.of("7:1", EVENT), Map.of("7:1", "<array xmlns=\""
+                        + "http://www.w3.org/2013/XSL/json\"><map><string key=\"ts\">2026-11-03T08:00:01.000Z"
+                        + "</string><string key=\"action\">login</string><string key=\"user\">jb</string>"
+                        + "<string key=\"src_ip\">198.51.100.7</string></map></array>"), false));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).as("rebuilt: %s", done).containsKey("saved").containsEntry("mode", "mapping lost");
+        assertThat(String.valueOf(done.get("left_out"))).startsWith("left out, as the original: src_ip")
+                .contains("ignored_fields");
+        assertThat(world.shown).singleElement().asString().contains("left out, as the original: src_ip");
+        final XsltDoc saved = world.xslt(uuid);
+        final TranslationMapping kept = TranslationMapping.parse(KeptMapping.readMapping(saved.getDescription())
+                .orElseThrow().payload().get("mapping"));
+        assertThat(kept.ignoredFields()).containsExactly("src_ip");
+        // Its regenerated XSLT reads src_ip as left out on purpose: never logged as a field no rule reads.
+        assertThat(saved.getData()).contains("'src_ip'");
+        assertThat(XsltCode.normalise(saved.getData())).isEqualTo(XsltCode.normalise(generated(kept)));
+    }
+
+    @Test
+    void aGeneratedXsltWhoseMappingWasLostLeavesNothingOut() {
+        // It logs its own unread fields: the mapping read back from it adds none to ignored_fields.
+        world.world.docs.put(uuid, world.xslt(uuid).copy().description(null).updateUser("bob").build());
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), isNull(), anyInt())).thenAnswer(inv ->
+                new PipelineStepping.Outputs(Map.of("7:1", EVENT), Map.of("7:1", "<records xmlns=\"records:2\">"
+                        + "<record><data name=\"never_read\" value=\"x\"/></record></records>"), false));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).as("rebuilt: %s", done).containsKey("saved").doesNotContainKey("left_out");
+        assertThat(TranslationMapping.parse(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload().get("mapping")).ignoredFields()).doesNotContain("never_read");
+    }
+
+    // The XSLT rewritten by hand into nothing a mapping reads, its kept mapping gone with its description.
+    private void unreadableByHand() {
+        final XsltDoc doc = world.xslt(uuid);
+        world.world.docs.put(uuid, doc.copy().description(null).data("<xsl:stylesheet "
+                + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"><xsl:template match=\"/\">"
+                + "<Events xmlns=\"event-logging:3\"/></xsl:template></xsl:stylesheet>").updateUser("bob").build());
+    }
+
+    private Map<String, Object> call(final Map<String, Object> more) {
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("uuid", uuid);
+        arguments.put("pipeline_uuid", "p");
+        arguments.put("stream_ids", List.of(7));
+        arguments.putAll(more);
+        return world.call(tool, arguments);
+    }
+
+    // A constant changed by hand in Stroom's editor.
+    private static String environmentChanged(final String code) {
+        return code.replaceFirst("<Environment>Dev</Environment>", "<Environment>Test</Environment>");
+    }
+
+    private static String generated(final TranslationMapping mapping) {
+        return stroom.ai.impl.tools.generation.XsltGenerator.generate(mapping, TranslationWorld.SCHEMA,
+                TranslationWorld.VERSION).xslt();
+    }
+}

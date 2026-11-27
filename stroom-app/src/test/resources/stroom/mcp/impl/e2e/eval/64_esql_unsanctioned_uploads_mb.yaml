@@ -1,0 +1,36 @@
+name: Users uploading over 150 MB outside the company's domains, on an Elasticsearch index (a question, nothing built)
+kind: question
+capabilities: [elasticsearch, esql, aggregation, computed_values]
+# The proxy upload events of case 62. The answer is filtered and computed: allowed uploads only, to domains not
+# ending in example.com (the company's own: files.example.com, intranet.example.com), summed by user, converted to MB
+# with EVAL (1 MB = 1,000,000 bytes, rounded to one place), kept over 150 MB, largest first. The traps: blocked
+# uploads counted; the company's domains left in, or matched as exactly 'example.com'; MB taken as 2^20 bytes; the
+# threshold applied before summing; the users ordered wrongly (alice, grace and bob are within 2 MB of each other).
+elastic_index: {name: Proxy uploads}
+request: >
+  Which users have uploaded more than 150 MB in total to site domains outside our company's domains (ours all end
+  in example.com)? Count only uploads the proxy allowed. Give each such user's total in MB, where 1 MB is
+  1,000,000 bytes, to one decimal place, largest first. Use the "Proxy uploads" Elasticsearch index.
+user_knows: >
+  The index is "Proxy uploads". user.name is the user, url.domain the site domain, http.request.bytes the size of
+  each upload in bytes, and event.action is allowed or blocked. The company's domains are those ending in
+  example.com. Over all the time the index holds.
+expected:
+  tools_used: [esql_query]
+  answer:
+    ordered: true
+    rows:
+      - [erin, 397.1]
+      - [carol, 245.2]
+      - [alice, 171.6]
+      - [grace, 169.9]
+      - [bob, 169.6]
+reference:
+  esql_query:
+    pipeline: >-
+      | WHERE event.action == "allowed" AND url.domain NOT LIKE "*example.com"
+      | STATS total = SUM(http.request.bytes) BY user.name
+      | EVAL mb = ROUND(total / 1000000.0, 1)
+      | WHERE mb > 150
+      | SORT mb DESC
+      | KEEP user.name, mb

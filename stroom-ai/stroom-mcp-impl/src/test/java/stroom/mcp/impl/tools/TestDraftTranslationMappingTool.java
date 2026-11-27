@@ -1,0 +1,1024 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.sample.SourceTypeRows;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.sample.SurveyDoc;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.documentation.shared.DocumentationDoc;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// draft_translation_mapping, the tool (the draft itself is [stroom.ai.impl.tools.draft.DraftMapping]'s, tested with
+/// it).
+class TestDraftTranslationMappingTool {
+
+    private static final String CSV = "time,user,action\n2026-10-01T10:00:00Z,alice,login\n"
+                                       + "2026-10-01T10:05:00Z,bob,logout\n";
+    // A firewall's sample.
+    private static final String FIREWALL = """
+            timestamp,device,event_type,severity,src_ip,src_port,dst_ip,dst_port,protocol,action,rule_id,bytes_sent,\
+            bytes_received,username,message
+            2026-10-01T09:00:12+10:00,FW1,TRAFFIC,INFO,192.0.2.10,54321,198.51.100.20,443,TCP,ALLOW,1001,1520,8450,,ok
+            2026-10-01T09:01:05+10:00,FW1,TRAFFIC,WARNING,203.0.113.45,49822,192.0.2.25,22,TCP,DENY,2003,0,0,,blocked
+            2026-10-01T09:10:00+10:00,FW1,ADMIN,INFO,192.0.2.5,50000,192.0.2.1,443,HTTPS,LOGIN_SUCCESS,0,0,0,admin,in
+            2026-10-01T09:20:00+10:00,FW1,SYSTEM,WARNING,,,,,N/A,HIGH_CPU,0,0,0,,CPU over 85 percent
+            """;
+
+    // The start of the question on values longer than the JSON parser keeps.
+    private static final String LONG_VALUES_QUESTION = "Some values are longer than Stroom's JSON parser keeps";
+
+    private final TranslationWorld world = new TranslationWorld();
+    private final DraftTranslationMappingTool tool = world.draftTool();
+
+    @Test
+    void toolsReadTheSampleFromItsStreamsInsteadOfItsText() {
+        // The text goes through the model once, to upload_sample; the tools after it take stream_ids.
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7)));
+
+        assertThat(((Map<?, ?>) draft.get("mapping")).get("input")).isEqualTo("data_splitter");
+        Mockito.verify(world.sampleStreamTexts).read(List.of(7L));
+    }
+
+    @Test
+    void aBuildStartedFromACopyOfAnExistingPipelineIsNeverDraftedAnew() {
+        // Seen in eval cases 103 and 105 on Haiku: drafted after the copy was read back, its mapping replaced and
+        // the records it didn't cover written as Unknown events.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.EXISTING, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("starts from 'VPN-Events'", "rebuild_mapping",
+                "build_translation_xslt", "Nothing drafted");
+        Mockito.verifyNoInteractions(world.sampleStreamTexts);
+    }
+
+    @Test
+    void aBuildWhoseCopysXsltCouldntBeReadBackIsDraftedAnew() {
+        // Decided by the user (2026-11-25): rebuild_mapping refusing lifts the gate, the translation drafted anew.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.EXISTING, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+        world.world.records().rememberReadBackFailed("vpn", Map.of("xslt", Map.of("uuid", "x", "name",
+                "VPN-V1.1-Events"), "why", "nothing in it reads as a mapping"));
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(draft).containsKey("mapping").doesNotContainKey("error");
+        // Described in place, it is still never drafted: the failed read-back is a copy's alone.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+        assertThat(String.valueOf(world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7))).get("error")))
+                .contains("describes 'VPN-Events' in place");
+    }
+
+    @Test
+    void aBuildDescribingAPipelineInPlaceIsNeverDrafted() {
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("describes 'VPN-Events' in place",
+                "catalogue_event_types build=vpn", "Nothing drafted");
+    }
+
+    @Test
+    void aBuildDescribingInPlaceAnXsltThatCouldntBeReadBackIsStillNeverDraftedAndSaysWhy() {
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p"), InPlaceInduction.IN_PLACE, Map.of(
+                        InPlaceInduction.MAPPING_NOT_READ, "nothing in it reads as a mapping")));
+
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("describes 'VPN-Events' in place",
+                "couldn't be read back into a mapping (nothing in it reads as a mapping)", "a new version",
+                "catalogue_event_types build=vpn", "Nothing drafted").doesNotContain("its mapping is read from");
+    }
+
+    @Test
+    void aBuildWhoseUserChoseToDraftIsDrafted() {
+        // The third start choice: a new translation drafted from the sample, as for a new source.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.DRAFT));
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(draft).containsKey("mapping").doesNotContainKey("error");
+        // The plan's next step, as every write tool's result has it (seen in testing: a chat stopped after the
+        // draft's long values form, with no cue to build the XSLT).
+        assertThat(draft).containsKey("next").containsEntry("done", false);
+    }
+
+    @Test
+    void neitherSamplesNorStreamsIsRefused() {
+        assertThat(world.call(tool, Map.of("source_name", "Acme")))
+                .containsEntry("error", "Give the samples' text, or stream_ids of the uploaded sample streams");
+    }
+
+    @Test
+    void theUserChoosesHowMuchOfEachStackTraceIsKept() {
+        // Asked for by the user: asked, the whole trace by default.
+        final String traced = "2026-10-11 22:14:01.000 INFO [w1] Request 1 served\n"
+                              + "user=bob action=logout session=s1\n"
+                              + "2026-10-11 22:14:03.123 ERROR [w3] Request 3 failed\n"
+                              + "java.lang.IllegalStateException: request 3 rejected\n"
+                              + "\tat com.example.Service.handle(Service.java:10)\n"
+                              + "\tat com.example.Main.main(Main.java:3)\n"
+                              + "user=carol action=logout session=s2\n"
+                              + "2026-10-11 22:14:04.456 INFO [w4] Request 4 served\n";
+
+        // No forms: kept whole, the agent told to ask.
+        final Map<String, Object> whole = world.call(tool, Map.of("samples", Map.of("app.log", traced)));
+        assertThat(String.valueOf(whole.get("notes"))).contains("kept whole as Data 'continuation'",
+                "continuation_lines=");
+        assertThat(String.valueOf(whole.get("mapping"))).doesNotContain("position() le");
+
+        // In a form: the user's choice.
+        world.forms = true;
+        world.answers.put(DraftTranslationMappingTool.TRACE_QUESTION, "Its first 20 lines");
+        // Its key=value lines have no time: left for the agent to map here.
+        world.answers.put(TimeSources.TIME_QUESTION, "Leave it: I'll say which field");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+        final Map<String, Object> cut = world.call(tool, Map.of("samples", Map.of("app.log", traced)));
+        assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION);
+        assertThat(String.valueOf(cut.get("mapping"))).contains("[position() le 20]");
+        assertThat(String.valueOf(cut.get("notes"))).contains("cut to its first 20 line(s)");
+
+        // Given, nothing is asked.
+        world.asked.clear();
+        final Map<String, Object> given = world.call(tool, Map.of("samples", Map.of("app.log", traced),
+                DraftTranslationMappingTool.CONTINUATION_LINES_ARG, 1));
+        assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION);
+        assertThat(String.valueOf(given.get("mapping"))).contains("[position() le 1]");
+
+        // No stack traces, no question.
+        world.asked.clear();
+        world.call(tool, Map.of("samples", Map.of("acme.csv", CSV)));
+        assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION);
+    }
+
+    @Test
+    void theUserSaysWhereATimeComesFromWhenRecordsHaveNone() {
+        // key=value lines with no time: the stream's received or created time is offered, never assumed.
+        final String timeless = "user=bob action=logout session=s1\nuser=carol action=login session=s2\n"
+                                + "user=dave action=logout session=s3\n";
+
+        final Map<String, Object> asked = world.call(tool, Map.of("samples", Map.of("app.log", timeless)));
+        assertThat(String.valueOf(asked.get("notes"))).contains("write no EventTime/TimeCreated", "time_source=");
+        assertThat(String.valueOf(asked.get("mapping"))).doesNotContain("ReceivedTime");
+
+        world.forms = true;
+        world.answers.put(TimeSources.TIME_QUESTION, "When Stroom received the stream (an approximation)");
+        final Map<String, Object> chosen = world.call(tool, Map.of("samples", Map.of("app.log", timeless)));
+        // Every rule's, so once, in common.
+        assertThat(String.valueOf(((Map<?, ?>) chosen.get("mapping")).get("common")))
+                .contains("{path=EventTime/TimeCreated, meta=ReceivedTime}");
+        assertThat(String.valueOf(chosen.get("notes"))).contains("an approximation");
+
+        world.asked.clear();
+        final Map<String, Object> given = world.call(tool, Map.of("samples", Map.of("app.log", timeless),
+                TimeSources.TIME_SOURCE_ARG, "created"));
+        assertThat(world.asked).doesNotContain(TimeSources.TIME_QUESTION);
+        assertThat(String.valueOf(given.get("mapping"))).contains("meta=CreatedTime");
+        assertThat(world.call(tool, Map.of("samples", Map.of("app.log", timeless), TimeSources.TIME_SOURCE_ARG,
+                "now"))).containsEntry("error", "time_source is one of received, created, none");
+    }
+
+    @Test
+    void theUserSaysWhereADateComesFromWhenTimesHaveNoneAndNoHeaderGivesIt() {
+        // Lines holding a time of day only; the stream's file name holds the date.
+        final String dateless = "23:59:30.000 INFO [w1] request 1 done\n00:00:10.000 WARN [w2] request 2 slow\n"
+                                + "00:01:00.000 INFO [w1] request 3 done\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(9L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 9", dateless), List.of()));
+        Mockito.when(world.sampleStreamTexts.receiptHeaders(9L)).thenReturn(Map.of("RemoteFile",
+                "app-2026-10-11.log"));
+
+        final Map<String, Object> asked = world.call(tool, Map.of("stream_ids", List.of(9)));
+        assertThat(String.valueOf(asked.get("notes"))).contains("have no date and no header gives it",
+                "date_source=received|created|file_name");
+
+        world.forms = true;
+        world.answers.put(TimeSources.DATE_QUESTION, "The date in the file's name (e.g. app-2026-10-11.log)");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+        final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(9)));
+        assertThat(String.valueOf(chosen.get("mapping")))
+                .contains("replace(stroom:meta('RemoteFile'), '^.*?(\\d{4}-\\d{2}-\\d{2}).*$', '$1')")
+                .contains("time_format=yyyy-MM-dd HH:mm:ss.SSS", "rollover=true");
+        assertThat(world.asked).contains(TimeSources.DATE_QUESTION).doesNotContain(TimeSources.TIME_QUESTION);
+
+        // No file name holding a date: not offered.
+        Mockito.when(world.sampleStreamTexts.receiptHeaders(9L)).thenReturn(Map.of());
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(9), TimeSources.DATE_SOURCE_ARG, "file_name")))
+                .containsEntry("error", "date_source is one of received, created, none");
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(9), TimeSources.DATE_SOURCE_ARG,
+                "received")).get("mapping"))).contains("substring(stroom:meta('ReceivedTime'), 1, 10)");
+    }
+
+    @Test
+    void theUserSaysWhichZoneTimesWithNoneAreIn() {
+        // Asked for by the user: a time with no zone or offset is never assumed to be UTC.
+        final String local = "time,user,action\n2026-10-01 10:00:00,bob,login\n2026-10-01 10:04:00,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(11L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 11", local), List.of()));
+        // Received five minutes after its last event, in UTC: the source writes +10:00.
+        Mockito.when(world.sampleStreamTexts.receiptHeaders(11L)).thenReturn(Map.of("ReceivedTime",
+                "2026-10-01T00:09:00.000Z"));
+
+        final Map<String, Object> asked = world.call(tool, Map.of("stream_ids", List.of(11)));
+        assertThat(String.valueOf(asked.get("notes"))).contains("have no time zone or offset", "never assume UTC",
+                "timezone=");
+        assertThat(String.valueOf(asked.get("mapping"))).doesNotContain("timezone");
+
+        world.forms = true;
+        world.answers.put(TimeSources.ZONE_QUESTION, "+10:00 (a guess: the sample's latest time is about 10 hours "
+                                                     + "ahead of when Stroom received it)");
+        final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(11)));
+        assertThat(String.valueOf(chosen.get("mapping"))).contains("timezone=+10:00");
+        assertThat(String.valueOf(world.formsShown.getLast())).contains("UTC", "+10:00 (a guess",
+                "Another zone: I'll name it");
+        // Answered in the form: nothing says the zone is still the user's to say (seen in chat 182: the note did,
+        // and the agent asked the user again in the chat).
+        assertThat(String.valueOf(chosen.get("notes"))).contains("as the user chose")
+                .doesNotContain("the user's to say", "has no time zone or offset.");
+        assertThat(String.valueOf(chosen.get("hint"))).doesNotContain("the time zone");
+
+        world.asked.clear();
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(11), TimeSources.TIMEZONE_ARG,
+                "Australia/Sydney")).get("mapping"))).contains("timezone=Australia/Sydney");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(11), TimeSources.TIMEZONE_ARG, "Sydney")))
+                .extractingByKey("error").asString().contains("is not a time zone");
+    }
+
+    @Test
+    void aBuildOfFeedsInDifferentZonesReadsEachFeedsTimesInItsOwnZone() {
+        // Decided by the user (2026-11-25): per-feed zones allowed, kept in the build (compare_feeds), and the
+        // translation's time handling honours them: each record's zone from its stream's Feed meta.
+        final String local = "time,user,action\n2026-10-01 10:00:00,bob,login\n2026-10-01 10:04:00,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(14L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 14", local), List.of()));
+        world.forms = true;
+        world.world.folder("System/" + BuildWorld.WORKSPACE + "/acme-many");
+        world.world.records().rememberFeedComparison("acme-many", Map.of("time_zones", Map.of("ACME-A", "UTC",
+                "ACME-B", "Australia/Sydney", "ACME-C", "UTC")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many"));
+
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(String.valueOf(draft.get("mapping"))).contains("Feed", "Australia/Sydney");
+        assertThat(String.valueOf(draft.get("notes"))).contains("read in each feed's own zone",
+                "ACME-B: Australia/Sydney", "UTC for a feed not listed");
+        // Given as the argument, one zone still wins.
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many",
+                TimeSources.TIMEZONE_ARG, "UTC")).get("mapping"))).doesNotContain("Australia/Sydney");
+        // Every feed in one zone, as the user said for each: that zone, asked no more.
+        world.world.records().rememberFeedComparison("acme-many", Map.of("time_zones", Map.of("ACME-A",
+                "Europe/London", "ACME-B", "Europe/London")));
+        final Map<String, Object> one = world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many"));
+        assertThat(String.valueOf(one.get("mapping"))).contains("timezone=Europe/London");
+        assertThat(String.valueOf(one.get("notes"))).contains("the zone the user gave each of this build's feeds");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+    }
+
+    @Test
+    void aRedraftInTheSameBuildUsesTheZoneTheUserChoseAndAnotherBuildAsksAgain() {
+        // Seen in chats 185 and 186: drafted, then drafted again in the same build (with the System/Name the user
+        // gave), and the user was asked the zone again, answering UTC both times.
+        final String local = "time,user,action\n2026-10-01 10:00:00,bob,login\n2026-10-01 10:04:00,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(13L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 13", local), List.of()));
+        world.forms = true;
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+
+        final Map<String, Object> first = world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1"));
+        assertThat(world.asked).filteredOn(TimeSources.ZONE_QUESTION::equals).hasSize(1);
+        assertThat(String.valueOf(first.get("mapping"))).contains("timezone=UTC");
+
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1",
+                "system_name", "Acme"));
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(String.valueOf(again.get("mapping"))).contains("timezone=UTC");
+        assertThat(String.valueOf(again.get("notes"))).contains("the zone the user chose earlier for this build",
+                "timezone=");
+
+        // Given as the argument, the zone given wins, and is the build's from then on.
+        final Map<String, Object> given = world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1",
+                TimeSources.TIMEZONE_ARG, "Australia/Sydney"));
+        assertThat(String.valueOf(given.get("mapping"))).contains("timezone=Australia/Sydney");
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(13), "build", "acme-v1"))
+                .get("mapping"))).contains("timezone=Australia/Sydney");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+
+        // Another build is asked its own.
+        world.call(tool, Map.of("stream_ids", List.of(13), "build", "other-v1"));
+        assertThat(world.asked).contains(TimeSources.ZONE_QUESTION);
+    }
+
+    @Test
+    void aRedraftInTheSameBuildUsesTheTimeSourceAndTraceLinesTheUserChose() {
+        // As the zone (seen in chats 185 and 186): the other answers a draft asks are the build's too, so a redraft
+        // doesn't ask them again.
+        final String traced = "2026-10-11 22:14:01.000 INFO [w1] Request 1 served\n"
+                              + "user=bob action=logout session=s1\n"
+                              + "2026-10-11 22:14:03.123 ERROR [w3] Request 3 failed\n"
+                              + "java.lang.IllegalStateException: request 3 rejected\n"
+                              + "\tat com.example.Service.handle(Service.java:10)\n"
+                              + "\tat com.example.Main.main(Main.java:3)\n"
+                              + "user=carol action=logout session=s2\n"
+                              + "2026-10-11 22:14:04.456 INFO [w4] Request 4 served\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(14L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 14", traced), List.of()));
+        world.forms = true;
+        world.answers.put(DraftTranslationMappingTool.TRACE_QUESTION, "Its first 20 lines");
+        world.answers.put(TimeSources.TIME_QUESTION, "When Stroom received the stream (an approximation)");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+
+        world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-v1"));
+        assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION, TimeSources.TIME_QUESTION);
+
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-v1",
+                "system_name", "Acme"));
+        assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION, TimeSources.TIME_QUESTION);
+        assertThat(String.valueOf(again.get("mapping"))).contains("[position() le 20]", "meta=ReceivedTime");
+        assertThat(String.valueOf(again.get("notes"))).contains("earlier for this build (continuation_lines= changes "
+                                                                + "it)", "earlier for this build (time_source= "
+                                                                         + "changes it)");
+
+        // Another build is asked its own.
+        world.call(tool, Map.of("stream_ids", List.of(14), "build", "other-v1"));
+        assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION, TimeSources.TIME_QUESTION);
+    }
+
+    @Test
+    void eachRecordsZoneMayBeReadFromAField() {
+        // Asked for by the user: a field naming each record's zone, read record by record rather than one zone.
+        final String zoned = "time,tz,user,action\n2026-10-01 10:00:00,Australia/Sydney,bob,login\n"
+                             + "2026-10-01 10:04:00,Europe/London,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(12L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 12", zoned), List.of()));
+        world.forms = true;
+        world.answers.put(TimeSources.ZONE_QUESTION, "Each record's own zone, from 'tz' (UTC where a record gives "
+                                                     + "none)");
+
+        final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(12)));
+        assertThat(String.valueOf(chosen.get("mapping"))).contains("timezone={field=tz, default=UTC}");
+        assertThat(String.valueOf(chosen.get("notes"))).contains("each record's own zone", "never guess");
+
+        // Given as the argument, with a default other than UTC.
+        world.asked.clear();
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(12), TimeSources.TIMEZONE_ARG,
+                "field:tz|Australia/Sydney")).get("mapping"))).contains("timezone={field=tz, "
+                                                                         + "default=Australia/Sydney}");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(12), TimeSources.TIMEZONE_ARG, "field:tz|AEST")))
+                .extractingByKey("error").asString().contains("a default Stroom reads");
+    }
+
+    @Test
+    void theDraftIsCheckedAgainstTheSchemaAndKeptForTheSession() {
+        // Kept for this session, so the first save sends only what changes (seen in testing: a 50 KB draft,
+        // written out whole in one call, never reached the server).
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).containsEntry("schema_version", TranslationWorld.VERSION).containsKey("schema_check");
+        assertThat(((Map<?, ?>) draft.get("schema_check")).containsKey("problems")).isTrue();
+        assertThat(world.files()).containsKeys("/outputs/mappings/draft-acme-v1.json",
+                "/outputs/mappings/draft.json");
+        assertThat(ToolJson.loads(world.files().get("/outputs/mappings/draft-acme-v1.json")))
+                .isEqualTo(ToolJson.loads(ToolJson.dumps(draft.get("mapping"))));
+        // The one version this Stroom holds was settled without the agent: the hint says so first.
+        assertThat((String) draft.get("hint")).startsWith(TranslationWorld.VERSION + " is the only event-logging "
+                                                          + "version this Stroom holds")
+                .contains("The server keeps the draft with the build, for your later sessions too");
+        // A change sent for the build and an XSLT name not saved yet starts from it.
+        final TranslationBuilds.Base base = world.builds.mappingToChange(world.context(), "acme-v1/ACME-Events",
+                null, "acme-v1", "ACME-Events");
+        assertThat(base.basedOn()).isEqualTo(TranslationBuilds.ON_THE_DRAFT);
+    }
+
+    @Test
+    void aNextVersionsDraftNamesWhatTheCurrentTranslationLooksUp() {
+        // Seen in testing: V1.3 drafted for a feed V1.2 translates, and its IP lookups were gone, though the user
+        // meant to keep them.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(currentTranslation()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).containsEntry("current_translation", currentTranslation());
+        assertThat(((List<?>) draft.get("notes")).getLast()).asString()
+                .startsWith("The feed is translated now by 'FG-V1.2' (v12), whose XSLT looks up reference map(s) "
+                            + "['GEOIP'] with stroom:lookup(); loads reference data ['GEO-IP via Reference Loader "
+                            + "on translationFilter']. Ask the user whether the new version keeps these lookups.")
+                .contains("create_pipeline version_of='v12' keep_references=true");
+        // A feed translated by a pipeline that looks nothing up, or no build: nothing to say.
+        Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(Map.of("pipeline",
+                Map.of("name", "FG-V1.2", "uuid", "v12"))));
+        assertThat(world.call(tool, Map.of("samples", Map.of("acme.csv", CSV), "build", "acme-v1")))
+                .doesNotContainKey("current_translation");
+        assertThat(world.call(tool, Map.of("samples", Map.of("acme.csv", CSV))))
+                .doesNotContainKey("current_translation");
+    }
+
+    @Test
+    void theSessionsDraftFitsTheClientInline() {
+        // Copilot saved a 10.6 KB draft to a file; the agent read 100 of its 502 lines and wrote its own mapping.
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", List.of(FIREWALL),
+                "source_name", "Firewall Logs"));
+
+        final Map<String, Object> reply = new LinkedHashMap<>();
+        reply.put("mapping", draft.get("mapping"));
+        reply.put("schema_check", draft.get("schema_check"));
+        assertThat(ToolJson.dumpsCompact(reply).length()).isLessThan(8000);
+    }
+
+    @Test
+    void theDraftFollowsTheBuildsSourceNotes() {
+        // The user's documentation, kept in the build by record_source_notes: the draft follows its catalogue.
+        final String notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"events\": [{\"event\": \"login\", \"description\": \"A user logged in\", "
+                      + "\"event_detail\": \"Authenticate\", \"type_id\": \"Logon\", \"field\": \"action\", "
+                      + "\"value\": \"login\", \"action\": \"Logon\"}]}\n-->\n")
+                .build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(ToolJson.dumps(draft.get("mapping"))).contains("EventDetail/Authenticate");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aBuildWithAScopeDraftsTheScopesRulesAlone() {
+        // An aggregated feed's build covering one source type: the other's records are left out as they are read.
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            lines.append("{\"source\": \"db\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"").append(i % 2 == 0
+                            ? "select"
+                            : "update").append("\", \"user\": \"u").append(i).append("\"}\n");
+            lines.append("{\"source\": \"web\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"").append(i % 2 == 0
+                            ? "get"
+                            : "post").append("\", \"path\": \"/p").append(i).append("\"}\n");
+        }
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", lines.toString()), List.of()));
+        final Map<String, Object> state = SurveyDoc.merge(null, Map.of("feed", "ACME", "format", "json lines",
+                "streams_read", List.of(7L)), Map.of(), 2, "now");
+        state.put("source_types", Map.of("field", "source", "scope", Map.of("build", "acme-v1", "source_types",
+                List.of("db"), "rows", SourceTypeScope.kept(List.of(
+                        new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                        new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web"))))));
+        final String survey = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME")).getUuid();
+        world.world.docs.put(survey, DocumentationDoc.builder().uuid(survey).name(SurveyDoc.docName("ACME"))
+                .version("v0").data(SurveyDoc.render(state)).build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+
+        assertThat((Map<String, Object>) draft.get("scope")).containsEntry("records_in_scope", 8)
+                .containsEntry("records_left_out", Map.of("web", 8));
+        assertThat(ToolJson.dumps(draft.get("mapping"))).contains("select", "update").doesNotContain("\"get\"",
+                "\"post\"", "\"field\": \"path\"");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aGroupOfSourceTypesIsNamedPerSourceTypeFromTheSourceTypeField() {
+        // Seen in chat 182: the user answered "as per source type", which only one name could be given for.
+        scopedOverDbAndWeb(List.of(
+                new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "www")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB", "web", "Acme Web"), "environment", "Test"));
+
+        assertThat(draft).doesNotContainKey("error");
+        final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
+        final Map<String, Object> name = systemNameEntry(mapping);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("db", "Acme DB");
+        values.put("web", "Acme Web");
+        values.put("www", "Acme Web");
+        assertThat(name).containsEntry("field", "source").containsEntry("map", values).doesNotContainKey("value");
+        assertThat(ToolJson.dumps(mapping)).doesNotContain("TODO system name");
+        assertThat(ToolJson.dumps(draft.get("notes"))).doesNotContain("Ask the user for EventSource/System/Name");
+        // The draft only reads: the names go on the registry's rows when the group is saved (build_translation_xslt).
+        Mockito.verify(world.registries, Mockito.never()).writeRegistry(Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.any(), Mockito.any());
+
+        // Given again as JSON text, in another order: the same names, not another the user gave; left out, kept.
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "{\"web\": \"Acme Web\", \"db\": \"Acme DB\"}"));
+        assertThat(again).doesNotContainKey("error");
+        final Map<String, Object> leftOut = world.call(tool, Map.of("stream_ids", List.of(7), "build",
+                "acme-v1"));
+        assertThat(systemNameEntry((Map<String, Object>) leftOut.get("mapping"))).containsEntry("map", values);
+        // Another the user changed to: refused unless they did.
+        assertThat((String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "Acme")).get("error")).contains("user_changed");
+        final Map<String, Object> changed = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "Acme", "user_changed", true));
+        assertThat(systemNameEntry((Map<String, Object>) changed.get("mapping"))).containsEntry("value", "Acme");
+    }
+
+    @Test
+    void aGroupOfSourceTypesNotYetNamedIsOfferedOneNameOrEachSourceTypesOwn() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+
+        assertThat(ToolJson.dumps(draft.get("notes"))).contains("one name for the group or each source type's own",
+                "db, web", "system_name={\\\"<source type>\\\": \\\"<name>\\\"}");
+    }
+
+    @Test
+    void theOfferOfEachSourceTypesOwnNameIsInTheSystemNameNoteItself() {
+        // Chat 184: the offer was a note of its own after the System/Name note, the client's cut list of notes
+        // dropped it, and the agent asked for one name.
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+
+        final List<String> notes = JsonValues.listOrEmpty(draft.get("notes")).stream().map(String::valueOf).toList();
+        assertThat(notes).filteredOn(note -> note.contains("EventSource/System/Name")).singleElement().asString()
+                .startsWith("Ask the user for EventSource/System/Name and Environment")
+                .contains("one name for the group or each source type's own", "db, web",
+                        "system_name={\"<source type>\": \"<name>\"}", "Both are required");
+    }
+
+    @Test
+    void namesPerSourceTypeThatLeaveOneOutOrNameAnotherAreRefused() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final String missing = (String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB"))).get("error");
+        assertThat(missing).contains("web").contains("each of");
+        final String unknown = (String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB", "web", "Acme Web", "mail", "Acme Mail"))).get("error");
+        assertThat(unknown).contains("mail").contains("db, web");
+        // Nothing kept of a refused call: the right names are taken next.
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1", "system_name",
+                Map.of("db", "Acme DB", "web", "Acme Web")))).doesNotContainKey("error");
+    }
+
+    @Test
+    void namesPerSourceTypeAreRefusedWhereASourceTypeIsntToldByExactValues() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.PATTERN, "^we")));
+
+        final String refused = (String) world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", Map.of("db", "Acme DB", "web", "Acme Web"))).get("error");
+
+        assertThat(refused).contains("web", "one name");
+        // Nor offered.
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1"));
+        assertThat(ToolJson.dumps(draft.get("notes"))).doesNotContain("each source type's own");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void oneNameForAGroupOfSourceTypesIsWrittenAsBefore() {
+        scopedOverDbAndWeb(List.of(new SourceTypeRows.Row("db", SourceTypeRows.VALUE, "db"),
+                new SourceTypeRows.Row("web", SourceTypeRows.VALUE, "web")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(7), "build", "acme-v1",
+                "system_name", "Acme"));
+
+        assertThat(systemNameEntry((Map<String, Object>) draft.get("mapping"))).containsEntry("value", "Acme");
+    }
+
+    // A build of an aggregated feed (records of db and web, told by 'source') whose scope is both source types,
+    // told by these rows.
+    private void scopedOverDbAndWeb(final List<SourceTypeRows.Row> rows) {
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", dbAndWebLines()), List.of()));
+        final Map<String, Object> state = SurveyDoc.merge(null, Map.of("feed", "ACME", "format", "json lines",
+                "streams_read", List.of(7L)), Map.of(), 2, "now");
+        state.put("source_types", Map.of("field", "source", "scope", Map.of("build", "acme-v1", "source_types",
+                List.of("db", "web"), "rows", SourceTypeScope.kept(rows))));
+        final String survey = world.inBuild("acme-v1", DocumentationDoc.TYPE, SurveyDoc.docName("ACME")).getUuid();
+        world.world.docs.put(survey, DocumentationDoc.builder().uuid(survey).name(SurveyDoc.docName("ACME"))
+                .version("v0").data(SurveyDoc.render(state)).build());
+    }
+
+    // The mapping's common EventSource/System/Name entry.
+    private static Map<String, Object> systemNameEntry(final Map<String, Object> mapping) {
+        return JsonValues.maps(mapping.get("common")).stream()
+                .filter(entry -> "EventSource/System/Name".equals(entry.get("path")))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    // JSON lines of two source types, told by 'source'.
+    private static String dbAndWebLines() {
+        final StringBuilder lines = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            lines.append("{\"source\": \"db\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"select\", \"user\": \"u").append(i).append("\"}\n");
+            lines.append("{\"source\": \"").append(i % 2 == 0
+                            ? "web"
+                            : "www").append("\", \"time\": \"2026-10-01T10:00:0").append(i)
+                    .append("Z\", \"action\": \"get\", \"path\": \"/p").append(i).append("\"}\n");
+        }
+        return lines.toString();
+    }
+
+    @Test
+    void theSystemTheUserGaveIsKeptForTheBuildAndAnotherIsRefused() {
+        // From the chat 163 review: the user answered Test, and a later draft was given Prod.
+        world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes");
+        final Map<String, Object> first = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1", "system_name", "Acme Gateway", "environment", "Test"));
+        assertThat(ToolJson.dumps(first.get("mapping"))).contains("Acme Gateway").contains("Test");
+        assertThat(world.world.records().system("acme-v1")).hasValueSatisfying(system -> assertThat(system)
+                .containsEntry("system_name", "Acme Gateway")
+                .containsEntry("environment", "Test"));
+
+        final Map<String, Object> other = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1", "environment", "Prod"));
+        assertThat((String) other.get("error")).contains("environment Test (not Prod)").contains("user_changed");
+
+        final Map<String, Object> leftOut = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+        assertThat(ToolJson.dumps(leftOut.get("mapping"))).contains("Acme Gateway").contains("Test")
+                .doesNotContain("Prod");
+    }
+
+    @Test
+    void aSystemTheUserChangedReplacesTheOneKept() {
+        world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes");
+        world.call(tool, Map.of("samples", Map.of("acme.csv", CSV), "build", "acme-v1",
+                "system_name", "Acme Gateway", "environment", "Test"));
+
+        final Map<String, Object> changed = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1", "environment", "Prod", "user_changed", true));
+
+        assertThat(ToolJson.dumps(changed.get("mapping"))).contains("Acme Gateway").contains("Prod");
+        assertThat(world.world.records().system("acme-v1")).hasValueSatisfying(system -> assertThat(system)
+                .containsEntry("environment", "Prod"));
+    }
+
+    @Test
+    void aCatalogueStillToConfirmIsConfirmedBeforeTheDraft() {
+        // Seen in chat 169: the agent drafted with eight kinds still to confirm, then searched its own history.
+        notes("proposed", "proposed");
+
+        final Map<String, Object> refused = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat((String) refused.get("error")).startsWith("The catalogue's 1 event type(s) and the catch-all "
+                                                             + "for uncatalogued records are still to confirm")
+                .contains("catalogue_event_types build=... confirm=true");
+    }
+
+    @Test
+    void aCatchAllAloneStillToConfirmIsSaidAsOne() {
+        // Seen in eval case 66 (2026-11-20): "The catalogue's the catch-all for uncatalogued records are still to
+        // confirm".
+        notes("confirmed", "proposed");
+
+        final Map<String, Object> refused = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat((String) refused.get("error")).startsWith("The catalogue's catch-all for uncatalogued records is "
+                                                             + "still to confirm: call catalogue_event_types");
+    }
+
+    @Test
+    void aCatalogueWithNoEventTypesYetDoesntHoldTheDraft() {
+        // Seen in eval case 112 (2026-11-27): the proposals refused for the JSON cut said to draft with
+        // long_values=whole; the draft was refused for the empty catalogue's catch-all, and the user was asked to
+        // keep every record as Unknown before any event type was catalogued.
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"event_types\": [], \"catch_all\": {\"status\": \"proposed\"}}\n-->\n")
+                .build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error").containsKey("mapping");
+    }
+
+    @Test
+    void aConfirmedCatalogueIsTheDraftsRules() {
+        notes("confirmed", "confirmed");
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error");
+        final List<?> rules = (List<?>) ((Map<?, ?>) draft.get("mapping")).get("events");
+        assertThat(ToolJson.dumps(rules)).contains("Authenticate-Logon").contains("\"catch_all\": true");
+    }
+
+    @Test
+    void aBuildWithNoCatalogueYetIsDraftedFromTheDraftsOwnRules() {
+        world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes");
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error");
+        assertThat(ToolJson.dumps(draft.get("notes"))).contains("No catalogue of event types yet");
+    }
+
+    @Test
+    void aCatalogueReadingTheItemsInsideRecordsIsDraftedPerItem() {
+        // Seen in eval case 69: the catalogue read each alert of a batch as its record (reading for_each, given to
+        // catalogue_event_types and kept in the notes); the draft read whole batches, and its rules matched nothing.
+        final String batches = """
+                [{"gateway": "gw1", "alerts": [{"time": "2026-11-19T09:00:00Z", "kind": "malware", "to": "alice"}, \
+                {"time": "2026-11-19T09:00:05Z", "kind": "phishing", "to": "bob"}]},
+                 {"gateway": "gw2", "alerts": [{"time": "2026-11-19T09:01:00Z", "kind": "malware", "to": "carol"}]}]
+                """;
+        final String types = "{\"type_id\": \"Alert-Malware\", \"title\": \"Malware\", \"event_detail\": "
+                             + "\"Alert\", \"recognised_by\": [{\"when\": [{\"field\": \"kind\", "
+                             + "\"equals\": \"malware\"}]}], \"status\": \"confirmed\"}";
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", "
+                      + "\"fields\": [], \"event_types\": [" + types + "], \"catch_all\": {\"status\": "
+                      + "\"confirmed\"}, \"confirming\": {\"reading\": {\"input\": \"json\", "
+                      + "\"json_layout\": \"array\", \"for_each\": \"alerts\"}}}\n-->\n")
+                .build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("alerts.json", batches),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error").containsEntry("records", 3);
+        final Map<?, ?> mapping = (Map<?, ?>) draft.get("mapping");
+        assertThat(mapping.get("for_each")).isEqualTo("alerts");
+        assertThat(ToolJson.dumps(draft.get("notes"))).doesNotContain("not in the sample");
+        assertThat(ToolJson.dumps(mapping.get("events"))).contains("\"field\": \"kind\", \"equals\": "
+                                                                   + "\"malware\"")
+                .contains("\"field\": \"gateway\", \"scope\": \"record\"");
+    }
+
+    @Test
+    void anOldNewListsOldKeyIsAskedOnceForTheBuildAndTheDraftFollowsTheAnswer() {
+        // Decided by the user 2026-11-23: not by key order alone (Microsoft 365 writes NewValue before OldValue). In a
+        // build with forms, asked with the proposal first (the keys' names, else their order); kept for the build, so
+        // a redraft isn't asked again.
+        final String users = """
+                {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Update user.", "UserId": "jo", \
+                "ClientIP": "10.0.0.1", "Workload": "Directory", "event": {"Target": "sam", "ResultStatus": \
+                "Success", "ModifiedProperties": [{"Name": "DisplayName", "NewValue": "Sam Taylor", "OldValue": \
+                "Sam T"}, {"Name": "JobTitle", "NewValue": "Analyst", "OldValue": ""}]}}
+                {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "Update user.", "UserId": "al", \
+                "ClientIP": "10.0.0.2", "Workload": "Directory", "event": {"Target": "kate", "ResultStatus": \
+                "Success", "ModifiedProperties": [{"Name": "JobTitle", "NewValue": "Lead", "OldValue": "Analyst"}, \
+                {"Name": "DisplayName", "NewValue": "Kate Jones", "OldValue": "Kate"}]}}
+                {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "Update user.", "UserId": "bo", \
+                "ClientIP": "10.0.0.3", "Workload": "Directory", "event": {"Target": "al", "ResultStatus": \
+                "Success", "ModifiedProperties": [{"Name": "Department", "NewValue": "Ops", "OldValue": ""}, \
+                {"Name": "DisplayName", "NewValue": "Al Smith", "OldValue": "Al"}]}}
+                """;
+        final String types = "{\"type_id\": \"Update-User\", \"title\": \"Update user\", \"event_detail\": "
+                             + "\"Update\", \"recognised_by\": [{\"when\": [{\"field\": \"Operation\", "
+                             + "\"equals\": \"Update user.\"}]}], \"status\": \"confirmed\"}";
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", "
+                      + "\"fields\": [], \"event_types\": [" + types + "], \"catch_all\": {\"status\": "
+                      + "\"confirmed\"}, \"confirming\": {\"reading\": {\"input\": \"json\", "
+                      + "\"json_layout\": \"lines\"}}}\n-->\n")
+                .build());
+        world.forms = true;
+        world.answers.put(ChangeSides.QUESTION, "OldValue holds the value before, NewValue the value after");
+        world.answers.put(TimeSources.TIME_QUESTION, "When Stroom received the stream (an approximation)");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
+        final Map<String, Object> samples = Map.of("users.json", users);
+
+        final Map<String, Object> first = world.call(tool, Map.of("samples", samples, "build", "acme-v1"));
+
+        assertThat(world.asked).anySatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION)
+                .contains("event.ModifiedProperties", "OldValue or NewValue", "\"OldValue\": \"Sam T\""));
+        // The keys' names propose OldValue, though NewValue comes first in the items: listed first.
+        final int asked = world.asked.indexOf(world.asked.stream()
+                .filter(question -> question.startsWith(ChangeSides.QUESTION)).findFirst().orElseThrow());
+        assertThat(ToolJson.dumps(world.formsShown.get(asked))).contains("[\"OldValue holds the value before, "
+                                                                        + "NewValue the value after\", \"NewValue "
+                                                                        + "holds the value before, OldValue the "
+                                                                        + "value after\"]");
+        assertThat(ToolJson.dumps(first.get("change_lists"))).contains("\"old_key\": \"OldValue\", \"new_key\": "
+                                                                      + "\"NewValue\", \"by\": \"user\"");
+        // The snapshots follow the answer: Before reads OldValue, After NewValue.
+        assertThat(ToolJson.dumps(first.get("mapping")))
+                .contains("\"path\": \"EventDetail/Update/Before/Object/Data\", \"change\": {\"list\": "
+                          + "\"event.ModifiedProperties\", \"name_key\": \"Name\", \"old_key\": \"OldValue\", "
+                          + "\"new_key\": \"NewValue\"}");
+        assertThat(ToolJson.dumps(first.get("notes"))).contains("takes its old values from OldValue and its new from "
+                                                               + "NewValue, as the user said");
+
+        // A redraft in the same build isn't asked.
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("samples", samples, "build", "acme-v1"));
+        assertThat(world.asked).noneSatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION));
+        assertThat(ToolJson.dumps(again.get("change_lists"))).contains("\"old_key\": \"OldValue\"");
+        assertThat(ToolJson.dumps(again.get("notes"))).contains("as the user said earlier for this build");
+
+        // Another build is asked its own.
+        world.call(tool, Map.of("samples", samples, "build", "other-v1"));
+        assertThat(world.asked).anySatisfy(question -> assertThat(question).startsWith(ChangeSides.QUESTION));
+
+        // Without forms the same proposal stands (the keys' names), with the note to check it.
+        world.asked.clear();
+        world.forms = false;
+        final Map<String, Object> unasked = world.call(tool, Map.of("samples", samples, "build", "third-v1"));
+        assertThat(world.asked).isEmpty();
+        assertThat(ToolJson.dumps(unasked.get("change_lists"))).contains("\"old_key\": \"OldValue\", "
+                                                                        + "\"new_key\": \"NewValue\", \"by\": "
+                                                                        + "\"order\"");
+        assertThat(ToolJson.dumps(unasked.get("notes"))).contains("swap old_key and new_key");
+    }
+
+    @Test
+    void aCatalogueReadingWholeRecordsDraftsWholeRecords() {
+        notes("confirmed", "confirmed");
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(((Map<?, ?>) draft.get("mapping")).get("for_each")).isNull();
+    }
+
+    // The build's source notes: a catalogue of a logon (confirmed) and a logoff (of the status given), told by
+    // action, and its catch-all (of the status given).
+    private void notes(final String logoff, final String catchAll) {
+        final String types = type("Authenticate-Logon", "Logon", "login", "confirmed") + ", "
+                             + type("Authenticate-Logoff", "Logoff", "logout", logoff);
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"event_types\": [" + types + "], \"catch_all\": {\"status\": \"" + catchAll
+                      + "\"}}\n-->\n")
+                .build());
+    }
+
+    private static String type(final String typeId, final String action, final String value, final String status) {
+        return "{\"type_id\": \"" + typeId + "\", \"title\": \"" + action + "\", \"event_detail\": "
+               + "\"Authenticate\", \"action\": \"" + action + "\", \"recognised_by\": [{\"when\": "
+               + "[{\"field\": \"action\", \"equals\": \"" + value + "\"}]}], \"status\": \"" + status + "\"}";
+    }
+
+    @Test
+    void xmlFragmentsAreDraftedInTheNamespaceOfTheirWrapper() {
+        // Read in the namespace of the wrapper the environment uses, which need not be records:2: with no wrapper
+        // of the environment's own, the standard records:2 one.
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("events.xml",
+                TestSampleProfiling.FRAGMENTS)));
+
+        final Map<?, ?> mapping = (Map<?, ?>) draft.get("mapping");
+        assertThat(mapping.get("input")).isEqualTo("xml_fragments");
+        assertThat(mapping.get("xml_namespace")).isEqualTo("records:2");
+    }
+
+    @Test
+    void aSampleThatIsAFilePathIsRefusedWithWhatToSend() {
+        final Map<String, Object> refused = world.call(tool, Map.of("samples", List.of("C:\\logs\\acme.csv")));
+
+        assertThat((String) refused.get("error")).contains("path");
+    }
+
+    @Test
+    void theUserIsAskedOnceWhetherToKeepLongValuesWholeOrCutThemAndTheChoiceIsRecorded() {
+        // Seen in user test chat 182: the user said "Cut them" in the chat, nothing kept it, and every clean step
+        // was refused for the JSON parser's Warning, so the build could not be processed.
+        longValues(21L, 25_000);
+        world.forms = true;
+        world.answers.put(LONG_VALUES_QUESTION, "Cut them at 10,000 characters");
+
+        final Map<String, Object> cut = world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1"));
+
+        assertThat(cut).doesNotContainKey("error");
+        assertThat(world.asked).filteredOn(asked -> asked.startsWith(LONG_VALUES_QUESTION)).singleElement()
+                .asString().contains("body", "25,000 characters");
+        assertThat(String.valueOf(world.formsShown.getLast())).contains(
+                "Keep them whole (raise the JSON parser's limit to 50,000 characters)",
+                "Cut them at 10,000 characters");
+        assertThat(world.world.records().longValues("acme-v1")).hasValueSatisfying(kept -> assertThat(kept)
+                .containsEntry("choice", "cut").containsEntry("longest", 25_000)
+                .containsEntry("fields", List.of("body")).containsEntry("how", "form"));
+        // Answered: the notes say the choice, not that it is still the user's to make.
+        assertThat(String.valueOf(cut.get("notes"))).contains("The user chose to cut them")
+                .doesNotContain("is the user's to say", "Ask the user whether");
+        assertThat(cut.get("long_values")).asString().contains("choice=cut");
+
+        // Recorded: not asked again.
+        world.asked.clear();
+        final Map<String, Object> again = world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1"));
+        assertThat(world.asked).noneMatch(asked -> asked.startsWith(LONG_VALUES_QUESTION));
+        assertThat(String.valueOf(again.get("notes"))).contains("The user chose to cut them");
+
+        // Another choice than the user's is refused, unless the user changed their mind.
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1", "long_values", "whole")))
+                .extractingByKey("error").asString().contains("The user chose to cut long values", "user_changed");
+        final Map<String, Object> whole = world.call(tool, Map.of("stream_ids", List.of(21), "build", "acme-v1",
+                "long_values", "whole", "user_changed", true));
+        assertThat(String.valueOf(whole.get("notes"))).contains("The user chose to keep them whole",
+                "jsonParser.stringTruncateLength to 50000");
+        assertThat(world.world.records().longValues("acme-v1")).hasValueSatisfying(kept -> assertThat(kept)
+                .containsEntry("choice", "whole").containsEntry("limit", 50_000).containsEntry("how", "given"));
+        assertThat(world.asked).noneMatch(asked -> asked.startsWith(LONG_VALUES_QUESTION));
+    }
+
+    @Test
+    void withNoFormTheAgentIsToldToAskAndRecordLongValuesWithTheArgument() {
+        longValues(22L, 12_000);
+
+        final Map<String, Object> asked = world.call(tool, Map.of("stream_ids", List.of(22), "build", "acme-v1"));
+
+        assertThat(String.valueOf(asked.get("notes"))).contains("Ask the user whether to keep them whole or cut "
+                                                                + "them", "long_values=whole or long_values=cut");
+        assertThat(world.world.records().longValues("acme-v1")).isEmpty();
+
+        // The user's answer, passed by the agent.
+        final Map<String, Object> cut = world.call(tool, Map.of("stream_ids", List.of(22), "build", "acme-v1",
+                "long_values", "cut"));
+        assertThat(String.valueOf(cut.get("notes"))).contains("The user chose to cut them");
+        assertThat(world.world.records().longValues("acme-v1")).hasValueSatisfying(kept -> assertThat(kept)
+                .containsEntry("choice", "cut").containsEntry("how", "given"));
+
+        // Kept with a build, and one of the two choices.
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(22), "long_values", "cut")))
+                .extractingByKey("error").asString().contains("give build=");
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(22), "build", "acme-v1", "long_values", "trim")))
+                .extractingByKey("error").asString().contains("long_values is whole", "or cut");
+    }
+
+    @Test
+    void withoutABuildLongValuesAreOnlyNoted() {
+        longValues(23L, 12_000);
+        world.forms = true;
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(23)));
+
+        assertThat(draft).doesNotContainKey("error");
+        assertThat(world.asked).noneMatch(asked -> asked.startsWith(LONG_VALUES_QUESTION));
+        assertThat(String.valueOf(draft.get("notes"))).contains("is the user's to say",
+                "draft_translation_mapping with build= asks");
+    }
+
+    // JSON lines in the stream, the second record's body that long.
+    private void longValues(final long streamId, final int length) {
+        final String lines = "{\"time\": \"2026-10-01T10:00:00.000Z\", \"user\": \"bob\", \"body\": \"short\"}\n"
+                             + "{\"time\": \"2026-10-01T10:01:00.000Z\", \"user\": \"carol\", \"body\": \""
+                             + "x".repeat(length) + "\"}\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(streamId))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream " + streamId, lines), List.of()));
+    }
+
+    // A feed translated now by FG-V1.2, whose XSLT looks up GEOIP and loads its reference data.
+    private static Map<String, Object> currentTranslation() {
+        final Map<String, Object> current = new LinkedHashMap<>();
+        current.put("pipeline", Map.of("name", "FG-V1.2", "uuid", "v12"));
+        current.put("xslt", List.of(Map.of("name", "FG-Events-V1.2", "uuid", "x12")));
+        current.put("reference_data", List.of("GEO-IP via Reference Loader on translationFilter"));
+        current.put("lookup_maps", List.of("GEOIP"));
+        return current;
+    }
+}

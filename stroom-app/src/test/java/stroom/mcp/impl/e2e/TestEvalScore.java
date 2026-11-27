@@ -1,0 +1,2504 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.e2e;
+
+import stroom.ai.impl.tools.skills.SkillDoc;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
+
+@SuppressWarnings("unchecked")
+class TestEvalScore {
+
+    private static final String LOGON = event("<EventTime><TimeCreated>2026-09-28T08:01:12.000Z</TimeCreated>"
+                                              + "</EventTime>", "<TypeId>Authenticate-Logon</TypeId>"
+                                                                + "<Description>Signed in</Description><Authenticate>"
+                                                                + "<Action>Logon</Action><User><Id>alice</Id></User>"
+                                                                + "<Data Name=\"gateway\" Value=\"vpn-gw1\"/>"
+                                                                + "</Authenticate>");
+    private static final String DENY = event("<EventTime><TimeCreated>2026-09-28T08:02:00.000Z</TimeCreated>"
+                                             + "</EventTime>", "<TypeId>Network-Deny</TypeId>"
+                                                               + "<Description>Denied</Description><Network><Deny>"
+                                                               + "<Source><Device><IPAddress>10.0.0.1</IPAddress>"
+                                                               + "</Device></Source></Deny></Network>");
+
+    private static final String SKILL = """
+            # Failed logons by host
+
+            Counts a user's failed logons over a period, by host.
+
+            ## When to use
+            - "how many failed logons did jsmith have?"
+            - "failed logons by host for a user"
+
+            ## Parameters
+            - user (required): the account.
+            - days (default 7): how many days back.
+
+            ## Steps
+            1. Count them:
+               ```json
+               {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and EventTime \
+            > now() - {days}d select count()"}}
+               ```
+
+            ## Output
+            A table in the chat.
+            """;
+    private static final String OTHER = """
+            # Logon times of day
+
+            Shows the hours a user logs on at.
+
+            ## Steps
+            1. Look at them.
+            """;
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aCefForwarderPassesOnlyAsAChildOfItsTemplateSettingTheFlattenerAlone() {
+        final Map<String, Object> evalCase = Map.of("expected", Map.of(
+                "route", Map.of("calls_in_order", List.of("draft_cef_mapping", "create_pipeline")),
+                "forwarder", Map.of("topic", "arcsight-prod", "lines", 1, "line_starts", "CEF:0|Delinea|")));
+        final String sent = "<kafkaRecords xmlns=\"kafka-records:1\"><kafkaRecord topic=\"arcsight-prod\">"
+                            + "<value>CEF:0|Delinea|SecretServer|</value></kafkaRecord></kafkaRecords>";
+
+        final EvalScore right = new EvalScore("110");
+        right.scoreForwarder(evalCase, List.of("draft_cef_mapping", "create_pipeline", "step_sample"),
+                new EvalScore.Forwarder(true, List.of("flattenFilter.xslt"), "chained", "<records/>", true, "clean",
+                        List.of(sent)));
+        assertThat(right.passed()).as(String.valueOf(right.toMap())).isTrue();
+
+        // One XSLT writing the records itself, over the template's shared stage, with a topic of its own.
+        final EvalScore wrong = new EvalScore("110");
+        wrong.scoreForwarder(evalCase, List.of("draft_cef_mapping", "create_pipeline"),
+                new EvalScore.Forwarder(true, List.of("flattenFilter.xslt", "kafkaOutputFilter.xslt"), "kafka",
+                        "<kafkaRecord topic=\"mine\"/>", true, "clean", List.of(sent.replace("arcsight-prod",
+                        "mine"))));
+        assertThat(wrong.passed()).isFalse();
+        assertThat((List<String>) wrong.toMap().get("problems")).containsExactly(
+                "the pipeline sets [flattenFilter.xslt, kafkaOutputFilter.xslt], expected only flattenFilter.xslt",
+                "the flattener's XSLT keeps a plan of output kafka, expected chained",
+                "the flattener's XSLT writes Kafka records or a topic itself",
+                "0 of 1 records gave a Kafka record on topic arcsight-prod whose value starts CEF:0|Delinea|");
+
+        // No child of the template at all.
+        final EvalScore none = new EvalScore("110");
+        none.scoreForwarder(evalCase, List.of(), new EvalScore.Forwarder(false, List.of(), null, null, true, null,
+                List.of()));
+        assertThat((List<String>) none.toMap().get("problems")).contains(
+                "no pipeline of the build inherits the template", "step_sample's verdict is null");
+    }
+
+    @Test
+    void onlyTheRawStreamsTheBuildsFiltersCoverAreScored() {
+        // Case 66: the sample uploaded twice (streams 10 and 11), the build's filter on 10 alone.
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of(10L, 12L))).containsExactly(10L);
+        // A filter on the feed covers both.
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of(10L, 11L))).containsExactly(10L, 11L);
+        // No filter covers either (none made, or a filter on other streams): every raw stream, as before.
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of())).containsExactly(10L, 11L);
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of(7L))).containsExactly(10L, 11L);
+        assertThat(EvalScore.theBuildsRaws(List.of(), Set.of(10L))).isEmpty();
+    }
+
+    @Test
+    void eventsHoldingWhatTheCaseExpectsAreStage1() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreEvents(expecting(Map.of("records", 2, "event_types", List.of("Authenticate", "Network"),
+                        "paths", List.of("EventTime/TimeCreated", "EventDetail/TypeId"),
+                        "values", Map.of("EventDetail/Authenticate/User/Id", List.of("alice")))),
+                List.of(LOGON, DENY), List.of(true, true), null);
+        score.indexed(true);
+
+        assertThat(score.stage1()).isTrue();
+        assertThat(score.passed()).isTrue();
+        assertThat(score.events()).isEqualTo(2);
+        assertThat(score.toMap()).containsEntry("event_types", List.of("Authenticate", "Network"));
+    }
+
+    @Test
+    void aPathMayNameAlternativesOrAnyOneElement() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreEvents(expecting(Map.of("records", 1, "event_types", List.of("Authenticate|Authorise", "Network"),
+                        "paths", List.of("EventDetail/Network/*/Source", "EventDetail/Network/Permit|"
+                                                                         + "EventDetail/Network/Deny"))),
+                List.of(DENY), List.of(true), null);
+
+        assertThat(score.toMap().get("missing_types")).isEqualTo(List.of("Authenticate|Authorise"));
+        assertThat(score.toMap().get("missing_paths")).isEqualTo(List.of());
+        assertThat(score.stage1()).isFalse();
+    }
+
+    @Test
+    void whatIsWrongIsSaid() {
+        final EvalScore score = new EvalScore("c");
+        final Map<String, Object> expected = new HashMap<>(Map.of("records", 3,
+                "event_types", List.of("Authenticate"), "paths", List.of("EventDetail/Authenticate/Outcome"),
+                "values", Map.of("EventDetail/Authenticate/User/Id", List.of("bob")),
+                "forbidden_values", Map.of("EventDetail/Authenticate/User/Id", List.of("alice")),
+                "forbidden_types", List.of("Network")));
+
+        score.scoreEvents(expecting(expected), List.of(LOGON, DENY, "not xml"), List.of(true, false, false), null);
+        score.indexed(true);
+
+        assertThat(score.passed()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "2 events, expected 3",
+                "2 of 3 Events records invalid",
+                "no event has EventDetail/Authenticate/User/Id = [bob]",
+                "events have EventDetail/Authenticate/User/Id = [alice], which none should",
+                "events of type [Network], which none should be");
+        assertThat(score.toMap().get("missing_paths")).isEqualTo(List.of("EventDetail/Authenticate/Outcome"));
+        assertThat(score.summary()).startsWith("c: FAIL stage1=false indexed=true events=1/2");
+    }
+
+    @Test
+    void dataIsLookedForWhereItBelongsInEveryEventOrSome() {
+        final Map<String, Object> every = Map.of("name", "gateway", "at", "EventDetail/Authenticate");
+        final Map<String, Object> some = Map.of("name", "gateway", "value", "vpn-gw1",
+                "at", "EventDetail/Authenticate", "every", false);
+        final Map<String, Object> elsewhere = Map.of("name", "gateway", "at", "EventDetail/Authenticate/User");
+
+        assertThat(problems(List.of(every), List.of(LOGON))).isEmpty();
+        assertThat(problems(List.of(some), List.of(LOGON, DENY))).isEmpty();
+        assertThat(problems(List.of(every), List.of(LOGON, DENY)))
+                .containsExactly("not every event has Data 'gateway' under EventDetail/Authenticate");
+        assertThat(problems(List.of(elsewhere), List.of(LOGON)))
+                .containsExactly("not every event has Data 'gateway' under EventDetail/Authenticate/User");
+    }
+
+    @Test
+    void onlySomeReadTheCountIsTheStreamsAll() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreEvents(expecting(Map.of("records", 1000, "event_types", List.of("Authenticate"),
+                "paths", List.of())), List.of(LOGON), List.of(true), 1000);
+
+        assertThat(score.stage1()).isTrue();
+        assertThat(score.events()).isEqualTo(1000);
+        assertThat((List<String>) score.toMap().get("notes"))
+                .containsExactly("1000 events in the Events streams; 1 read and checked");
+    }
+
+    @Test
+    void noEventsReadIsNoPass() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreEvents(expecting(Map.of("records", 0, "event_types", List.of(), "paths", List.of())),
+                List.of(), List.of(), null);
+        score.indexed(true);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly("0 of 0 Events records invalid");
+    }
+
+    @Test
+    void anAggregatedFeedsBuildIsScoredFromItsRegistryAndWhatItsGroupsPipelineLogged() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreSourceTypes(expecting(Map.of("source_types", Map.of("field", "LogFilePath",
+                "group", Map.of("name", "web server", "values", List.of("/var/log/httpd/access_log",
+                        "/var/log/httpd/error_log"), "others", List.of("/var/log/mail/maillog",
+                        "/opt/gateway/logs/gw.log")),
+                "rows", List.of(Map.of("match", "pattern", "value", "^/opt/gateway/logs/", "status", "parked")),
+                "passed_over", 240))), registry(), 240L, 0);
+
+        assertThat(score.sourceTypes()).isTrue();
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) score.toMap().get("source_type_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("field", "group source types", "group name", "row pattern ^/opt/gateway/logs/ "
+                                                                              + "(parked)", "passed_over");
+    }
+
+    @Test
+    void whatIsWrongWithTheSourceTypesIsSaid() {
+        final EvalScore score = new EvalScore("c");
+
+        // Expected: the group takes the mail log too, a row the registry lacks, more passed over.
+        score.scoreSourceTypes(expecting(Map.of("source_types", Map.of("field", "Path",
+                "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log",
+                        "/var/log/mail/maillog"), "others", List.of("/var/log/httpd/error_log")),
+                "rows", List.of(Map.of("match", "member", "value", "Mail")),
+                "passed_over", 100))), registry(), 240L, 2);
+
+        assertThat(score.sourceTypes()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the registry's source type field is LogFilePath, expected Path",
+                "the group Web server [Web server] doesn't take [/var/log/mail/maillog] and takes "
+                + "[/var/log/httpd/error_log], which it shouldn't",
+                "the group is called Web server, expected Web",
+                "the registry has no row member Mail; its rows: [Web server: pattern ^/var/log/httpd/ (translated), "
+                + "Mail: pattern ^/var/log/mail/ (parked), Gateway: pattern ^/opt/gateway/logs/ (parked)]",
+                "the group's pipeline passed over 240 record(s), expected 100, and logged 2 ERROR or FATAL line(s)");
+    }
+
+    @Test
+    void noRegistryOrNoSourceTypesExpected() {
+        final EvalScore none = new EvalScore("c");
+        none.scoreSourceTypes(expecting(Map.of("source_types", Map.of("field", "Workload"))), null, null, 0);
+        assertThat(none.sourceTypes()).isFalse();
+        assertThat((List<String>) none.toMap().get("problems"))
+                .containsExactly("the build has no source type registry");
+
+        // A case that isn't an aggregated feed's: nothing checked.
+        final EvalScore plain = new EvalScore("c");
+        plain.scoreSourceTypes(expecting(Map.of("records", 1)), null, null, 0);
+        assertThat(plain.sourceTypes()).isTrue();
+        assertThat(plain.toMap()).doesNotContainKey("source_type_checks");
+    }
+
+    @Test
+    void theRegistrysGroupsAreScoredExactly() {
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreSourceTypes(expecting(Map.of("source_types", Map.of("groups", List.of("Web", "Mail")))),
+                laterRegistry("p-new"), null, 0);
+
+        assertThat((List<String>) score.toMap().get("problems"))
+                .containsExactly("the registry's groups are [Messaging, Web], expected [Web, Mail]");
+    }
+
+    @Test
+    void aLaterBuildIsScoredAgainstWhatItsSetupLeft() {
+        final Map<String, String> snapshot = new LinkedHashMap<>();
+        snapshot.put("pipeline", "a");
+        snapshot.put("XSLT", "b");
+        final EvalScore.Before before = new EvalScore.Before("Messaging", "p-messaging", "i-messaging", snapshot);
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of(
+                        "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log")),
+                        "pipeline", "new"),
+                "unchanged", true, "separate_index", true));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreLaterBuild(evalCase, laterRegistry("p-new"), before, Map.of("pipeline", "a", "XSLT", "b"),
+                "eval-60", "i-web");
+        assertThat(passing.sourceTypes()).isTrue();
+        assertThat((List<Map<String, Object>>) passing.toMap().get("source_type_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("pipeline new", "unchanged pipeline", "unchanged XSLT", "separate index");
+
+        // The setup group's pipeline taken, its XSLT changed, and the Events in its index.
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreLaterBuild(evalCase, laterRegistry("p-messaging"), before, Map.of("pipeline", "a",
+                "XSLT", "changed"), "eval-60", "i-messaging");
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the group's rows name pipeline(s) [p-messaging], expected a new one, not the setup's p-messaging",
+                "the setup group Messaging's XSLT changed",
+                "the build's Events were found in index i-messaging, expected one of their own, not the setup "
+                + "group's i-messaging");
+    }
+
+    @Test
+    void aJoinedGroupKeepsItsPipelineAndItsIndexGainsTheBuildsFields() {
+        final EvalScore.Before before = new EvalScore.Before("Web", "p-web", "i-web", Map.of());
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of(
+                "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log")),
+                "pipeline", "same", "index", Map.of("fields_added", true))));
+        final Map<String, Object> registry = new HashMap<>(laterRegistry("p-web"));
+        registry.put("indexes", Map.of("web-index", Map.of("index", "web-index", "groups", List.of("Web"),
+                "added_by", Map.of("Path", "eval-56", "Name", "eval-61"))));
+
+        final EvalScore joined = new EvalScore("c");
+        joined.scoreLaterBuild(evalCase, registry, before, Map.of(), "eval-61", "i-web");
+        assertThat(joined.sourceTypes()).as("%s", joined.toMap()).isTrue();
+
+        // Nothing added by this build.
+        final EvalScore unchanged = new EvalScore("c");
+        unchanged.scoreLaterBuild(evalCase, registry, before, Map.of(), "eval-62", "i-web");
+        assertThat((List<String>) unchanged.toMap().get("problems")).singleElement().asString()
+                .startsWith("the index of group Web (web-index) has no field added by eval-62");
+    }
+
+    @Test
+    void aLaterBuildThatNeverFinishedFailsWithAPlainProblem() {
+        // Seen in eval case 61: the build never saved its group, so the joining source type's row was still
+        // parked, with no pipeline, and scoring threw a NullPointerException.
+        final EvalScore.Before before = new EvalScore.Before("Web", "p-web", "i-web", Map.of());
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of(
+                "group", Map.of("name", "Web", "values", List.of("/var/log/httpd/access_log",
+                        "/var/log/mail/maillog")),
+                "pipeline", "same")));
+        final Map<String, Object> registry = Map.of("field", "LogFilePath",
+                "rows", List.of(
+                        Map.of("name", "Web server", "match", "pattern", "value", "^/var/log/httpd/",
+                                "status", "translated", "group", "Web", "pipeline", Map.of("uuid", "p-web")),
+                        Map.of("name", "Mail", "match", "pattern", "value", "^/var/log/mail/", "status",
+                                "parked")));
+
+        final EvalScore unfinished = new EvalScore("c");
+        unfinished.scoreLaterBuild(evalCase, registry, before, Map.of(), "eval-61", null);
+
+        assertThat(unfinished.sourceTypes()).isFalse();
+        assertThat((List<String>) unfinished.toMap().get("problems")).containsExactly(
+                "the group's rows name pipeline(s) [p-web, null], expected the setup's p-web");
+        // No setup pipeline recorded either: still a plain problem.
+        final EvalScore noSetup = new EvalScore("c");
+        noSetup.scoreLaterBuild(evalCase, registry, new EvalScore.Before("Web", null, null, Map.of()), Map.of(),
+                "eval-61", null);
+        assertThat((List<String>) noSetup.toMap().get("problems")).singleElement().asString()
+                .startsWith("the group's rows name pipeline(s) [p-web, null]");
+    }
+
+    @Test
+    void theFormsAskedAndNotAskedAreScored() {
+        final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of(
+                "asked", List.of(Map.of("message", "runs in pipeline", "answer", "Change ")),
+                "not_asked", List.of("Which field says"))));
+        final Map<String, Object> changed = Map.of("message", "Group 'M' runs in pipeline P, in production.",
+                "content", Map.of("choice", "Change P (its working copy ...)"));
+        final Map<String, Object> versioned = Map.of("message", "Group 'M' runs in pipeline P, in production.",
+                "content", Map.of("choice", "A new version of P"));
+        final Map<String, Object> field = Map.of("message", "Which field says which source a record came from?");
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreForms(evalCase, List.of(changed));
+        assertThat(passing.sourceTypes()).isTrue();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreForms(evalCase, List.of(versioned, field));
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the form 'runs in pipeline' wasn't answered 'Change …': [{choice=A new version of P}]",
+                "a form asked 'Which field says', which none should");
+
+        final EvalScore none = new EvalScore("c");
+        none.scoreForms(evalCase, List.of());
+        assertThat((List<String>) none.toMap().get("problems")).containsExactly("no form asked 'runs in pipeline'");
+    }
+
+    @Test
+    void aFormAskedTooOftenOrOfferingWhatNoneShouldIsAProblem() {
+        final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of(
+                "asked", List.of(Map.of("message", "go in this build's", "at_most", 1)),
+                "not_asked", List.of(Map.of("message", "kinds of event apart", "offering", "^(time|orig_rt)( |$)")))));
+        final Map<String, Object> scope = Map.of("message", "Which source types go in this build's group?");
+        final Map<String, Object> kinds = Map.of("message", "Which field tells the kinds of event apart?",
+                "options", List.of("event.action (LOGIN, LOGOUT)", "level (INFO, WARN)"));
+        final Map<String, Object> timeKinds = Map.of("message", "Which field tells the kinds of event apart?",
+                "options", List.of("time (1794992402171, 1794992403171)", "event.action (LOGIN)"));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreForms(evalCase, List.of(scope, kinds));
+        assertThat(passing.sourceTypes()).isTrue();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreForms(evalCase, List.of(scope, scope, timeKinds));
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the form 'go in this build's' was asked 2 times, at most 1 expected",
+                "a form asking 'kinds of event apart' offered [time (1794992402171, 1794992403171)], which none "
+                + "should");
+    }
+
+    @Test
+    void theLayoutIsScoredOnTheGroupsPipelineFolder() {
+        final Map<String, Object> evalCase = expecting(Map.of("source_types", Map.of("layout", "/Events/V1\\.0$")));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreLayout(evalCase, "System/Eval Feeds/EVAL-65/Security audit/Events/V1.0");
+        assertThat(passing.sourceTypes()).isTrue();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreLayout(evalCase, "System/Eval Feeds/EVAL-65/V1.0/Events");
+        failing.scoreLayout(evalCase, null);
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "the group's pipeline is in System/Eval Feeds/EVAL-65/V1.0/Events, expected a folder matching "
+                + "/Events/V1\\.0$",
+                "the group's pipeline is in null, expected a folder matching /Events/V1\\.0$");
+
+        final EvalScore none = new EvalScore("c");
+        none.scoreLayout(expecting(Map.of()), null);
+        assertThat(none.sourceTypes()).isTrue();
+    }
+
+    @Test
+    void textsAreLookedForAnywhereInAnEvent() {
+        final String quoted = event("<EventTime><TimeCreated>2026-09-28T08:01:12.000Z</TimeCreated></EventTime>",
+                "<TypeId>Network-Block</TypeId><Description>say \"hi\"</Description><Network><Open><Destination>"
+                + "<Data Name=\"msg\" Value=\"a &quot;b&quot; c\"/></Destination></Open></Network>");
+        final Map<String, Object> expected = Map.of("records", 1, "texts", List.of("say \"hi\"", "a \"b\" c"),
+                "forbidden_texts", List.of("say \\\"hi\\\""));
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreEvents(expecting(expected), List.of(quoted), List.of(true), null);
+        assertThat(passing.stage1()).isTrue();
+
+        final String escaped = quoted.replace("say \"hi\"", "say \\\"hi\\\"");
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreEvents(expecting(expected), List.of(escaped), List.of(true), null);
+        assertThat(failing.stage1()).isFalse();
+        assertThat((List<String>) failing.toMap().get("problems")).containsExactly(
+                "no event holds [say \"hi\"] anywhere",
+                "events hold [say \\\"hi\\\"], which none should");
+    }
+
+    @Test
+    void typeIdsAreScoredVerbObjectDistinctForbiddenAndShared() {
+        final List<String> events = List.of(
+                typed("Authenticate-Logon", "<Data Name=\"eventType\" Value=\"user.session.start\"/>"),
+                typed("Authenticate-Logon", "<Data Name=\"type\" Value=\"login\"/>"),
+                typed("Authenticate-Logoff", "<Data Name=\"type\" Value=\"logout\"/>"),
+                unknown("x"));
+        final Map<String, Object> expected = Map.of("records", 4, "type_ids", Map.of("pattern", "verb_object",
+                "min_distinct", 2, "forbidden", List.of("login"),
+                "same", List.of(List.of(Map.of("eventType", "user.session.start"), Map.of("type", "login")))),
+                "unknown_at_most", 1);
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), events, List.of(true, true, true, true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat(score.stage1()).isTrue();
+        assertThat(score.toMap()).containsEntry("type_ids", List.of("Authenticate-Logoff", "Authenticate-Logon",
+                "Unknown-X"));
+    }
+
+    @Test
+    void whatIsWrongWithTheTypeIdsIsSaid() {
+        final List<String> events = List.of(
+                typed("user.session.start", "<Data Name=\"event.eventType\" Value=\"user.session.start\"/>"),
+                typed("login", "<Data Name=\"type\" Value=\"login\"/>"),
+                unknown("a"),
+                unknown("b"));
+        final Map<String, Object> expected = Map.of("records", 4, "type_ids", Map.of("pattern", "verb_object",
+                "min_distinct", 3, "forbidden", List.of("login"),
+                "same", List.of(List.of(Map.of("eventType", "user.session.start"), Map.of("type", "login")),
+                        List.of(Map.of("type", "logout")))),
+                "unknown_at_most", 1);
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), events, List.of(true, true, true, true), null);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "TypeIds [login, user.session.start] are not Verb-Object",
+                "2 distinct TypeIds [login, user.session.start], expected at least 3",
+                "events have TypeId [login], which none should",
+                "records that must share one TypeId have [login, user.session.start]: {eventType=user.session.start}"
+                + " [user.session.start], {type=login} [login]",
+                "no event matches {type=logout}, which must share its TypeId",
+                "2 Unknown events, at most 1 expected");
+    }
+
+    @Test
+    void aTypeIdOfMoreThanTwoPartsIsVerbObjectAsTheCatalogueHasIt() {
+        // Seen in eval case 69 (2026-11-20): Raise-Malware-Alert, which the catalogue takes, scored not Verb-Object.
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", 2, "type_ids", Map.of("pattern", "verb_object"))),
+                List.of(typed("Raise-Malware-Alert", ""), typed("Update-User2-Password", "")), List.of(true, true),
+                null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+
+        final EvalScore trailing = new EvalScore("c");
+        trailing.scoreEvents(expecting(Map.of("records", 1, "type_ids", Map.of("pattern", "verb_object"))),
+                List.of(typed("Raise-Malware-", "")), List.of(true), null);
+        assertThat((List<String>) trailing.toMap().get("problems")).containsExactly(
+                "TypeIds [Raise-Malware-] are not Verb-Object");
+    }
+
+    @Test
+    void aTypeIdOfAnyFormMayBeAllowedAndUnknownEventsAreLeftOutOfTheForm() {
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", 2, "type_ids", Map.of("pattern", "any"))),
+                List.of(typed("login", ""), unknown("x")), List.of(true, true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+
+        final EvalScore verbObject = new EvalScore("c");
+        verbObject.scoreEvents(expecting(Map.of("records", 1, "type_ids", Map.of("pattern", "verb_object"))),
+                List.of(unknown("lower case")), List.of(true), null);
+        assertThat((List<String>) verbObject.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void aDescriptionOnEveryEventIsScoredLeavingOutUnknownEvents() {
+        final String described = event("", "<TypeId>Authenticate-Logon</TypeId><Description>Signed in</Description>"
+                                            + "<Authenticate><Action>Logon</Action></Authenticate>");
+        final String bare = event("", "<TypeId>Authenticate-Logoff</TypeId><Description> </Description>"
+                                      + "<Authenticate><Action>Logoff</Action></Authenticate>");
+        final Map<String, Object> expected = Map.of("records", 2, "description_every_event", true);
+
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreEvents(expecting(expected), List.of(described, unknown("x")), List.of(true, true), null);
+        assertThat((List<String>) passing.toMap().get("problems")).isEmpty();
+
+        final EvalScore failing = new EvalScore("c");
+        failing.scoreEvents(expecting(expected), List.of(described, bare), List.of(true, true), null);
+        assertThat(failing.stage1()).isFalse();
+        assertThat((List<String>) failing.toMap().get("problems"))
+                .containsExactly("1 of 2 events have no EventDetail/Description: TypeIds [Authenticate-Logoff]");
+    }
+
+    @Test
+    void aDescriptionIsOptionalUnlessTheCaseAsksForOne() {
+        // Decided by the user 2026-11-20: an event type need not have a description, so a case scores Descriptions
+        // only when it says so (one whose records say what happened).
+        final String bare = event("", "<TypeId>Authenticate-Logoff</TypeId>"
+                                      + "<Authenticate><Action>Logoff</Action></Authenticate>");
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", 1)), List.of(bare), List.of(true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void theCatalogueIsScoredFromTheSourceNotesAndTheCheck() {
+        final Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("catch_all_confirmed", true);
+        expected.put("no_overlaps", true);
+        expected.put("description_every", true);
+        expected.put("no_condition_on_source_type_field", true);
+        expected.put("recognised_two_ways", List.of("Authenticate-Logon"));
+        expected.put("documentation_only", List.of("Unlock-Account|Update-Account"));
+        expected.put("dropped", List.of("process-heartbeat"));
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreCatalogue(expecting(Map.of("catalogue", expected)), catalogue(), check(List.of()));
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) score.toMap().get("catalogue_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("catch-all confirmed", "no overlaps", "description on every event type",
+                        "no condition on the source type field", "Authenticate-Logon recognised two ways",
+                        "Unlock-Account|Update-Account from documentation only", "process-heartbeat dropped");
+
+        final EvalScore counted = new EvalScore("c");
+        counted.scoreCatalogue(expecting(Map.of("catalogue", Map.of("documentation_only", 1))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) counted.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void whatIsWrongWithTheCatalogueIsSaid() {
+        final Map<String, Object> notes = catalogue();
+        notes.put("catch_all", Map.of("status", "proposed"));
+        final List<Map<String, Object>> types = (List<Map<String, Object>>) notes.get("event_types");
+        types.getFirst().put("description", "");
+        ((List<Map<String, Object>>) types.get(1).get("recognised_by")).add(Map.of("when", List.of(
+                Map.of("field", "event.log_type", "equals", "Integration"))));
+        final Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("catch_all_confirmed", true);
+        expected.put("no_overlaps", true);
+        expected.put("description_every", true);
+        expected.put("no_condition_on_source_type_field", true);
+        expected.put("recognised_two_ways", List.of("Unlock-Account", "Process-Missing"));
+        expected.put("documentation_only", 2);
+        expected.put("dropped", List.of("Authenticate-Logon"));
+        final EvalScore score = new EvalScore("c");
+
+        score.scoreCatalogue(expecting(Map.of("catalogue", expected)), notes, check(List.of(Map.of("record", 3,
+                "type_ids", List.of("Authenticate-Logon", "Authenticate-Logoff")))));
+
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the catch-all is proposed, not confirmed",
+                "event types overlap: record 3 [Authenticate-Logon, Authenticate-Logoff]",
+                "event types with no description: [Authenticate-Logon]",
+                "event types recognised by the source type field event>log_type: [Authenticate-Logoff]",
+                "Unlock-Account is recognised 1 way, expected two or more",
+                "no event type Process-Missing in the catalogue",
+                "1 event type(s) from documentation only, with no record in the sample, expected at least 2",
+                "Authenticate-Logon is not dropped");
+    }
+
+    @Test
+    void soManyEventTypesRecognisedTwoWaysAreScoredWhateverTheirTypeIds() {
+        // Seen in eval cases 30 and 67 (2026-11-20): the agent's TypeIds are its own (Start-Session for
+        // Authenticate-Logon), so a case may count the event types recognised two ways instead of naming them.
+        final EvalScore one = new EvalScore("c");
+        one.scoreCatalogue(expecting(Map.of("catalogue", Map.of("recognised_two_ways", 1))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) one.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) one.toMap().get("catalogue_checks"))
+                .extracting(check -> check.get("check"))
+                .containsExactly("at least 1 recognised two ways");
+
+        final EvalScore two = new EvalScore("c");
+        two.scoreCatalogue(expecting(Map.of("catalogue", Map.of("recognised_two_ways", 2))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) two.toMap().get("problems")).containsExactly(
+                "1 event type(s) recognised two or more ways [Authenticate-Logon], expected at least 2");
+    }
+
+    @Test
+    void aCatalogueThatGrewHasAtLeastSoManyEventTypesNotDropped() {
+        final EvalScore grown = new EvalScore("c");
+        grown.scoreCatalogue(expecting(Map.of("catalogue", Map.of("event_types_at_least", 3))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) grown.toMap().get("problems")).isEmpty();
+
+        final EvalScore small = new EvalScore("c");
+        small.scoreCatalogue(expecting(Map.of("catalogue", Map.of("event_types_at_least", 4))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) small.toMap().get("problems"))
+                .containsExactly("the catalogue has 3 event types, expected at least 4");
+    }
+
+    @Test
+    void theDropRulesAreCountedAndTheirLabelsAreTheModels() {
+        // Any label the catalogue takes, Verb-Object shaped too (decided by the user 2026-11-27).
+        final EvalScore one = new EvalScore("c");
+        one.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1)))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) one.toMap().get("problems")).isEmpty();
+
+        // A rule per logger, where the user asked for one.
+        final Map<String, Object> plain = catalogue();
+        final List<Map<String, Object>> types = new ArrayList<>((List<Map<String, Object>>) plain.get("event_types"));
+        types.add(eventType("Tomcat access log", "dropped", List.of(
+                Map.of("field", "event.logger_name", "equals", "AccessLogValve")), "user_confirmed", true));
+        plain.put("event_types", types);
+        final EvalScore two = new EvalScore("c");
+        two.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1)))), plain,
+                check(List.of()));
+        assertThat((List<String>) two.toMap().get("problems")).containsExactly(
+                "the catalogue has 2 drop rule(s) [Process-Heartbeat, Tomcat access log], expected 1");
+    }
+
+    @Test
+    void aFormNotRequiredMayBeUnshownButNotAskedTooOften() {
+        final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of("asked", List.of(Map.of(
+                "message", "[Uu]ncatalogued", "at_most", 1, "required", false)))));
+        final Map<String, Object> catchAll = Map.of("message", "Uncatalogued records: 40. Accept the catch-all?");
+
+        final EvalScore unshown = new EvalScore("c");
+        unshown.scoreForms(evalCase, List.of());
+        assertThat((List<String>) unshown.toMap().get("problems")).isEmpty();
+
+        final EvalScore once = new EvalScore("c");
+        once.scoreForms(evalCase, List.of(catchAll));
+        assertThat((List<String>) once.toMap().get("problems")).isEmpty();
+
+        final EvalScore looped = new EvalScore("c");
+        looped.scoreForms(evalCase, List.of(catchAll, catchAll, catchAll));
+        assertThat((List<String>) looped.toMap().get("problems"))
+                .containsExactly("the form '[Uu]ncatalogued' was asked 3 times, at most 1 expected");
+    }
+
+    @Test
+    void aRuleNamedByANumberIsAProblem() {
+        final Map<String, Object> evalCase = expecting(Map.of("rule_names", Map.of("forbidden", List.of("_\\d+$"))));
+
+        final EvalScore described = new EvalScore("c");
+        described.scoreRuleNames(evalCase, List.of("logon", "search_query", "search_query_qa"));
+        assertThat((List<String>) described.toMap().get("problems")).isEmpty();
+
+        final EvalScore numbered = new EvalScore("c");
+        numbered.scoreRuleNames(evalCase, List.of("logon", "searchquery", "searchquery_2"));
+        assertThat((List<String>) numbered.toMap().get("problems"))
+                .containsExactly("rules named [searchquery_2], matching _\\d+$, which none should");
+
+        final EvalScore unkept = new EvalScore("c");
+        unkept.scoreRuleNames(evalCase, null);
+        assertThat((List<String>) unkept.toMap().get("problems"))
+                .containsExactly("rule names: the build keeps no mapping to read them from");
+
+        final EvalScore notExpected = new EvalScore("c");
+        notExpected.scoreRuleNames(expecting(Map.of("records", 1)), List.of("searchquery_2"));
+        assertThat((List<String>) notExpected.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void aValuePlacedInItsElementMustNotBeRepeatedAsData() {
+        final Map<String, Object> evalCase = expecting(Map.of("records", 1,
+                "not_repeated_as_data", List.of("EventDetail/Search/Query/Raw")));
+        final String placed = "<TypeId>Search-Query</TypeId><Search><Query><Raw>vpn users 7</Raw></Query>"
+                              + "<Data Name=\"type\" Value=\"search\"/>"
+                              // A held JSON text kept whole holds the query among more text: not a repeat.
+                              + "<Data Name=\"event.original.details\" Value=\"{&quot;query_text&quot;: "
+                              + "&quot;vpn users 7&quot;}\"/></Search>";
+        final EvalScore once = new EvalScore("c");
+        once.scoreEvents(evalCase, List.of(event("", placed)), List.of(true), null);
+        assertThat((List<String>) once.toMap().get("problems")).isEmpty();
+        assertThat(once.stage1()).isTrue();
+
+        final String repeated = placed.replace("</Search>", "<Data Name=\"query_text\" Value=\"vpn users 7\"/>"
+                                                            + "</Search>");
+        final EvalScore twice = new EvalScore("c");
+        twice.scoreEvents(evalCase, List.of(event("", repeated)), List.of(true), null);
+        assertThat((List<String>) twice.toMap().get("problems"))
+                .containsExactly("1 event(s) repeat EventDetail/Search/Query/Raw's value as Data [query_text]");
+        assertThat(twice.stage1()).isFalse();
+    }
+
+    @Test
+    void noCatalogueOrNoCheckIsAProblemAndNoneExpectedIsNotScored() {
+        final EvalScore none = new EvalScore("c");
+        none.scoreCatalogue(expecting(Map.of("catalogue", Map.of("catch_all_confirmed", true))), null, null);
+        assertThat((List<String>) none.toMap().get("problems"))
+                .containsExactly("the build's source notes hold no event type catalogue");
+
+        final EvalScore unchecked = new EvalScore("c");
+        unchecked.scoreCatalogue(expecting(Map.of("catalogue", Map.of("no_overlaps", true))), catalogue(), null);
+        assertThat((List<String>) unchecked.toMap().get("problems"))
+                .containsExactly("no catalogue check to score the overlaps on");
+
+        final EvalScore plain = new EvalScore("c");
+        plain.scoreCatalogue(expecting(Map.of("records", 1)), null, null);
+        assertThat(plain.toMap()).doesNotContainKey("catalogue_checks");
+        assertThat((List<String>) plain.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void typedPathsAreHeldOutsideDataWithAlternatives() {
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Description>Sent</Description><Send><Source><User>"
+                                      + "<EmailAddress>kate@contoso.example</EmailAddress></User></Source>"
+                                      + "<Destination><User><Id>anja</Id></User></Destination><Payload><Email>"
+                                      + "<Subject>Re: roster</Subject></Email></Payload>"
+                                      + data("Operation", "Send") + "</Send>");
+        final Map<String, Object> expected = Map.of("records", 1, "typed", List.of(Map.of(
+                "select", Map.of("text", "Send"),
+                "paths", List.of("Send/Source/User/Id|Send/Source/User/EmailAddress", "Send/Destination/User",
+                        "Send/Payload/*/Subject"))));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send), List.of(true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).isEmpty();
+        assertThat(score.stage1()).isTrue();
+        assertThat((List<Map<String, Object>>) score.toMap().get("typed_checks"))
+                .extracting(check -> check.get("check"), check -> check.get("passed"))
+                .containsExactly(
+                        tuple("typed {text=Send} Send/Source/User/Id|Send/Source/User/EmailAddress", true),
+                        tuple("typed {text=Send} Send/Destination/User", true),
+                        tuple("typed {text=Send} Send/Payload/*/Subject", true));
+    }
+
+    @Test
+    void dataNeverSatisfiesATypedPath() {
+        // The values are all there, but in Data: a Data element named as the path's element, a typed element that
+        // holds only Data, and Data that * would reach.
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User>"
+                                      + data("Id", "kate") + "</User></Source>"
+                                      + data("Operation", "Send") + "<Data Name=\"Subject\" Value=\"Re: roster\"/>"
+                                      + "</Send>");
+        final Map<String, Object> expected = Map.of("records", 1, "typed", List.of(Map.of(
+                "select", Map.of("action", "Send"),
+                "paths", List.of("Send/Source/User", "Send/Source/User/Data", "Send/Subject|Send/*"))));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send), List.of(true), null);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "no event of {action=Send} (TypeIds [Send-Mail]) has a typed EventDetail/Send/Source/User (Data "
+                + "doesn't count)",
+                "no event of {action=Send} (TypeIds [Send-Mail]) has a typed EventDetail/Send/Source/User/Data (Data "
+                + "doesn't count)",
+                "no event of {action=Send} (TypeIds [Send-Mail]) has a typed EventDetail/Send/Subject|Send/* (Data "
+                + "doesn't count)");
+    }
+
+    @Test
+    void aTypedPathNeedsOnlyOneSelectedEventAndAnEntrySelectingNoneIsAProblem() {
+        final String typed = event("", "<TypeId>Move-MailItems</TypeId><Move><Source><Folder><Path>\\Inbox</Path>"
+                                       + "</Folder></Source>" + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final String bare = event("", "<TypeId>Move-MailItems</TypeId><Move>"
+                                      + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final Map<String, Object> expected = Map.of("records", 2, "typed", List.of(
+                Map.of("select", Map.of("text", "MoveToDeletedItems"), "paths", List.of("Move/Source/Folder/Path")),
+                Map.of("select", Map.of("text", "TeamMemberAdded"), "paths", List.of("Authorise/User/Id"))));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(bare, typed), List.of(true, true), null);
+
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "no event matches {text=TeamMemberAdded}, whose typed paths are expected");
+    }
+
+    @Test
+    void theEventsAreSelectedByTypeIdActionTextOrData() {
+        final String move = event("", "<TypeId>Move-MailItems</TypeId><Move><Source><Folder><Path>\\Inbox</Path>"
+                                      + "</Folder></Source>" + data("event.Operation", "MoveToDeletedItems")
+                                      + "</Move>");
+        final String delete = event("", "<TypeId>Delete-MailItem</TypeId><Delete><Email><Id>m1</Id></Email>"
+                                        + data("Operation", "HardDelete") + "</Delete>");
+        final List<Map<String, Object>> selectors = List.of(
+                Map.of("type_id", "Move-.*"),
+                Map.of("type_id", "Move"),
+                Map.of("action", "Delete|Move"),
+                Map.of("text", "\\Inbox"),
+                Map.of("data", Map.of("Operation", "MoveToDeletedItems")),
+                Map.of("action", "Delete", "text", "MoveToDeletedItems"));
+        final List<Object> selected = new ArrayList<>();
+        for (final Map<String, Object> selector : selectors) {
+            final EvalScore score = new EvalScore("c");
+            score.scoreEvents(expecting(Map.of("records", 2, "typed", List.of(Map.of("select", selector,
+                    "paths", List.of())), "data_share_at_most", 1)), List.of(move, delete), List.of(true, true),
+                    null);
+            selected.add(((List<String>) score.toMap().get("problems")).isEmpty());
+        }
+
+        // A TypeId pattern matches the whole TypeId; every key of a selector must hold.
+        assertThat(selected).containsExactly(true, false, true, true, true, false);
+        final EvalScore unknownKey = new EvalScore("c");
+        assertThatThrownBy(() -> unknownKey.scoreEvents(expecting(Map.of("records", 1, "typed", List.of(Map.of(
+                "select", Map.of("operation", "Send"), "paths", List.of())))), List.of(move), List.of(true), null))
+                .hasMessageContaining("typed select operation is none of type_id, action, text and data");
+    }
+
+    @Test
+    void theDataShareIsMeasuredByTypeIdReportedAndCapped() {
+        // Send-Mail: 4 values (the actor, a recipient, the subject in Data, the outcome) of which 1 in Data;
+        // Update-InboxRule: all 3 in Data, a nested Data's values counted and its Name not. The TypeId, the
+        // Description and the Unknown event are left out.
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Description>Sent</Description><Send><Source>"
+                                      + "<User><Id>kate</Id></User></Source><Destination><User><Id>anja</Id>"
+                                      + "</User></Destination>" + data("Subject", "Re: roster")
+                                      + "<Outcome><Success>true</Success></Outcome></Send>");
+        final String rule = event("", "<TypeId>Update-InboxRule</TypeId><Update><After><Object>"
+                                      + data("Operation", "New-InboxRule") + "<Data Name=\"Parameters\">"
+                                      + data("Name", "FW to personal") + data("MoveToFolder", "Archive")
+                                      + "</Data></Object></After></Update>");
+        final Map<String, Object> expected = Map.of("records", 3, "data_share_at_most", 0.5);
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send, rule, unknown("x")), List.of(true, true, true), null);
+
+        assertThat(score.toMap().get("data_shares")).isEqualTo(Map.of(
+                "Send-Mail", Map.of("share", 0.25, "data", 1, "values", 4),
+                "Update-InboxRule", Map.of("share", 1.0, "data", 3, "values", 3)));
+        assertThat(score.toMap().get("data_share")).isEqualTo(Map.of("share", 0.57, "data", 4, "values", 7));
+        assertThat(score.stage1()).isFalse();
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the events hold 0.57 of their EventDetail values in Data (4 of 7), at most 0.5 expected");
+        assertThat(score.summary()).contains(" data_share=0.57");
+
+        // Under the cap, the shares are still reported.
+        final EvalScore passing = new EvalScore("c");
+        passing.scoreEvents(expecting(Map.of("records", 1, "data_share_at_most", 0.3)), List.of(send),
+                List.of(true), null);
+        assertThat(passing.stage1()).isTrue();
+        assertThat(passing.toMap().get("data_share")).isEqualTo(Map.of("share", 0.25, "data", 1, "values", 4));
+        assertThat((List<Map<String, Object>>) passing.toMap().get("typed_checks"))
+                .containsExactly(Map.of("check", "data share at most 0.3", "passed", true));
+
+        // A case expecting neither has no shares in its score.
+        final EvalScore plain = new EvalScore("c");
+        plain.scoreEvents(expecting(Map.of("records", 1)), List.of(send), List.of(true), null);
+        assertThat(plain.toMap()).doesNotContainKeys("typed_checks", "data_share", "data_shares");
+    }
+
+    @Test
+    void anEntrysDataShareIsOfTheEventsItSelects() {
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate</Id></User>"
+                                      + "</Source>" + data("Operation", "Send") + "</Send>");
+        final String rule = event("", "<TypeId>Update-InboxRule</TypeId><Update><After><Object><Name>FW</Name>"
+                                      + "</Object></After>" + data("Operation", "New-InboxRule")
+                                      + data("MoveToFolder", "Archive") + "</Update>");
+        final Map<String, Object> expected = Map.of("records", 2, "typed", List.of(
+                Map.of("select", Map.of("text", "Send"), "paths", List.of(), "data_share_at_most", 0.5),
+                Map.of("select", Map.of("text", "New-InboxRule"), "paths", List.of(), "data_share_at_most", 0.5)));
+
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(expected), List.of(send, rule), List.of(true, true), null);
+
+        assertThat((List<String>) score.toMap().get("problems")).containsExactly(
+                "the events of {text=New-InboxRule} (TypeIds [Update-InboxRule]) hold 0.67 of their EventDetail "
+                + "values in Data (2 of 3), at most 0.5 expected");
+        assertThatThrownBy(() -> new EvalScore("c").scoreEvents(expecting(Map.of("records", 1,
+                "data_share_at_most", 60)), List.of(send), List.of(true), null))
+                .hasMessageContaining("data_share_at_most 60 is not a number from 0 to 1");
+    }
+
+    @Test
+    void aNameValueListsPairNamesHeldTypedFailNotTyped() {
+        // Chat 187: each {Name, Value} pair of the mail read's OperationProperties typed as an object, its name in
+        // Object/Name and its value in Description; a pair's name belongs in a Data Name.
+        final String objects = event("", "<TypeId>View-MailItems</TypeId><View><Object><Name>MailAccessType</Name>"
+                                         + "<Description>Bind</Description></Object>"
+                                         + data("Operation", "MailItemsAccessed") + "</View>");
+        final String asData = event("", "<TypeId>View-MailItems</TypeId><View><Folder><Path>\\Inbox</Path></Folder>"
+                                        + data("MailAccessType", "Bind") + data("Operation", "MailItemsAccessed")
+                                        + "</View>");
+        final Map<String, Object> expected = expecting(Map.of("records", 1, "typed", List.of(Map.of("select",
+                Map.of("text", "MailItemsAccessed"), "paths", List.of(), "not_typed",
+                List.of("MailAccessType", "IsThrottled")))));
+
+        final EvalScore typed = new EvalScore("c");
+        typed.scoreEvents(expected, List.of(objects), List.of(true), null);
+        final EvalScore data = new EvalScore("c");
+        data.scoreEvents(expected, List.of(asData), List.of(true), null);
+
+        assertThat(typed.stage1()).isFalse();
+        assertThat((List<String>) typed.toMap().get("problems")).containsExactly(
+                "the events of {text=MailItemsAccessed} (TypeIds [View-MailItems]) hold 'MailAccessType' typed, at "
+                + "[View/Object/Name] (expected as a Data Name)");
+        assertThat((List<String>) data.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) data.toMap().get("typed_checks")).containsExactly(
+                Map.of("check", "not typed {text=MailItemsAccessed} 'MailAccessType'", "passed", true),
+                Map.of("check", "not typed {text=MailItemsAccessed} 'IsThrottled'", "passed", true));
+    }
+
+    @Test
+    void typedAtLeastCountsTheDistinctTypedLeafPathsTheSelectedEventsHoldBetweenThem() {
+        // Two moves: the first types the source folder's Id and Path and the destination's Path, the second the
+        // destination's Id; Data (named as a typed element too), the TypeId and the Description don't count.
+        final String first = event("", "<TypeId>Move-MailItems</TypeId><Description>Moved</Description><Move><Source>"
+                                       + "<Folder><Id>F1</Id><Path>\\Inbox</Path></Folder></Source><Destination>"
+                                       + "<Folder><Path>\\Deleted Items</Path>" + data("Id", "F2") + "</Folder>"
+                                       + "</Destination>" + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final String second = event("", "<TypeId>Move-MailItems</TypeId><Move><Source><Folder><Id>F1</Id></Folder>"
+                                        + "</Source><Destination><Folder><Id>F2</Id></Folder></Destination>"
+                                        + data("Operation", "MoveToDeletedItems") + "</Move>");
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate</Id></User></Source>"
+                                      + "<Destination><User><Id>anja</Id></User></Destination>"
+                                      + data("Operation", "Send") + "</Send>");
+
+        final EvalScore enough = new EvalScore("c");
+        enough.scoreEvents(expecting(Map.of("records", 3, "typed", List.of(Map.of("select",
+                Map.of("text", "MoveToDeletedItems"), "paths", List.of(), "typed_at_least", 4)))),
+                List.of(first, second, send), List.of(true, true, true), null);
+
+        assertThat((List<String>) enough.toMap().get("problems")).isEmpty();
+        assertThat((List<Map<String, Object>>) enough.toMap().get("typed_checks")).containsExactly(Map.of(
+                "check", "typed paths {text=MoveToDeletedItems} at least 4", "passed", true));
+        // Reported by TypeId, as the shares are.
+        assertThat(enough.toMap().get("typed_paths")).isEqualTo(Map.of("Move-MailItems", 4, "Send-Mail", 2));
+
+        final EvalScore tooFew = new EvalScore("c");
+        tooFew.scoreEvents(expecting(Map.of("records", 3, "typed", List.of(Map.of("select",
+                Map.of("text", "MoveToDeletedItems"), "paths", List.of(), "typed_at_least", 5)))),
+                List.of(first, second, send), List.of(true, true, true), null);
+
+        assertThat(tooFew.stage1()).isFalse();
+        assertThat((List<String>) tooFew.toMap().get("problems")).containsExactly(
+                "the events of {text=MoveToDeletedItems} (TypeIds [Move-MailItems]) hold 4 distinct typed EventDetail "
+                + "leaf paths (Data doesn't count) [Move/Destination/Folder/Id, Move/Destination/Folder/Path, "
+                + "Move/Source/Folder/Id, Move/Source/Folder/Path], at least 5 expected");
+    }
+
+    @Test
+    void typedAtLeastMustBeAWholeNumberOfAtLeastOne() {
+        final String send = event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate</Id></User>"
+                                      + "</Source>" + data("Operation", "Send") + "</Send>");
+        for (final Object given : List.of(0, 2.5, "3")) {
+            assertThatThrownBy(() -> new EvalScore("c").scoreEvents(expecting(Map.of("records", 1, "typed",
+                    List.of(Map.of("select", Map.of("text", "Send"), "paths", List.of(), "typed_at_least", given)))),
+                    List.of(send), List.of(true), null))
+                    .hasMessageContaining("typed_at_least " + given + " is not a whole number of at least 1");
+        }
+    }
+
+    @Test
+    void case56FailsAChat182StyleTranslationAndPassesOneTypedAsItsReferenceIs() {
+        // Test chat 182 (2026-11-21): the Messaging group's events with almost nothing typed, the actor as View/User,
+        // the Operation as Data of Update/After/Object, everything else Data; which case 56 passed before it scored
+        // typed paths.
+        final Map<String, Object> case56 = (Map<String, Object>) EvalCases.load("56_jsonl_azure_audit_aggregated")
+                .get("expected");
+        final Map<String, Object> expected = new HashMap<>();
+        expected.put("records", 6);
+        expected.put("typed", case56.get("typed"));
+
+        final EvalScore chat182 = new EvalScore("56");
+        chat182.scoreEvents(expecting(expected), chat182Events(), List.of(true, true, true, true, true, true), null);
+
+        assertThat(chat182.stage1()).isFalse();
+        // The share is reported, no longer capped (2026-11-22): how many elements are typed is.
+        assertThat((Map<String, Object>) chat182.toMap().get("data_share"))
+                .hasEntrySatisfying("share", share -> assertThat((Double) share).isGreaterThan(0.8));
+        assertThat((List<Map<String, Object>>) chat182.toMap().get("typed_checks"))
+                .filteredOn(check -> Boolean.FALSE.equals(check.get("passed")))
+                .extracting(check -> String.valueOf(check.get("check")))
+                .noneMatch(check -> check.startsWith("data share"))
+                .contains("typed paths {text=MailItemsAccessed} at least 4", "typed paths {text=Send} at least 5",
+                        "typed paths {text=TeamMemberAdded} at least 4")
+                .anyMatch(check -> check.startsWith("typed {text=MailItemsAccessed} View/Folder/Path"))
+                .anyMatch(check -> check.startsWith("typed {text=Send} Send/Payload/Email/Subject"))
+                .anyMatch(check -> check.startsWith("typed {text=New-InboxRule} Create/Configuration/Name"))
+                .anyMatch(check -> check.startsWith("typed {text=MoveToDeletedItems} Move/Source/Folder/Path"))
+                .anyMatch(check -> check.startsWith("typed {text=TeamMemberAdded} Authorise/AddGroups/Group/Name"))
+                .anyMatch(check -> check.startsWith("typed {text=TeamMemberAdded} Authorise/User/Id"));
+
+        final EvalScore reference = new EvalScore("56");
+        reference.scoreEvents(expecting(expected), referenceEvents(), List.of(true, true, true, true, true, true),
+                null);
+
+        assertThat((List<String>) reference.toMap().get("problems")).isEmpty();
+        assertThat(reference.stage1()).isTrue();
+        assertThat((Map<String, Object>) reference.toMap().get("data_share"))
+                .hasEntrySatisfying("share", share -> assertThat((Double) share).isLessThan(0.4));
+
+        // Haiku eval run 1 (2026-11-22): only what the schema requires placed, every other field kept as Data;
+        // each event type types too few elements.
+        final EvalScore run1 = new EvalScore("56");
+        run1.scoreEvents(expecting(expected), run1Events(), List.of(true, true, true, true, true, true), null);
+
+        assertThat((List<Map<String, Object>>) run1.toMap().get("typed_checks"))
+                .filteredOn(check -> String.valueOf(check.get("check")).startsWith("typed paths"))
+                .hasSize(6)
+                .allSatisfy(check -> assertThat(check).containsEntry("passed", false));
+    }
+
+    // Case 56's records translated as Haiku's build in eval run 1 translated them (its rules' typed entries).
+    @Test
+    void aSkillProposalWithItsParametersStepsAndNoProblemsPasses() {
+        final Map<String, Object> evalCase = skillCase(Map.of("tools_used", List.of("propose_skill"),
+                "proposal", Map.of("folder", "/Hunts", "skill", "Failed logons by host",
+                        "parameters", List.of(List.of("account", "user"), "days"),
+                        "not_parameters", List.of("index"), "defaults", Map.of("days|period", 7),
+                        "steps_call", List.of("run_stroomql"), "steps_contain", List.of("from logons"),
+                        "check_problems", 0)));
+        final EvalScore score = new EvalScore("88");
+
+        score.scoreSkill(evalCase, run(List.of(call("propose_skill", Map.of("folder", "/Hunts"), false)),
+                proposal("System/Hunts", "", skillDoc(SKILL), "Draft skill 'Failed logons by host': No problems "
+                                                              + "or suggestions.")));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+    }
+
+    @Test
+    void anAgentsDocProposalIsScoredByWhatTheToolsReadOfIt() {
+        final Map<String, Object> evalCase = Map.of("kind", "instructions", "expected", Map.of(
+                "tools_used", List.of("propose_instructions"),
+                "instructions", Map.of("folder", "/Endpoint", "fields", Map.of("user", "user.name", "host",
+                                List.of("host.name", "Host")), "keeps", List.of("Times are UTC."), "check_problems", 0,
+                        "check_without", List.of("plan_disagrees"))));
+        final String before = "Times are UTC.\n\n## Fields\n- user: actor.login\n";
+        final EvalScore good = new EvalScore("101");
+        final EvalScore bad = new EvalScore("101");
+
+        good.scoreSkill(evalCase, run(List.of(call("propose_instructions", Map.of("folder", "/Endpoint"), false)),
+                proposal("System/Endpoint", before, "Times are UTC.\n\n## Fields\n- user: user.name, actor.login\n"
+                                                    + "- host: host.name, Host\n", "Draft AGENTS doc for "
+                                                                                     + "/Endpoint:\nNo problems or "
+                                                                                     + "suggestions.")));
+        // A prose line the tools pass over, the other rule dropped, and the check's findings.
+        bad.scoreSkill(evalCase, run(List.of(), proposal("System/Endpoint", before, "## Notes\nThe user is "
+                                                                                    + "user.name.\n",
+                "- Problem (misplaced_fields): x\n- Suggestion (plan_disagrees): y")));
+
+        assertThat(good.passed()).as(good.summary()).isTrue();
+        assertThat(bad.passed()).isFalse();
+        assertThat(bad.summary()).contains("its '## Fields' gives user as [], expected [user.name]",
+                "the doc no longer holds 'Times are UTC.'", "check_instructions found 1 problem(s)",
+                "check_instructions found plan_disagrees");
+    }
+
+    @Test
+    void aSkillProposalMissesWhatTheCaseExpectsOfIt() {
+        final Map<String, Object> evalCase = skillCase(Map.of("proposal", Map.of("folder", "/Leavers",
+                "skill", "Failed logons by host", "parameters", List.of("host"), "not_parameters", List.of("days"),
+                "defaults", Map.of("days", 14), "steps_call", List.of("activity_timeline"), "check_problems", 0)));
+        final EvalScore score = new EvalScore("88");
+
+        score.scoreSkill(evalCase, run(List.of(), proposal("System/Hunts", "", skillDoc(SKILL),
+                "- Problem (missing_data_source): Step 1's example call's query is from 'Logons'")));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the proposal is for folder System/Hunts, expected /Leavers",
+                "no parameter [host]", "'days' is a parameter", "the default of days is 7, expected 14",
+                "no step's example call calls activity_timeline", "check_skill found 1 problem(s)");
+    }
+
+    @Test
+    void nothingProposedFailsAProposalCaseAndPassesANoProposalCase() {
+        final EvalScore wanted = new EvalScore("88");
+        final EvalScore unwanted = new EvalScore("95");
+
+        wanted.scoreSkill(skillCase(Map.of("proposal", Map.of("skill", "Failed logons by host"))), run(List.of()));
+        unwanted.scoreSkill(skillCase(Map.of("no_proposal", true, "tools_not_used", List.of("propose_skill"))),
+                run(List.of(call("activity_timeline", Map.of(), false))));
+
+        assertThat(wanted.summary()).contains("nothing was proposed");
+        assertThat(unwanted.passed()).as(unwanted.summary()).isTrue();
+    }
+
+    @Test
+    void aModificationMayChangeOnlyTheSectionsItWasAskedTo() {
+        final String fourteen = SKILL.replace("days (default 7)", "days (default 14)");
+        final Map<String, Object> evalCase = skillCase(Map.of("proposal", Map.of("skill", "Failed logons by host",
+                "changed_sections", List.of("parameters"), "defaults", Map.of("days", 14))));
+        final EvalScore only = new EvalScore("93");
+        final EvalScore more = new EvalScore("93");
+        final EvalScore none = new EvalScore("93");
+
+        only.scoreSkill(evalCase, run(List.of(), proposal("Hunts", skillDoc(SKILL, OTHER), skillDoc(fourteen,
+                OTHER), "")));
+        more.scoreSkill(evalCase, run(List.of(), proposal("Hunts", skillDoc(SKILL, OTHER), skillDoc(fourteen
+                .replace("by host.", "by host, for audits."), OTHER.replace("hours", "times")), "")));
+        none.scoreSkill(skillCase(Map.of("proposal", Map.of("skill", "Failed logons by host",
+                "changed_sections", List.of("parameters")))), run(List.of(), proposal("Hunts", skillDoc(SKILL),
+                skillDoc(SKILL), "")));
+
+        assertThat(only.passed()).as(only.summary()).isTrue();
+        assertThat(more.summary()).contains("its description was changed, which wasn't asked",
+                "the skill 'Logon times of day' was changed or removed");
+        assertThat(none.summary()).contains("its parameters wasn't changed");
+    }
+
+    @Test
+    void aSkillReadByNameWithItsArgumentsCountsOnlyAcceptedCalls() {
+        final Map<String, Object> evalCase = skillCase(Map.of("tools_used", List.of("find_skills"),
+                "find_skills", Map.of("name", "Failed logons by host", "arguments", Map.of("user", "bob")),
+                "not_chosen", List.of("Logon times of day"),
+                "calls_with", List.of(Map.of("tool", "run_stroomql", "contains", List.of("bob", "Logons")))));
+        final EvalScore refused = new EvalScore("89");
+        final EvalScore read = new EvalScore("89");
+        final EvalScore distracted = new EvalScore("89");
+
+        refused.scoreSkill(evalCase, run(List.of(call("find_skills", Map.of("name", "failed-logons-by-host",
+                "arguments", Map.of("user", "bob")), true))));
+        read.scoreSkill(evalCase, run(List.of(call("find_skills", Map.of("name", "failed-logons-by-host",
+                        "arguments", Map.of("user", "Bob")), false),
+                call("run_stroomql", Map.of("query", "from Logons where UserId = 'bob'"), false))));
+        distracted.scoreSkill(evalCase, run(List.of(call("find_skills", Map.of("name", "Logon times of day"),
+                false), call("run_stroomql", Map.of("query", "from Logons where UserId = 'alice'"), false))));
+
+        assertThat(refused.summary()).contains("find_skills was not used",
+                "no find_skills call read 'Failed logons by host' by name");
+        assertThat(read.passed()).as(read.summary()).isTrue();
+        assertThat(distracted.summary()).contains("find_skills read 'Logon times of day'",
+                "no accepted run_stroomql call's arguments hold all of [bob, Logons]");
+    }
+
+    @Test
+    void aCallWithItsArgumentsMayAlsoNeedWhatItsResultSays() {
+        final Map<String, Object> evalCase = skillCase(Map.of("calls_with", List.of(Map.of("tool",
+                "activity_timeline", "contains", List.of("mlee"), "result_contains",
+                List.of("Learned for the skill")))));
+        final EvalScore learned = new EvalScore("94");
+        final EvalScore nothing = new EvalScore("94");
+
+        learned.scoreSkill(evalCase, run(List.of(new EvalScore.SkillCall("activity_timeline", Map.of("entity",
+                "mlee"), false, "Spans...\nLearned for the skill:\n- VPN: pair Up -> Down by Id"))));
+        nothing.scoreSkill(evalCase, run(List.of(new EvalScore.SkillCall("activity_timeline", Map.of("entity",
+                "mlee"), false, "Spans: 0 pair span(s)"))));
+
+        assertThat(learned.passed()).as(learned.summary()).isTrue();
+        assertThat(nothing.summary()).contains("with a result holding [Learned for the skill]");
+    }
+
+    @Test
+    void aSkillCaseChecksWhatTheAgentToldTheUserAndThatTheChatRan() {
+        final Map<String, Object> evalCase = skillCase(Map.of("answer_must_say_all_of", List.of("Logons-V2"),
+                "answer_must_say_one_of", List.of("missing", "renamed"), "answer_must_not_say", List.of("ws-01")));
+        final EvalScore told = new EvalScore("90");
+        final EvalScore ran = new EvalScore("90");
+
+        told.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(), "The index Logons is missing: use Logons-V2.",
+                List.of(), List.of()));
+        ran.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(), "3 on ws-01.", List.of(), List.of("timed out")));
+
+        assertThat(told.passed()).as(told.summary()).isTrue();
+        assertThat(ran.summary()).contains("the chat's run failed: timed out", "the reply says none of [Logons-V2]",
+                "the reply says 'ws-01'");
+    }
+
+    @Test
+    void case90PassesAStopWithTheFixOfferedAndFailsARunAgainstTheRenamedIndex() {
+        final Map<String, Object> evalCase = EvalCases.load("90_skill_broken_reported_before_running");
+        final String stopped = "Skill 'Failed logons by host' (folder /Hunts, doc d).\n\nStop: don't run this "
+                               + "skill, nor its steps against anything in place of what is broken.\n- Problem "
+                               + "(missing_data_source): Step 1's example call's query is from 'Logons'. Fix: "
+                               + "Likely replacement: 'Logons-V2'.\n\nThe user can edit its skills doc, so offer "
+                               + "them the fix: the skill itself corrected, as propose_skill {...}";
+        final Map<String, Object> arguments = Map.of("name", "failed-logons-by-host", "arguments",
+                Map.of("user", "jsmith"));
+        final EvalScore offered = new EvalScore("90");
+        final EvalScore substituted = new EvalScore("90");
+
+        offered.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(new EvalScore.SkillCall("find_skills",
+                arguments, false, stopped)), "It can't run: the index Logons doesn't exist; Logons-V2 looks like "
+                                             + "it. I can propose the fix to the skill when you want.", List.of(),
+                List.of()));
+        substituted.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(new EvalScore.SkillCall("find_skills",
+                arguments, false, stopped), new EvalScore.SkillCall("run_stroomql", Map.of("query",
+                "from Logons-V2 where UserId = 'jsmith'"), false, "3 on ws-02")), "Logons is missing, so I ran it "
+                                                                                  + "on Logons-V2: 3 on ws-02.",
+                List.of(), List.of()));
+
+        assertThat(offered.passed()).as(offered.summary()).isTrue();
+        assertThat(substituted.summary()).contains("run_stroomql was used",
+                "the reply says none of [fix, correct, propose");
+    }
+
+    @Test
+    void case91ScoresTheOutcomeNotTheTemplatesUse() {
+        final Map<String, Object> evalCase = EvalCases.load("91_skill_timeline_from_template");
+        final String skill = """
+                # User activity timeline
+
+                Builds a timeline of one user's activity over a period from the User activity index.
+
+                ## Parameters
+                - user (required): the user's account name.
+                - days (default 7): how many days back.
+
+                ## Steps
+                1. Build it:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "timeFrom": "now()-{days}d", \
+                "sources": [{"index": "User activity"}]}}
+                   ```
+                """;
+        final List<EvalScore.SkillCall> calls = List.of(new EvalScore.SkillCall("activity_timeline", Map.of(
+                "entity", "jsmith", "sources", List.of(Map.of("index", "User activity"))), false, "Spans: 12"),
+                new EvalScore.SkillCall("propose_skill", Map.of("folder", "/Investigations", "markdown", skill),
+                        false, "Proposed."));
+        final EvalScore drafted = new EvalScore("91");
+        final EvalScore problems = new EvalScore("91");
+
+        drafted.scoreSkill(evalCase, new EvalScore.SkillRun(calls, "Proposed.", List.of(proposal("Investigations",
+                "", skillDoc(skill), "Draft skill 'User activity timeline':\n- Suggestion (thin_when_to_use): ...")),
+                List.of()));
+        problems.scoreSkill(evalCase, new EvalScore.SkillRun(calls, "Proposed.", List.of(proposal(
+                "Investigations", "", skillDoc(skill), "- Problem (missing_data_source): ...")), List.of()));
+
+        // Drafted from the chat with no template and no trial: as good a route.
+        assertThat(drafted.passed()).as(drafted.summary()).isTrue();
+        assertThat(problems.summary()).contains("check_skill found 1 problem(s), expected 0");
+    }
+
+    @Test
+    void aHandWrittenCasesRouteCopyAndOriginalAreScored() {
+        final Map<String, Object> evalCase = Map.of("expected", Map.of(
+                "route", Map.of("calls_in_order", List.of("survey_feed", "copy_pipeline", "promote_build"),
+                        "forbidden_calls", List.of("draft_translation_mapping")),
+                "catalogue", Map.of("origin", "4 event types from 'EVAL-97-Events'"),
+                "promoted", Map.of("pipeline", "EVAL-97-Events-V1.1", "original_unchanged", true)));
+        final EvalScore followed = new EvalScore("97");
+        final EvalScore drafted = new EvalScore("97");
+
+        followed.scoreHandWritten(evalCase, List.of("start_build", "survey_feed", "copy_pipeline",
+                "build_translation_xslt", "promote_build"), "4 event types from 'EVAL-97-Events' (read back)",
+                "EVAL-97-Events-V1.1", true);
+        followed.sameAsSetup(List.of("EventSource/Client/IPAddress"), List.of());
+        drafted.scoreHandWritten(evalCase, List.of("survey_feed", "draft_translation_mapping", "promote_build"),
+                null, null, false);
+        drafted.sameAsSetup(List.of("EventSource/Client/IPAddress"), List.of(3));
+
+        assertThat(followed.summary()).doesNotContain("\n  - ");
+        assertThat(drafted.summary()).contains("from copy_pipeline on was missing", "draft_translation_mapping was "
+                                                                                   + "called",
+                "the catalogue's origin is null", "the copy is named null", "the original's XSLT was changed",
+                "the Events of record(s) [3] differ");
+    }
+
+    @Test
+    void aTranslationDescribedInPlaceIsScoredByWhatItLeftInStroom() {
+        final Map<String, Object> expected = Map.of("code_unchanged", true, "mapping_kept", true,
+                "description_kept", "Owned by the network team", "pre_process_untouched", true, "notes_beside", true,
+                "confirmed", true, "checked_feeds", List.of("A", "B"), "timeline_roles",
+                Map.of("vpn-login", "active", "vpn-session-switch", "focus"));
+        final Map<String, Object> beside = Map.of("checked_feeds", List.of("B", "A"), "event_types", List.of(
+                Map.of("type_id", "vpn-login", "status", "confirmed", "timeline_role", "active"),
+                Map.of("type_id", "vpn-session-switch", "status", "confirmed", "timeline_role", "focus")));
+        final EvalScore described = new EvalScore("106");
+        final EvalScore copied = new EvalScore("106");
+
+        described.scoreInPlace(expected, new EvalScore.InPlace(true, true, "Owned by the network team. <!-- x -->",
+                true, true, beside));
+        copied.scoreInPlace(expected, new EvalScore.InPlace(false, false, "Replaced", false, false, null));
+
+        assertThat(described.summary()).doesNotContain("\n  - ");
+        assertThat(copied.summary()).contains("the XSLT's code was changed", "keeps no mapping",
+                "doesn't start with the user's text", "the pre-processor keeps a mapping",
+                "links no source notes beside its pipeline", "not every event type beside the pipeline is confirmed",
+                "checked against [], expected [A, B]", "vpn-session-switch's timeline role is null, expected focus");
+    }
+
+    @Test
+    void anEventTypeBesideThePipelineWithNoTimelineRoleIsAProblemNotAScoringFailure() {
+        // Seen in eval case 109 on Sonnet: the type's role was left unset, and the score failed with "null" (a
+        // stream's findFirst of a null role) instead of naming the role missing.
+        final Map<String, Object> expected = Map.of("timeline_roles", Map.of("vpn-session-switch", "focus"));
+        final Map<String, Object> unset = new HashMap<>();
+        unset.put("type_id", "vpn-session-switch");
+        unset.put("status", "confirmed");
+        unset.put("timeline_role", null);
+        final EvalScore score = new EvalScore("109");
+
+        score.scoreInPlace(expected, new EvalScore.InPlace(true, true, "", true, true, Map.of("event_types",
+                List.of(unset))));
+
+        assertThat(score.summary()).contains("vpn-session-switch's timeline role is null, expected focus");
+    }
+
+    // A skill case expecting so.
+    private static Map<String, Object> skillCase(final Map<String, Object> expected) {
+        return Map.of("kind", "skill", "expected", expected);
+    }
+
+    private static EvalScore.SkillRun run(final List<EvalScore.SkillCall> calls,
+                                          final EvalScore.SkillProposal... proposals) {
+        return new EvalScore.SkillRun(calls, "Done.", List.of(proposals), List.of());
+    }
+
+    private static EvalScore.SkillCall call(final String tool, final Map<String, Object> arguments,
+                                            final boolean error) {
+        return new EvalScore.SkillCall(tool, arguments, error, error
+                ? "Not run: call it again"
+                : "ok");
+    }
+
+    private static EvalScore.SkillProposal proposal(final String folder,
+                                                    final String before,
+                                                    final String after,
+                                                    final String checked) {
+        return new EvalScore.SkillProposal("apply_documentation_change", folder, before, after, checked);
+    }
+
+    // A skills doc holding the skills, with a history entry each.
+    private static String skillDoc(final String... skills) {
+        String text = "";
+        int version = 1;
+        for (final String skill : skills) {
+            text = SkillDoc.parse(text).withSkill(skill, new SkillDoc.HistoryEntry(version, "2026-11-25", "admin",
+                    SkillDoc.HOW_AGENT, SkillDoc.parse(skill).skills().getFirst().name(), "v" + version, null));
+            version++;
+        }
+        return text;
+    }
+
+    private static List<String> run1Events() {
+        return List.of(
+                event("", "<TypeId>View-MailItems</TypeId><View><Object><Id>5a6f815d</Id></Object>"
+                          + data("Operation", "MailItemsAccessed") + data("FolderPath", "\\Drafts") + "</View>"),
+                event("", "<TypeId>Send-Email</TypeId><Send><Source><User><Id>kate.jones@contoso.example</Id>"
+                          + "</User></Source><Destination><User><Id>anja.michel@contoso.example</Id></User>"
+                          + "</Destination>" + data("Operation", "Send") + data("Subject", "Re: roster") + "</Send>"),
+                event("", "<TypeId>Create-InboxRule</TypeId><Create><Object><Id>357dcfb8</Id></Object>"
+                          + data("Operation", "New-InboxRule") + "</Create>"),
+                event("", "<TypeId>Move-ToDeletedItems</TypeId><Move><Source><Folder><Id>AAMkF0B8</Id></Folder>"
+                          + "</Source><Destination><Folder><Id>AAMkEEEF</Id></Folder></Destination>"
+                          + data("Operation", "MoveToDeletedItems") + data("FolderPath", "\\Inbox") + "</Move>"),
+                event("", "<TypeId>Send-TeamsMessage</TypeId><Send><Source><User><Id>anja.michel@contoso.example</Id>"
+                          + "</User></Source><Destination><User><Id>kate.jones@contoso.example</Id></User>"
+                          + "</Destination>" + data("Operation", "MessageSent") + "</Send>"),
+                event("", "<TypeId>Authorise-TeamMemberAdded</TypeId><Authorise><Action>Modify</Action><Group>"
+                          + "<Id>0b9a8c7d</Id></Group>" + data("Operation", "TeamMemberAdded") + "</Authorise>"));
+    }
+
+    // Case 56's records translated as test chat 182 translated them.
+    private static List<String> chat182Events() {
+        return List.of(
+                event("", "<TypeId>View-MailItems</TypeId><View><User><Id>li.wei@contoso.example</Id>"
+                          + "<EmailAddress>li.wei@contoso.example</EmailAddress></User>"
+                          + data("Operation", "MailItemsAccessed") + data("MailboxOwnerUPN", "li.wei@contoso.example")
+                          + data("ClientInfoString", "Client=REST;Outlook") + data("LogonType", "1")
+                          + data("ExternalAccess", "false") + data("MailboxGuid", "5a6f815d")
+                          + data("MailAccessType", "Sync") + data("IsThrottled", "False")
+                          + data("FolderId", "AAMk32B9") + data("FolderPath", "\\Drafts")
+                          + data("InternetMessageId", "<37fd1f4c@contoso.example>") + data("SizeInBytes", "315880")
+                          + data("InternetMessageId", "<0fa6dea5@contoso.example>") + data("SizeInBytes", "55909")
+                          + data("OperationCount", "3") + data("RecordType", "25") + data("UserType", "0")
+                          + "</View>"),
+                event("", "<TypeId>Send-Mail</TypeId><Send><Source><User><Id>kate.jones@contoso.example</Id></User>"
+                          + "</Source><Destination><User><Id>anja.michel@contoso.example</Id></User><User>"
+                          + "<Id>accounts@fabrikam.example</Id></User></Destination><Payload><Email>"
+                          + data("Subject", "Re: roster") + data("SizeInBytes", "483614")
+                          + data("Id", "AAMk9328") + data("InternetMessageId", "<f8ce0925@contoso.example>")
+                          + data("ParentFolderId", "AAMk90A1") + data("ParentFolderPath", "\\Sent Items")
+                          + data("BodyContentType", "HTML") + "</Email></Payload>"
+                          + data("Operation", "Send") + data("MailboxOwnerUPN", "kate.jones@contoso.example")
+                          + data("ClientInfoString", "Client=OWA") + data("LogonType", "1")
+                          + data("ExternalAccess", "false") + data("MailboxGuid", "3ddbd4ed")
+                          + data("RecordType", "50") + data("UserType", "0") + "</Send>"),
+                event("", "<TypeId>Update-InboxRule</TypeId><Update><After><Object>"
+                          + data("Operation", "New-InboxRule") + data("MailboxOwnerUPN", "sam.taylor@contoso.example")
+                          + data("Name", "FW to personal") + data("SubjectContainsWords", "invoice;payment")
+                          + data("MoveToFolder", "Conversation History") + data("StopProcessingRules", "True")
+                          + data("ClientInfoString", "Client=REST;Outlook") + data("MailboxGuid", "357dcfb8")
+                          + "</Object></After></Update>"),
+                event("", "<TypeId>Move-MailToDeletedItems</TypeId><Update><After><Object>"
+                          + data("Operation", "MoveToDeletedItems") + data("FolderPath", "\\Inbox")
+                          + data("DestFolderPath", "\\Deleted Items") + data("FolderId", "AAMkF0B8")
+                          + data("DestFolderId", "AAMkEEEF") + data("Subject", "FW: Change freeze & CAB notes")
+                          + data("InternetMessageId", "<0ca2b8f1@contoso.example>")
+                          + "</Object></After></Update>"),
+                event("", "<TypeId>Send-TeamsMessage</TypeId><Send><Source><User>"
+                          + "<Id>anja.michel@contoso.example</Id></User></Source>"
+                          + data("Operation", "MessageSent") + data("Recipients", "kate.jones@contoso.example")
+                          + data("TeamName", "Ops") + data("ChannelName", "General") + data("MessageId", "6100214")
+                          + data("ChatThreadId", "19:b66f@thread.tacv2") + data("CommunicationType", "Team")
+                          + "</Send>"),
+                event("", "<TypeId>Update-TeamMemberAdded</TypeId><Update><After><Object>"
+                          + data("Operation", "TeamMemberAdded") + data("TeamName", "Finance")
+                          + data("TeamGuid", "0b9a8c7d") + data("ChannelName", "General")
+                          + data("MemberUPN", "li.wei@contoso.example") + data("MemberDisplayName", "Li Wei")
+                          + data("MemberRole", "2") + data("MemberUPN", "svc-batch@contoso.example")
+                          + "</Object></After></Update>"));
+    }
+
+    // Case 56's records translated as its reference mapping translates them.
+    private static List<String> referenceEvents() {
+        return List.of(
+                event("", "<TypeId>View-MailItems</TypeId><Description>Mail items were accessed</Description><View>"
+                          + "<Folder><Id>AAMk32B9</Id><Path>\\Drafts</Path><Type>Mail folder</Type></Folder>"
+                          + "<Email><Id>&lt;37fd1f4c@contoso.example&gt;</Id></Email><User>"
+                          + "<EmailAddress>li.wei@contoso.example</EmailAddress></User>"
+                          + data("Operation", "MailItemsAccessed") + data("MailAccessType", "Sync") + "</View>"),
+                event("", "<TypeId>Send-Mail</TypeId><Description>A message was sent</Description><Send><Source>"
+                          + "<User><EmailAddress>kate.jones@contoso.example</EmailAddress></User><Device>"
+                          + "<IPAddress>203.0.113.57</IPAddress></Device></Source>"
+                          + "<Destination><User><EmailAddress>anja.michel@contoso.example</EmailAddress></User><User>"
+                          + "<EmailAddress>accounts@fabrikam.example</EmailAddress></User></Destination><Payload>"
+                          + "<Email><Type>Email</Type><Id>&lt;f8ce0925@contoso.example&gt;</Id><From>"
+                          + "<EmailAddress>kate.jones@contoso.example</EmailAddress></From>"
+                          + "<Subject>Re: roster</Subject>"
+                          + data("SizeInBytes", "483614") + "</Email></Payload>" + data("Operation", "Send")
+                          + "</Send>"),
+                event("", "<TypeId>Create-InboxRule</TypeId><Description>An inbox rule was created</Description>"
+                          + "<Create><Configuration><Type>Inbox rule</Type><Name>FW to personal</Name>"
+                          + data("SubjectContainsWords", "invoice;payment") + "</Configuration>"
+                          + data("Operation", "New-InboxRule") + "</Create>"),
+                event("", "<TypeId>Move-MailItems</TypeId><Description>Messages were moved to Deleted Items"
+                          + "</Description><Move><Source><Folder><Id>AAMkF0B8</Id><Path>\\Inbox</Path></Folder>"
+                          + "</Source><Destination><Folder><Id>AAMkEEEF</Id>"
+                          + "<Path>\\Deleted Items</Path></Folder></Destination>"
+                          + data("Operation", "MoveToDeletedItems") + "</Move>"),
+                event("", "<TypeId>Send-TeamsMessage</TypeId><Description>A message was posted in Teams</Description>"
+                          + "<Send><Source><User><EmailAddress>anja.michel@contoso.example</EmailAddress></User>"
+                          + "</Source><Destination><User><EmailAddress>kate.jones@contoso.example</EmailAddress>"
+                          + "</User></Destination><Payload><Chat><Id>6100214</Id><Room>General</Room></Chat></Payload>"
+                          + data("Operation", "MessageSent") + data("team", "Ops") + "</Send>"),
+                event("", "<TypeId>Add-TeamMember</TypeId><Description>A member was added to a team</Description>"
+                          + "<Authorise><User><Id>li.wei@contoso.example</Id><Name>Li Wei</Name></User>"
+                          + "<Action>Modify</Action><AddGroups><Group><Id>0b9a8c7d</Id><Name>Finance</Name></Group>"
+                          + "</AddGroups>" + data("Operation", "TeamMemberAdded") + "<Data Name=\"member\">"
+                          + data("UPN", "li.wei@contoso.example") + "</Data><Data Name=\"member\">"
+                          + data("UPN", "svc-batch@contoso.example") + "</Data></Authorise>"));
+    }
+
+    // A Data element of the name and value (the value's XML escaped).
+    private static String data(final String name, final String value) {
+        return "<Data Name=\"" + name + "\" Value=\"" + value.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;") + "\"/>";
+    }
+
+    // A catalogue as the source notes' JSON block holds it: a logon recognised two ways, a logoff, an unlock from the
+    // documentation with no record in the sample, a dropped heartbeat.
+    private static Map<String, Object> catalogue() {
+        final List<Map<String, Object>> types = new ArrayList<>();
+        types.add(eventType("Authenticate-Logon", "documented", List.of(
+                Map.of("field", "eventType", "equals", "user.session.start"),
+                Map.of("field", "type", "equals", "login")), "user_confirmed", false));
+        types.add(eventType("Authenticate-Logoff", "documented", List.of(
+                Map.of("field", "type", "one_of", List.of("logout", "timeout"))), "user_confirmed", false));
+        types.add(eventType("Unlock-Account", "documented", List.of(
+                Map.of("field", "type", "equals", "unlock")), "documentation", false));
+        types.add(eventType("Process-Heartbeat", "documented", List.of(
+                Map.of("field", "type", "equals", "heartbeat")), "user_confirmed", true));
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("event_types", types);
+        notes.put("catch_all", Map.of("status", "confirmed"));
+        notes.put("scope", Map.of("source_type_field", "event>log_type", "source_types", List.of("Integration")));
+        return notes;
+    }
+
+    // An event type recognised one way for each condition given.
+    private static Map<String, Object> eventType(final String typeId,
+                                                 final String description,
+                                                 final List<Map<String, Object>> ways,
+                                                 final String basis,
+                                                 final boolean drop) {
+        final List<Map<String, Object>> recognisedBy = new ArrayList<>();
+        ways.forEach(condition -> recognisedBy.add(Map.of("when", List.of(condition), "names", List.of())));
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", typeId);
+        type.put("description", description);
+        type.put("recognised_by", recognisedBy);
+        type.put("drop", drop);
+        type.put("basis", basis);
+        type.put("status", "confirmed");
+        return type;
+    }
+
+    // The catalogue's check: every type's records counted (none for the documented unlock), and the overlaps given.
+    private static Map<String, Object> check(final List<Map<String, Object>> overlaps) {
+        return Map.of("counts", Map.of("Authenticate-Logon", Map.of("records", 2, "by_way", List.of(1, 1)),
+                        "Authenticate-Logoff", Map.of("records", 1, "by_way", List.of(1)),
+                        "Process-Heartbeat", Map.of("records", 3, "by_way", List.of(3))),
+                "overlaps", overlaps, "uncatalogued", Map.of("records", 0, "shapes", List.of()));
+    }
+
+    // An event of a TypeId, its Data under Authenticate.
+    private static String typed(final String typeId, final String data) {
+        return event("", "<TypeId>" + typeId + "</TypeId><Description>d</Description><Authenticate>"
+                         + "<Action>Logon</Action>" + data
+                         + "</Authenticate>");
+    }
+
+    // A record no event type recognised, translated as Unknown.
+    private static String unknown(final String typeId) {
+        return event("", "<TypeId>Unknown-" + typeId.toUpperCase(Locale.ROOT).charAt(0)
+                         + typeId.substring(1) + "</TypeId><Unknown><Data Name=\"x\" Value=\"y\"/></Unknown>");
+    }
+
+    // A later build's registry: the web server group's row naming its pipeline, the mail row the Messaging group's.
+    private static Map<String, Object> laterRegistry(final String pipeline) {
+        return Map.of("field", "LogFilePath",
+                "rows", List.of(
+                        Map.of("name", "Web server", "match", "pattern", "value", "^/var/log/httpd/",
+                                "status", "translated", "group", "Web", "pipeline", Map.of("uuid", pipeline)),
+                        Map.of("name", "Mail", "match", "pattern", "value", "^/var/log/mail/", "status",
+                                "translated", "group", "Messaging", "pipeline", Map.of("uuid", "p-messaging"))),
+                "scope", Map.of("group", "Web", "source_types", List.of("Web server")));
+    }
+
+    // A registry as SourceTypeRegistry reads it: the collector's paths, its scope the web server group.
+    private static Map<String, Object> registry() {
+        return Map.of("field", "LogFilePath",
+                "rows", List.of(
+                        Map.of("name", "Web server", "match", "pattern", "value", "^/var/log/httpd/",
+                                "status", "translated"),
+                        Map.of("name", "Mail", "match", "pattern", "value", "^/var/log/mail/", "status", "parked"),
+                        Map.of("name", "Gateway", "match", "pattern", "value", "^/opt/gateway/logs/",
+                                "status", "parked")),
+                "scope", Map.of("group", "Web server", "source_types", List.of("Web server")));
+    }
+
+    private static List<String> problems(final List<Map<String, Object>> data, final List<String> records) {
+        final EvalScore score = new EvalScore("c");
+        score.scoreEvents(expecting(Map.of("records", records.size(), "event_types", List.of(), "paths", List.of(),
+                "data", data)), records, records.stream().map(record -> true).toList(), null);
+        return (List<String>) score.toMap().get("problems");
+    }
+
+    private static Map<String, Object> expecting(final Map<String, Object> expected) {
+        return Map.of("expected", expected);
+    }
+
+    private static String event(final String time, final String detail) {
+        return "<Events xmlns=\"event-logging:3\"><Event>" + time + "<EventDetail>" + detail
+               + "</EventDetail></Event></Events>";
+    }
+
+    @Test
+    void anAnswerMayTakeAnyOfItsFormsWithTimesInAnyZone() {
+        final Map<String, Object> evalCase = Map.of("kind", "question", "expected", Map.of(
+                "tools_used", List.of("esql_query"),
+                "answer", Map.of("ordered", true, "rows_any_of", List.of(
+                        List.of(List.of("2026-09-17T10:05:00.000Z", "2026-09-17T11:40:00.000Z", "S1")),
+                        List.of(List.of("2026-09-17T10:05:00.000Z", "S1"), List.of("2026-09-17T11:40:00.000Z",
+                                "S1"))))));
+        final EvalScore asEvents = new EvalScore("q");
+        final EvalScore wrong = new EvalScore("q");
+
+        asEvents.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000+10:00", "S1", "Connect"),
+                List.of("2026-09-17T21:40:00.000+10:00", "S1", "Disconnect"))), "ok")));
+        wrong.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000Z", "S1", "Connect"))), "ok")));
+
+        assertThat(asEvents.passed()).as(asEvents.summary()).isTrue();
+        assertThat(wrong.passed()).as(wrong.summary()).isFalse();
+    }
+
+    @Test
+    void anAnswerAllowingExtraRowsPassesWithRowsBesidesTheExpected() {
+        final Map<String, Object> evalCase = Map.of("kind", "question", "expected", Map.of(
+                "answer", Map.of("ordered", true, "extra_rows", true, "rows", List.of(
+                        List.of("2026-09-17T10:05:00.000Z", "S1"), List.of("2026-09-17T11:40:00.000Z", "S1")))));
+        final EvalScore wider = new EvalScore("q");
+        final EvalScore missing = new EvalScore("q");
+
+        wider.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000+10:00", "S1", "Connect"),
+                List.of("2026-09-17T21:40:00.000+10:00", "S1", "Disconnect"),
+                List.of("2026-09-18T08:26:00.000+10:00", "S2", "Connect"))), "ok")));
+        missing.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000+10:00", "S1", "Connect"),
+                List.of("2026-09-18T08:26:00.000+10:00", "S2", "Connect"))), "ok")));
+
+        assertThat(wider.passed()).as(wider.summary()).isTrue();
+        assertThat(missing.passed()).as(missing.summary()).isFalse();
+    }
+
+    @Test
+    void aQuestionAnsweredWithTheExpectedRowsPasses() {
+        final EvalScore score = new EvalScore("q");
+
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("describe_data_source", false, Map.of(), "fields"),
+                new EvalScore.ToolUse("esql_query", true, Map.of(), "Error: Unknown column [usr]"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of(300, "alice", "box.com"), List.of("bob", 200.0, "github.com")),
+                        "truncated", true, "total_groups", 12), "ok")));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+        assertThat(score.toMap()).containsKey("question_checks");
+        assertThat((List<String>) score.toMap().get("notes")).contains("esql_query: 1 of 2 call(s) refused");
+    }
+
+    @Test
+    void aQuestionsAnswerIsAnAcceptedCallsRowsInOrder() {
+        final EvalScore wrongOrder = new EvalScore("q");
+        wrongOrder.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
+                List.of(List.of("bob", "github.com", 200), List.of("alice", "box.com", 300)), "total_groups", 12),
+                "ok")));
+        assertThat(wrongOrder.passed()).isFalse();
+        assertThat(wrongOrder.summary()).contains("row 1 was [bob, github.com, 200]");
+
+        // In any order when the case says so.
+        final EvalScore anyOrder = new EvalScore("q");
+        anyOrder.scoreQuestion(question(false), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
+                List.of(List.of("bob", "github.com", 200), List.of("alice", "box.com", 300)), "total_groups", 12),
+                "ok")));
+        assertThat(anyOrder.passed()).as(anyOrder.summary()).isTrue();
+    }
+
+    @Test
+    void aQuestionFailsWithoutTheToolOrWhenEveryCallIsRefused() {
+        final EvalScore other = new EvalScore("q");
+        other.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("run_stroomql", false, Map.of(), "ok")));
+        assertThat(other.passed()).isFalse();
+        assertThat(other.summary()).contains("esql_query was not used");
+
+        final EvalScore refused = new EvalScore("q");
+        refused.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", true, Map.of(),
+                "Error: FROM isn't allowed")));
+        assertThat(refused.summary())
+                .contains("every esql_query call was refused, the last: Error: FROM isn't allowed");
+
+        final EvalScore total = new EvalScore("q");
+        total.scoreQuestion(question(true), List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows",
+                List.of(List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)), "truncated", true),
+                "ok")));
+        assertThat(total.summary()).contains("the total groups were null, expected 12");
+    }
+
+    @Test
+    void anEarlierAcceptedCallThatMatchesIsTheAnswerWhateverCameAfter() {
+        // As case 62 on Haiku: the answer from the second call, then a count of the pairs, which gives no
+        // total_groups and one row.
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(9021, "allowed")),
+                        "truncated", false), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)),
+                        "truncated", true, "total_groups", 12), "ok"),
+                new EvalScore.ToolUse("esql_query", true, Map.of(), "Error: Unknown column [pair]"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(12)),
+                        "truncated", false), "ok")));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("esql_query: 1 of 4 call(s) refused", "answer rows from esql_query call 2 of 4");
+    }
+
+    @Test
+    void whenNoCallMatchesTheProblemIsSaidOfTheClosestCall() {
+        // The second call holds one of the two rows; the last, a check afterwards, none.
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of("carol", "x.com", 1))),
+                        "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 201)),
+                        "total_groups", 12), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(12))), "ok")));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's rows row 2 was [bob, github.com, 201]");
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("no esql_query call matched; the closest, call 2 of 3, held 1 of 2 expected rows");
+    }
+
+    @Test
+    void theTotalGroupsMayComeFromAnotherAcceptedCall() {
+        // The answer call cut short without a total; a later call over the same groups gives it.
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)),
+                        "truncated", true), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of("alice", "box.com", 300)),
+                        "truncated", true, "total_groups", 12), "ok")));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // None gives the expected total: every total given is said.
+        final EvalScore wrong = new EvalScore("q");
+        wrong.scoreQuestion(question(true), List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)),
+                        "truncated", true, "total_groups", 11), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(1)),
+                        "truncated", true, "total_groups", 40), "ok")));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("the total groups were [11, 40], expected 12");
+    }
+
+    @Test
+    void anAnswerWorkedOutInTheReplyAndNotTheQueryFails() {
+        // As case 64 on Haiku: the bytes summed for every user, the MB and the cut-off left to the reply.
+        final Map<String, Object> mb = Map.of("kind", "question", "expected", Map.of("answer", Map.of(
+                "ordered", true, "rows", List.of(List.of("erin", 397.1), List.of("carol", 245.2)))));
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(mb, List.of(
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(List.of(1446, "files.example.com")),
+                        "truncated", false), "ok"),
+                new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                        List.of(397114256, 826, "erin"), List.of(245201352, 1017, "carol"),
+                        List.of(111835605, 902, "dave")), "truncated", false), "ok")));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's rows were 3, expected 2");
+        assertThat((List<String>) score.toMap().get("notes")).noneMatch(note -> note.startsWith("answer rows from"));
+
+        // Converted and cut in the query, it passes.
+        final EvalScore inQuery = new EvalScore("q");
+        inQuery.scoreQuestion(mb, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("erin", 397.1), List.of("carol", 245.2)), "truncated", false), "ok")));
+        assertThat(inQuery.passed()).as(inQuery.summary()).isTrue();
+    }
+
+    @Test
+    void valuesMatchAsDaysAndRoundedNumbers() {
+        assertThat(EvalScore.mismatch(List.of(List.of("2026-01-02", "box.com", 52.8)),
+                List.of(List.of("2026-01-02T00:00:00.000Z", "box.com", 52.83)), true, 0.001)).isNull();
+        assertThat(EvalScore.mismatch(List.of(List.of("2026-01-02", 52.8)),
+                List.of(List.of("2026-01-02T00:00:00.000Z", 52.9)), true, 0.001)).isNotNull();
+        assertThat(EvalScore.mismatch(List.of(List.of(1000)), List.of(List.of(1000), List.of(5)), false, 0.001))
+                .startsWith("were 2, expected 1");
+    }
+
+    @Test
+    void aJoinDoneByHandAndNotInTheQueryFails() {
+        // As a by-hand anti-join: the leavers read from HR first, then their names written into the query.
+        final Map<String, Object> leavers = Map.of("kind", "question", "expected", Map.of(
+                "tools_used", List.of("run_stroomql"),
+                "answer", Map.of("tool", "run_stroomql", "query", "\\bjoin\\b|\\(\\s*from\\b",
+                        "rows", List.of(List.of("dave", 3), List.of("gina", 1)))));
+        final List<List<Object>> rows = List.of(List.of("dave", "3"), List.of("gina", "1"));
+
+        final EvalScore byHand = new EvalScore("q");
+        byHand.scoreQuestion(leavers, List.of(
+                new EvalScore.ToolUse("run_stroomql", false, Map.of("query", "from HR where Status = Leaver "
+                                                                             + "select Username",
+                        "rows", List.of(List.of("dave"), List.of("frank"), List.of("gina"), List.of("ivan"))), "ok"),
+                new EvalScore.ToolUse("run_stroomql", false, Map.of("query", "from \"Staff activity\" "
+                                                                             + "where UserId in (dave, gina) "
+                                                                             + "group by UserId select UserId, "
+                                                                             + "count()", "rows", rows), "ok")));
+        assertThat(byHand.passed()).isFalse();
+        assertThat(byHand.summary()).contains("the answer's query doesn't match /\\bjoin\\b|\\(\\s*from\\b/: "
+                                              + "from \"Staff activity\" where UserId in (dave, gina)");
+
+        // The same rows from a subquery pass, whatever the case of its words.
+        final EvalScore inQuery = new EvalScore("q");
+        inQuery.scoreQuestion(leavers, List.of(new EvalScore.ToolUse("run_stroomql", false, Map.of("query",
+                "from \"Staff activity\" where UserId in (FROM HR where Status = Leaver select Username) "
+                + "group by UserId select UserId, count()", "rows", rows), "ok")));
+        assertThat(inQuery.passed()).as(inQuery.summary()).isTrue();
+    }
+
+    @Test
+    void theAnswerRowsMayComeFromATableCallOnTheFileTheQueryWrote() {
+        // As case 72 on Sonnet: a join grouped by user and action, its logon rows then kept with table.
+        final List<List<Object>> grouped = List.of(List.of("gina", "Read", "6"), List.of("dave", "Logon", "3"),
+                List.of("frank", "Read", "5"), List.of("gina", "Logon", "1"));
+        final List<List<Object>> logons = List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1"));
+        final String join = "from \"Staff activity\" join HR as hr on UserId = hr.Username where hr.Status = "
+                            + "Leaver group by UserId, Action select UserId, Action, count() as N";
+
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(leavers(), List.of(
+                stroomQl("from HR select Username", "/outputs/queries/q1.md", List.of(List.of("dave"))),
+                stroomQl(join, "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/q2.md", logons)));
+
+        assertThat(score.passed()).as(score.summary()).isTrue();
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("answer rows from a table call on run_stroomql call 2 of 2");
+    }
+
+    @Test
+    void aTableCallOnAnotherFileOrBeforeTheQueryGivesNoAnswerRows() {
+        final List<List<Object>> grouped = List.of(List.of("dave", "Logon", "3"), List.of("frank", "Read", "5"),
+                List.of("gina", "Logon", "1"));
+        final List<List<Object>> logons = List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1"));
+        final String join = "from \"Staff activity\" join HR as hr on UserId = hr.Username select UserId";
+
+        final EvalScore otherFile = new EvalScore("q");
+        otherFile.scoreQuestion(leavers(), List.of(stroomQl(join, "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/other.md", logons)));
+        assertThat(otherFile.passed()).isFalse();
+        assertThat(otherFile.summary()).contains("the answer's rows were 3, expected 2");
+
+        final EvalScore before = new EvalScore("q");
+        before.scoreQuestion(leavers(), List.of(table("/outputs/queries/q2.md", logons),
+                stroomQl(join, "/outputs/queries/q2.md", grouped)));
+        assertThat(before.passed()).isFalse();
+
+        // A later query that wrote the same file: the table call after it is that query's.
+        final EvalScore rewritten = new EvalScore("q");
+        rewritten.scoreQuestion(leavers(), List.of(stroomQl(join, "/outputs/queries/q2.md", grouped),
+                stroomQl("from \"Staff activity\" select UserId", "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/q2.md", logons)));
+        assertThat(rewritten.passed()).isFalse();
+        assertThat(rewritten.summary()).contains("the answer's query doesn't match");
+    }
+
+    @Test
+    void theLatestTableCallOnTheFileIsTheOneThatCounts() {
+        final List<List<Object>> grouped = List.of(List.of("dave", "Logon", "3"), List.of("frank", "Read", "5"),
+                List.of("gina", "Logon", "1"));
+        final List<List<Object>> logons = List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1"));
+        final String join = "from \"Staff activity\" join HR as hr on UserId = hr.Username select UserId";
+
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(leavers(), List.of(stroomQl(join, "/outputs/queries/q2.md", grouped),
+                table("/outputs/queries/q2.md", logons),
+                table("/outputs/queries/q2.md", List.of(List.of("frank", "Read", "5")))));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's rows were 1, expected 2");
+    }
+
+    @Test
+    void aJoinDoneByHandFailsWhateverATableCallOnItGives() {
+        final EvalScore score = new EvalScore("q");
+        score.scoreQuestion(leavers(), List.of(
+                stroomQl("from \"Staff activity\" where Action = Logon group by UserId select UserId, count()",
+                        "/outputs/queries/q1.md", List.of(List.of("dave", "3"), List.of("bob", "1"))),
+                table("/outputs/queries/q1.md", List.of(List.of("dave", "3"), List.of("gina", "1")))));
+
+        assertThat(score.passed()).isFalse();
+        assertThat(score.summary()).contains("the answer's query doesn't match");
+        assertThat((List<String>) score.toMap().get("notes"))
+                .contains("answer rows from a table call on run_stroomql call 1 of 1");
+    }
+
+    @Test
+    void anAnswerFromRowsCutAtTheRowLimitFails() {
+        // Case 75's question: the exports by department, over more rows than a query may return.
+        final Map<String, Object> exports = Map.of("kind", "question", "expected", Map.of("answer", Map.of(
+                "tool", "run_stroomql", "uncapped", true, "rows", List.of(List.of("Engineering", 100)))));
+        final EvalScore.ToolUse capped = new EvalScore.ToolUse("run_stroomql", false, Map.of("query",
+                "from \"Staff activity\" where Action = Export select UserId, Files", "capped", true,
+                "rows", List.of(List.of("user00001", "3"))), "ok");
+
+        final EvalScore byHand = new EvalScore("q");
+        byHand.scoreQuestion(exports, List.of(capped));
+        assertThat(byHand.passed()).isFalse();
+        assertThat(byHand.summary()).contains("the answer's rows were cut at the row limit");
+        assertThat((List<String>) byHand.toMap().get("notes"))
+                .contains("run_stroomql: 1 of 1 accepted call(s) cut at the row limit");
+
+        // A capped call on the way to a whole answer is noted, not failed.
+        final EvalScore joined = new EvalScore("q");
+        joined.scoreQuestion(exports, List.of(capped, new EvalScore.ToolUse("run_stroomql", false, Map.of("query",
+                "from \"Staff activity\" join HR as hr on UserId = hr.Username", "capped", false,
+                "rows", List.of(List.of("Engineering", "100"))), "ok")));
+        assertThat(joined.passed()).as(joined.summary()).isTrue();
+        assertThat((List<String>) joined.toMap().get("notes"))
+                .contains("run_stroomql: 1 of 2 accepted call(s) cut at the row limit");
+    }
+
+    @Test
+    void aTableResultIsReadAsItsMarkdownTable() {
+        final Map<String, Object> table = AbstractEvalTest.markdownTable("""
+                2 of 11 rows matched; the result has 2 row(s).
+
+                | UserId | Action | N |
+                | --- | --- | --- |
+                | dave | Logon | 3 |
+                | gina | Logon | 1 |
+                """);
+
+        assertThat(table).containsEntry("columns", List.of("UserId", "Action", "N"))
+                .containsEntry("rows", List.of(List.of("dave", "Logon", "3"), List.of("gina", "Logon", "1")));
+        assertThat(AbstractEvalTest.markdownTable("No rows matched.")).containsEntry("rows", List.of());
+    }
+
+    // Case 72's question: the leavers who logged on, and how often, joined in the query.
+    private static Map<String, Object> leavers() {
+        return Map.of("kind", "question", "expected", Map.of(
+                "tools_used", List.of("run_stroomql"),
+                "answer", Map.of("tool", "run_stroomql", "query", "\\bjoin\\b|\\(\\s*from\\b",
+                        "rows", List.of(List.of("dave", 3), List.of("gina", 1)))));
+    }
+
+    private static EvalScore.ToolUse stroomQl(final String query, final String out, final List<List<Object>> rows) {
+        return new EvalScore.ToolUse("run_stroomql", false, Map.of("query", query, "out", out, "rows", rows), "ok");
+    }
+
+    private static EvalScore.ToolUse table(final String path, final List<List<Object>> rows) {
+        return new EvalScore.ToolUse("table", false, Map.of("path", path, "rows", rows), "ok");
+    }
+
+    @Test
+    void theAnswerCallMustHoldTheValuesTheCaseGives() {
+        // A sequence on a Lucene index runs in Stroom as a windowed join, not EQL.
+        final Map<String, Object> sequence = Map.of("kind", "question", "expected", Map.of("answer", Map.of(
+                "tool", "sequence_query", "result", Map.of("engine", "StroomQL"),
+                "rows", List.of(List.of("alice")))));
+
+        final EvalScore eql = new EvalScore("q");
+        eql.scoreQuestion(sequence, List.of(new EvalScore.ToolUse("sequence_query", false, Map.of("engine", "EQL",
+                "rows", List.of(List.of("alice", "2026-01-06T09:00:00.000Z"))), "ok")));
+        assertThat(eql.passed()).isFalse();
+        assertThat(eql.summary()).contains("the answer's engine was EQL, expected StroomQL");
+
+        final EvalScore windowed = new EvalScore("q");
+        windowed.scoreQuestion(sequence, List.of(new EvalScore.ToolUse("sequence_query", false, Map.of("engine",
+                "StroomQL", "rows", List.of(List.of("alice", "2026-01-06T09:00:00.000Z"))), "ok")));
+        assertThat(windowed.passed()).as(windowed.summary()).isTrue();
+    }
+
+    @Test
+    void theFindingsTheCaseNamesMustBeThereAndTheOthersNot() {
+        final Map<String, Object> leaver = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
+                "compare_activity"), "findings", Map.of(
+                "must_include", List.of(
+                        ordered("kind", "change", "feature", "events", "near", "2026-07-01", "days", 3),
+                        ordered("feature", "category:Job Search"),
+                        ordered("source_wide", true, "near", "2026-06-15")),
+                "must_not_include", List.of(
+                        ordered("kind", "change", "feature", "events", "near", "2026-06-15", "days", 5),
+                        ordered("window_in", List.of("2026-05-11", "2026-05-15"))),
+                "answer_must_not_say", List.of("guilty"),
+                "answer_must_say_one_of", List.of("indicator", "evidence"))));
+        final Map<String, Object> found = Map.of(
+                "findings", List.of(
+                        finding("change", "events", "2026-07-02", "Events shifted from a median of 9 to 22 a day"),
+                        finding("week", "category:Job Search", "2026-06-27 to 2026-09-25", "Events in the category"),
+                        finding("week", "events", "2026-05-18 to 2026-05-24", "Events 30 a day")),
+                "source_wide", List.of("[Proxy] Events 21 a day in the week from 2026-06-15 against a median of 7"));
+
+        final EvalScore passed = new EvalScore("q");
+        passed.scoreQuestion(leaver, List.of(new EvalScore.ToolUse("compare_activity", false, found, "ok")),
+                "These are indicators, each with its evidence.");
+        assertThat(passed.passed()).as(passed.summary()).isTrue();
+
+        // Without the reply its wording isn't checked, and that is said.
+        final EvalScore noReply = new EvalScore("q");
+        noReply.scoreQuestion(leaver, List.of(new EvalScore.ToolUse("compare_activity", false, found, "ok")));
+        assertThat(noReply.passed()).as(noReply.summary()).isTrue();
+        assertThat(noReply.summary()).contains("the reply's wording wasn't checked: there is no reply");
+
+        // The change three days late is still near; four is not. A finding in the exception's days, and the
+        // pipeline's step as the person's, fail; so does the reply's wording.
+        final Map<String, Object> wrong = Map.of(
+                "findings", List.of(
+                        finding("change", "events", "2026-07-05", "late"),
+                        finding("change", "events", "2026-06-16", "the pipeline as the person's"),
+                        finding("day", "sum:bytes", "2026-05-13", "in the migration")),
+                "source_wide", List.of());
+        final EvalScore failed = new EvalScore("q");
+        failed.scoreQuestion(leaver, List.of(new EvalScore.ToolUse("compare_activity", false, wrong, "ok")),
+                "She is guilty.");
+        assertThat(failed.passed()).isFalse();
+        assertThat(failed.summary()).contains("no finding matched {kind=change, feature=events, near=2026-07-01, "
+                                              + "days=3}")
+                .contains("no finding matched {feature=category:Job Search}")
+                .contains("a finding matched {kind=change, feature=events, near=2026-06-15, days=5}")
+                .contains("a finding matched {window_in=[2026-05-11, 2026-05-15]}")
+                .contains("the reply says 'guilty'")
+                .contains("the reply says none of [indicator, evidence]");
+    }
+
+    @Test
+    void aScreensRankedPeopleAndRareValuesAreScored() {
+        final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
+                "compare_activity"), "screen", Map.of(
+                "ranked_include", List.of("P10001", "P10002"),
+                "ranked_below", List.of("P10005", "P20001"),
+                "rare_new", List.of(Map.of("value", "mydrive.personal-cloud.example", "person", "P10001")),
+                "rare_excludes", List.of("cdn-edge.example"))));
+        final Map<String, Object> screened = Map.of(
+                "ranked", List.of(Map.of("person", "P10002"), Map.of("person", "P10001"),
+                        Map.of("person", "P20001")),
+                "rare", List.of(Map.of("values", List.of(Map.of("value", "mydrive.personal-cloud.example",
+                        "new_for", List.of("P10001")), Map.of("value", "jobs.example", "new_for", List.of())))));
+
+        final EvalScore passed = new EvalScore("q");
+        passed.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, screened, "ok")));
+        assertThat(passed.passed()).as(passed.summary()).isTrue();
+
+        // A decoy above a plant, a plant missing, the personal cloud not new, a CDN host listed: each fails.
+        final Map<String, Object> wrong = Map.of(
+                "ranked", List.of(Map.of("person", "P10005"), Map.of("person", "P10001")),
+                "rare", List.of(Map.of("values", List.of(Map.of("value", "mydrive.personal-cloud.example",
+                        "new_for", List.of()), Map.of("value", "e00af1.cdn-edge.example", "new_for",
+                        List.of("P20003"))))));
+        final EvalScore failed = new EvalScore("q");
+        failed.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, wrong, "ok")));
+        assertThat(failed.passed()).isFalse();
+        assertThat(failed.summary()).contains("P10002 isn't among those ranked")
+                .contains("P10005 is ranked 1, above one of [P10001, P10002]")
+                .contains("no rare value mydrive.personal-cloud.example new for P10001")
+                .contains("a rare value holds cdn-edge.example");
+    }
+
+    @Test
+    void anAnswerIsScoredByWhatItSaysWhicheverToolFoundIt() {
+        // No answer tool: the reply must name the group and one of the ways of naming who granted it.
+        final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("findings", Map.of(
+                "answer_must_say_all_of", List.of(List.of("Finance Data Admins"), List.of("P20002", "ben.petrov")),
+                "answer_must_not_say", List.of("guilty"))));
+        final List<EvalScore.ToolUse> search = List.of(new EvalScore.ToolUse("search_events", false, Map.of(),
+                "| EventTime | PersonId | Action | Object |\n| 2026-09-14T00:38 | P20002 | AddGroup | Finance Data "
+                + "Admins |"));
+
+        final EvalScore named = new EvalScore("q");
+        named.scoreQuestion(question, search, "On 14 September ben.petrov added her to Finance Data Admins.");
+        assertThat(named.passed()).as(named.summary()).isTrue();
+
+        // The reply missing the grant fails, though a tool result held it.
+        final EvalScore missed = new EvalScore("q");
+        missed.scoreQuestion(question, search, "ben.petrov ran an AddGroup action against her account.");
+        assertThat(missed.passed()).isFalse();
+        assertThat(missed.summary()).contains("the reply says none of [Finance Data Admins]");
+        final EvalScore wrongWords = new EvalScore("q");
+        wrongWords.scoreQuestion(question, search, "Finance Data Admins was granted by P20002: she is guilty.");
+        assertThat(wrongWords.passed()).isFalse();
+        assertThat(wrongWords.summary()).contains("the reply says 'guilty'");
+
+        // A reference run (no reply): the accepted tool results must say it; a refused call's text doesn't count.
+        final EvalScore reference = new EvalScore("q");
+        reference.scoreQuestion(question, search);
+        assertThat(reference.passed()).as(reference.summary()).isTrue();
+        final EvalScore refused = new EvalScore("q");
+        refused.scoreQuestion(question, List.of(new EvalScore.ToolUse("esql_query", true, Map.of(),
+                "Error: no Finance Data Admins for P20002")));
+        assertThat(refused.passed()).isFalse();
+        assertThat(refused.summary()).contains("no reply: no tool result says any of [Finance Data Admins]");
+    }
+
+    @Test
+    void aFindingOfWhatWasDoneToThePersonIsMatchedAgainstThoseFindingsOnly() {
+        final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
+                "compare_activity"), "findings", Map.of(
+                "must_include", List.of(ordered("done_to_them", true, "feature", "done_to_them:events", "near",
+                        "2026-09-14")),
+                "must_not_include", List.of(ordered("feature", "done_to_them:events")))));
+        final Map<String, Object> found = Map.of("findings", List.of(), "source_wide", List.of(), "done_to_them",
+                Map.of("findings", List.of(finding("week", "done_to_them:events", "2026-09-14 to 2026-09-20",
+                        "Events done to them 1 in the week from 2026-09-14"))));
+
+        final EvalScore passed = new EvalScore("q");
+        passed.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, found, "ok")));
+        assertThat(passed.passed()).as(passed.summary()).isTrue();
+
+        // Among the person's own findings, it is no finding of what was done to them.
+        final EvalScore own = new EvalScore("q");
+        own.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, Map.of("findings",
+                List.of(finding("week", "done_to_them:events", "2026-09-14 to 2026-09-20", "x")), "source_wide",
+                List.of()), "ok")));
+        assertThat(own.passed()).isFalse();
+        assertThat(own.summary()).contains("no finding matched {done_to_them=true, feature=done_to_them:events, "
+                                           + "near=2026-09-14}")
+                .contains("a finding matched {feature=done_to_them:events}");
+    }
+
+    @Test
+    void aPeriodWhoseEndWasntSeenMayEndAtTheWindowsEndAfterTheOneGiven() {
+        // Case 119 on Haiku and Sonnet (2026-11-27): Friday's enter with no leave runs to the end of the window the
+        // model asked for (16 to 22 November), past the case's 21 November.
+        final Map<String, Object> open = Map.of("kind", "on_site", "end", "2026-11-21T00:00", "end_seen",
+                "end not seen");
+        assertThat(EvalTimelineScore.periodMatches(open, Map.of("kind", "on_site", "end", "2026-11-23T00:00:00Z",
+                "end_seen", "end not seen"))).isTrue();
+        assertThat(EvalTimelineScore.periodMatches(open, Map.of("kind", "on_site", "end", "2026-11-20T17:00:00Z",
+                "end_seen", "end not seen"))).isFalse();
+        // A seen end matches only its own time.
+        assertThat(EvalTimelineScore.periodMatches(Map.of("end", "2026-11-21T00:00", "end_seen", "seen"),
+                Map.of("end", "2026-11-23T00:00:00Z", "end_seen", "seen"))).isFalse();
+    }
+
+    @Test
+    void aTimelinesPeriodsAreScoredByKindKeyTimesAndEndsSeenAndImplyNoActivity() {
+        final Map<String, Object> evalCase = timelineCase(Map.of(
+                "periods", List.of(
+                        Map.of("kind", "on_site", "key", "HQ, L2", "start", "2026-11-16T08:2", "end",
+                                "2026-11-16T17:1", "start_seen", "seen", "end_seen", "seen"),
+                        Map.of("kind", "on_site", "key", "HQ, L2", "end", "2026-11-17T07:5", "start_seen",
+                                "start not seen")),
+                "periods_by_kind", Map.of("on_site", 2, "remote_session", 1),
+                "periods_imply_no_activity", true,
+                "periods_within", List.of(Map.of("kind", "remote_session", "within", "on_site", "start",
+                        "2026-11-16")),
+                "no_activity_on", List.of("2026-11-17")));
+        final String periods = """
+                period,kind,key,start,end,start_seen,end_seen
+                pr1,on_site,"HQ, L2",2026-11-16T08:22:00Z,2026-11-16T17:12:00Z,seen,seen
+                pr2,remote_session,lt-01,2026-11-16T10:00:00Z,2026-11-16T11:00:00Z,seen,seen
+                pr3,on_site,"HQ, L2",2026-11-16T17:12:00Z,2026-11-17T07:52:00Z,start not seen,seen
+                """;
+        final String events = """
+                time,role,kind,span,merged,activity,periods,StreamId,EventId
+                2026-11-16T08:22:00Z,period_start,on_site,,,,pr1,1,1
+                2026-11-16T09:00:00Z,action,web.get,s1,,a1,pr1,1,2
+                2026-11-16T17:12:00Z,period_end,on_site,,,,pr1 pr3,1,3
+                2026-11-17T07:52:00Z,period_end,on_site,,,,pr3,1,4
+                """;
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("periods.csv", periods, "events.csv", events)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // Paired by door, not by the zone: no key, and a period too many; a badge event in a span; Tuesday active.
+        final String byDoor = periods.replace("\"HQ, L2\"", "").replace("pr3,on_site,,", "pr3,on_site,,")
+                              + "pr4,on_site,,2026-11-17T08:00:00Z,2026-11-17T09:00:00Z,seen,seen\n";
+        final String inSpan = events.replace("period_end,on_site,,,,pr3", "period_end,on_site,s2,,a1,pr3");
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("periods.csv", byDoor, "events.csv", inSpan)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("no period matched")
+                .contains("the periods by kind were {on_site=3, remote_session=1}")
+                .contains("a period's events were taken as activity or are in no period: 1:4")
+                .contains("events of 2026-11-17 are activity: 1:4");
+
+        // No table written at all is said, not thrown.
+        final EvalScore none = new EvalScore("t");
+        none.scoreTimeline(evalCase, timelineRun(List.of(), Map.of()));
+        assertThat(none.summary()).contains("no periods.csv was written");
+    }
+
+    @Test
+    void aThemeIsTheLevelsRowHoldingItsEventsWithTheVisitsAsChildrenAndItsMembersAnAnswerListsExactly() {
+        final Map<String, Object> evalCase = timelineCase(Map.of(
+                "theme", Map.of("matches", "homes\\.example|rentals\\.example", "level", 2, "exactly", true,
+                        "children_at_least", 2),
+                "members_answer", true));
+        final String levels = """
+                id,level,parent,bar_label,how
+                a1,1,,Budget,characterisation
+                m1,2,a1,budget,code: sharing budget
+                t1,2,a2,viewed property listing sites,model (high): example.com.au
+                s1,3,m1,doc.edit,by: activity
+                s2,3,t1,web.get · homes.example.com.au,by: activity
+                s3,3,t1,web.get · rentals.example.org,by: activity
+                """;
+        final String events = """
+                time,object,StreamId,EventId,span,merged,activity
+                2026-11-18T09:00:00Z,\\\\fs01\\budget.xlsx,1,1,s1,m1,a1
+                2026-11-18T13:00:00Z,https://www.homes.example.com.au/1,1,2,s2,t1,a2
+                2026-11-18T13:01:00Z,https://www.homes.example.com.au/2,1,3,s2,t1,a2
+                2026-11-18T13:05:00Z,https://rentals.example.org/3,1,4,s3,t1,a2
+                """;
+        final EvalScore.ToolUse answer = new EvalScore.ToolUse("table", false, Map.of("path",
+                "/outputs/timelines/pat/events.csv", "columns", List.of("time", "StreamId", "EventId"), "rows",
+                List.of(List.of("13:00", "1", "2"), List.of("13:01", "1", "3"), List.of("13:05", "1", "4"))), "");
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, timelineRun(List.of(answer), Map.of("activity-levels.csv", levels,
+                "events.csv", events)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // The document work taken into the theme; an answer by time, one event short.
+        final String widened = events.replace("budget.xlsx,1,1,s1,m1,a1", "budget.xlsx,1,1,s1,t1,a1");
+        final EvalScore.ToolUse short1 = new EvalScore.ToolUse("table", false, Map.of("path",
+                "/outputs/timelines/pat/events.csv", "columns", List.of("EventId"), "rows", List.of(List.of("2"),
+                        List.of("3"))), "");
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, timelineRun(List.of(short1), Map.of("activity-levels.csv", levels,
+                "events.csv", widened)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("no row at level 2 holds exactly the 3 events matching")
+                .contains("no theme to answer of");
+        final EvalScore shortAnswer = new EvalScore("t");
+        shortAnswer.scoreTimeline(evalCase, timelineRun(List.of(short1), Map.of("activity-levels.csv", levels,
+                "events.csv", events)));
+        assertThat(shortAnswer.summary()).contains("a table call returned 2 event(s), 1 of t1's missing and 0 not "
+                                                   + "of it");
+
+        // Made by the model where it was to be merged in code by a category.
+        final Map<String, Object> byCode = timelineCase(Map.of("theme", Map.of("matches",
+                "homes\\.example|rentals\\.example", "exactly", true, "how", "^code: sharing category")));
+        final EvalScore byModel = new EvalScore("t");
+        byModel.scoreTimeline(byCode, timelineRun(List.of(), Map.of("activity-levels.csv", levels, "events.csv",
+                events)));
+        assertThat(byModel.passed()).isFalse();
+        assertThat(byModel.summary()).contains("t1 was made 'model (high): example.com.au', expected ^code: sharing "
+                                               + "category");
+        final EvalScore byCategory = new EvalScore("t");
+        byCategory.scoreTimeline(byCode, timelineRun(List.of(), Map.of("activity-levels.csv", levels.replace(
+                "model (high): example.com.au", "code: sharing category real estate"), "events.csv", events)));
+        assertThat(byCategory.passed()).as(byCategory.summary()).isTrue();
+    }
+
+    @Test
+    void aSplitRunsPartsAreScoredByTheirEventsTheEvidenceEachCitesAndTheirParent() {
+        final Map<String, Object> evalCase = timelineCase(Map.of(
+                "runs", List.of(Map.of("matches", "rota", "events", 2), Map.of("matches", "certificate", "events", 2)),
+                "runs_total", 2,
+                "runs_described_with_evidence", true,
+                "runs_under_activity", true,
+                "runs_parent_rows", true));
+        final String levels = """
+                id,level,parent,activity,activity_label,bar_label,how
+                a1,1,,a1,Rota,Rota,characterisation
+                a2,1,,a2,Certificate,Certificate,characterisation
+                pr1,1,,pr1,remote session,remote session,period
+                r1-1,2,a1,a1,Rota,arranged the rota,"model (high): e1, e2"
+                r1-2,2,a2,a2,Certificate,renewed the certificate,model (high): e3
+                1:1,3,r1-1,a1,Rota,Can you cover the rota?,event of the run
+                1:2,3,r1-1,a1,Rota,"Rota sorted, thanks",event of the run
+                1:3,3,r1-2,a2,Certificate,The certificate expires,event of the run
+                1:4,3,r1-2,a2,Certificate,Certificate renewed,event of the run
+                """;
+        final String events = """
+                time,StreamId,EventId,span,merged,activity
+                2026-11-19T10:00:00Z,1,1,s1,r1-1,a1
+                2026-11-19T10:02:00Z,1,2,s1,r1-1,a1
+                2026-11-19T10:04:00Z,1,3,s1,r1-2,a2
+                2026-11-19T10:06:00Z,1,4,s1,r1-2,a2
+                """;
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("activity-levels.csv", levels, "events.csv",
+                events)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // The first part citing the second's event, the second code's alone and under a period, and the first's
+        // activity no row of the table (an activity of the run's items alone).
+        final String wrongLevels = levels.replace("\"model (high): e1, e2\"", "\"model (high): e1, e3\"")
+                .replace("r1-2,2,a2,a2,Certificate,renewed the certificate,model (high): e3",
+                        "r1-2,2,pr1,pr1,remote session,renewed the certificate,code: a run by host within the idle "
+                        + "cap")
+                .replace("a1,1,,a1,Rota,Rota,characterisation\n", "");
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("activity-levels.csv", wrongLevels,
+                "events.csv", events)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("run r1-1 cites [e3], not events of its own")
+                .contains("run r1-2 wasn't described by the model")
+                .contains("run r1-2's parent is 'pr1', not an activity")
+                .contains("run r1-1's parent 'a1' is no level-1 row ([a2])");
+
+        // One run for the whole thread: neither topic's run is there.
+        final String unsplit = """
+                id,level,parent,activity,activity_label,bar_label,how
+                a1,1,,a1,Chat,Chat,characterisation
+                r1,2,a1,a1,Chat,chatted,"model (high): e1, e3"
+                1:1,3,r1,a1,Chat,Can you cover the rota?,event of the run
+                1:2,3,r1,a1,Chat,"Rota sorted, thanks",event of the run
+                1:3,3,r1,a1,Chat,The certificate expires,event of the run
+                1:4,3,r1,a1,Chat,Certificate renewed,event of the run
+                """;
+        final EvalScore whole = new EvalScore("t");
+        whole.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("activity-levels.csv", unsplit, "events.csv",
+                events.replace("r1-1", "r1").replace("r1-2", "r1"))));
+        assertThat(whole.summary()).contains("1 run(s), expected 2")
+                .contains("no run of exactly 2 events all matching rota");
+    }
+
+    @Test
+    void theNoiseIsScoredByItsFormWhatWasLeftOutWhatWasKeptAndTheBaseline() {
+        final Map<String, Object> evalCase = timelineCase(Map.of("noise", Map.of(
+                "form", true,
+                "excluded_at_least", 100,
+                "remembered", true,
+                "gone", "telemetry",
+                "kept", "supplier",
+                "kept_at_least", 2,
+                "fewer_than_baseline", List.of("events.csv"))));
+        final Map<String, Object> schema = Map.of("type", "object", "properties", Map.of("exclude", Map.of("type",
+                "array", "items", Map.of("type", "string", "anyOf", List.of(Map.of("const", "noise-1"),
+                        Map.of("const", "noise-2"))))));
+        final EvalTimelineScore.Form accepted = new EvalTimelineScore.Form("activity_timeline", null, schema,
+                "ACCEPTED", Map.of("exclude", List.of("noise-1", "noise-2")));
+        final EvalScore.ToolUse first = new EvalScore.ToolUse("activity_timeline", false, Map.of(),
+                "Left out as noise, as the user chose (kept in /outputs/timelines/exclusions.json): 120 event(s): "
+                + "web.get at telemetry 100; process.start 20.");
+        final String events = """
+                time,object,StreamId,EventId
+                2026-11-17T09:35:00Z,https://www.supplier.example.com/1,1,1
+                2026-11-17T09:37:00Z,https://www.supplier.example.com/2,1,2
+                """;
+        final String baseline = events + "2026-11-17T09:38:00Z,https://telemetry.example.net/beacon,1,3\n";
+        final Map<String, String> files = Map.of("events.csv", events);
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(first, first), path -> files.get(
+                path.substring(path.lastIndexOf('/') + 1)), path -> path.endsWith("events.csv")
+                ? baseline
+                : null, List.of(accepted)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // Unticked, the beacon kept, asked again on the re-run; and no baseline to compare with.
+        final EvalTimelineScore.Form unticked = new EvalTimelineScore.Form("activity_timeline", null, schema,
+                "ACCEPTED", Map.of("exclude", List.of("noise-2")));
+        final EvalScore.ToolUse kept = new EvalScore.ToolUse("activity_timeline", false, Map.of(), "No noise.");
+        final Map<String, String> noisy = Map.of("events.csv", baseline);
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(kept, kept), path -> noisy.get(
+                path.substring(path.lastIndexOf('/') + 1)), null, List.of(unticked, unticked)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("2 noise form(s); the first ACCEPTED leaving out [noise-2] of "
+                                             + "[noise-1, noise-2]")
+                .contains("they said [null, null]")
+                .contains("the later run asked again (2 noise forms)")
+                .contains("1 event(s) matching telemetry are still in the timeline")
+                .contains("the baseline none (no baseline)");
+
+        // Built once: remembering isn't checked, and said so.
+        final EvalScore once = new EvalScore("t");
+        once.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(first), path -> files.get(
+                path.substring(path.lastIndexOf('/') + 1)), path -> path.endsWith("events.csv")
+                ? baseline
+                : null, List.of(accepted)));
+        assertThat(once.passed()).as(once.summary()).isTrue();
+        assertThat(once.summary()).contains("not re-run, so remembering wasn't checked");
+    }
+
+    @Test
+    void theSourcesAreScoredByWhatTheFormsOfferedWhatTheyLeftOutAndWhyAndWhatWasRead() {
+        final Map<String, Object> evalCase = timelineCase(Map.of("sources", Map.of(
+                "offered", List.of("Web proxy events", "Badge events"),
+                "not_offered", List.of("Old proxy events", "Legacy events"),
+                "left_out", Map.of("Old proxy events", "holding (none|no data)"),
+                "read", List.of("Web proxy events"))));
+        final Map<String, Object> choose = Map.of("type", "object", "properties", Map.of("sources", Map.of("type",
+                "string", "enum", List.of("All supported data sources", "Other (say which)"))));
+        final EvalTimelineScore.Form sources = new EvalTimelineScore.Form("activity_timeline", "Which data sources "
+                + "should the timeline read? Supported: the 2 Elastic Index(es) you can use holding documents in the "
+                + "period. Left out, holding none: Old proxy events.", choose, "ACCEPTED", Map.of());
+        final EvalTimelineScore.Form confirm = new EvalTimelineScore.Form("activity_timeline", "Read these?",
+                indexes(List.of("Web proxy events", "Badge events")), "ACCEPTED", Map.of());
+        final String events = """
+                time,source,StreamId,EventId
+                2026-11-20T09:00:00Z,Web proxy events,1,1
+                2026-11-20T09:02:00Z,Web proxy events,1,2
+                """;
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(), path -> path.endsWith("events.csv")
+                ? events
+                : null, null, List.of(sources, confirm)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // The empty index offered, nothing said of it, and the badge index's events read too.
+        final EvalTimelineScore.Form offeringAll = new EvalTimelineScore.Form("activity_timeline", "Read these?",
+                indexes(List.of("Web proxy events", "Badge events", "Old proxy events")), "ACCEPTED", Map.of());
+        final String both = events + "2026-11-20T08:00:00Z,Badge events,2,1\n";
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(), path -> path.endsWith("events.csv")
+                ? both
+                : null, null, List.of(offeringAll)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("the forms (or the list) offered [Web proxy events, Badge events, Old "
+                                             + "proxy events]")
+                .contains("Old proxy events was offered in a form or listed")
+                .contains("no form or result names Old proxy events with why (holding (none|no data))")
+                .contains("3 event(s) from [Web proxy events, Badge events], expected events from "
+                          + "[Web proxy events]");
+
+        // No form: chosen from list_data_sources, which left the empty index out, saying so (case 117 on Haiku and
+        // Sonnet, 2026-11-27).
+        final EvalScore.ToolUse list = new EvalScore.ToolUse("list_data_sources", false, null, """
+                Data sources you can use (3):
+                - Analytics 'Analytics' (uuid Analytics)
+                - ElasticIndex 'Badge events' (uuid b-1)
+                - ElasticIndex 'Web proxy events' (uuid w-1)
+                1 index(es) holding no data were left out: Old proxy events (no documents).""");
+        final EvalScore listed = new EvalScore("t");
+        listed.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(list), path -> path.endsWith("events.csv")
+                ? events
+                : null, null, List.of()));
+        assertThat(listed.passed()).as(listed.summary()).isTrue();
+
+        // No form at all.
+        final EvalScore unasked = new EvalScore("t");
+        unasked.scoreTimeline(evalCase, timelineRun(List.of(), Map.of()));
+        assertThat(unasked.summary()).contains("no form asked which data sources to read")
+                .contains("no events.csv was written");
+    }
+
+    // A confirming form listing data sources.
+    private static Map<String, Object> indexes(final List<String> names) {
+        return Map.of("type", "object", "properties", Map.of("indexes", Map.of("type", "array", "items",
+                Map.of("type", "string", "enum", names))));
+    }
+
+    @Test
+    void aTimelinesTablesAreReadWithTheirQuotedValuesWhole() {
+        assertThat(EvalTimelineScore.csv("a,b,c\n1,\"x, \"\"y\"\"\",\n")).containsExactly(Map.of("a", "1", "b",
+                "x, \"y\"", "c", ""));
+        assertThat(EvalTimelineScore.csv("")).isEmpty();
+        // A case without expected.timeline scores nothing of it.
+        final EvalScore none = new EvalScore("t");
+        none.scoreTimeline(Map.of("expected", Map.of()), timelineRun(List.of(), Map.of()));
+        assertThat((List<?>) none.toMap().getOrDefault("question_checks", List.of())).isEmpty();
+    }
+
+    // A timeline case of pat's, its expected.timeline the checks given.
+    private static Map<String, Object> timelineCase(final Map<String, Object> checks) {
+        final Map<String, Object> timeline = new LinkedHashMap<>(checks);
+        timeline.put("entity", "pat");
+        return Map.of("kind", "question", "expected", Map.of("timeline", timeline));
+    }
+
+    // A run whose timeline wrote the files given (by name, in pat's folder), with no baseline or forms.
+    private static EvalTimelineScore.Run timelineRun(final List<EvalScore.ToolUse> calls,
+                                                     final Map<String, String> files) {
+        return new EvalTimelineScore.Run(calls, path -> path.startsWith("/outputs/timelines/pat/")
+                ? files.get(path.substring("/outputs/timelines/pat/".length()))
+                : null, null, null);
+    }
+
+    @Test
+    void aFindingMatchesOnEachKeyGiven() {
+        final Map<String, Object> peers = finding("peers", "events_vs_peers", "2026-06-01 to 2026-06-26",
+                "46 events per day against a median of 2.7 for 5 peers in Organisation 'Finance'");
+        assertThat(EvalScore.findingMatches(Map.of("kind", "PEERS", "evidence_contains", "Organisation 'Finance'"),
+                peers)).isTrue();
+        assertThat(EvalScore.findingMatches(Map.of("evidence_contains", "Organisation 'Sales'"), peers)).isFalse();
+        assertThat(EvalScore.findingMatches(Map.of("window", "RO"), finding("location", "country:new", "RO", "x")))
+                .isTrue();
+        // A window with no date matches no date condition.
+        assertThat(EvalScore.findingMatches(Map.of("near", "2026-04-08"), finding("location", "country:new", "RO",
+                "x"))).isFalse();
+        assertThat(EvalScore.findingMatches(Map.of("window_in", List.of("2026-06-01", "2026-06-01")), peers))
+                .isTrue();
+    }
+
+    // A matcher in the order given, as a case's YAML reads.
+    private static Map<String, Object> ordered(final Object... pairs) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 0; i < pairs.length; i += 2) {
+            map.put(String.valueOf(pairs[i]), pairs[i + 1]);
+        }
+        return map;
+    }
+
+    private static Map<String, Object> finding(final String kind,
+                                               final String feature,
+                                               final String window,
+                                               final String evidence) {
+        return Map.of("kind", kind, "feature", feature, "window", window, "evidence", evidence);
+    }
+
+    private static Map<String, Object> question(final boolean ordered) {
+        return Map.of("kind", "question", "expected", Map.of("tools_used", List.of("esql_query"), "answer",
+                Map.of("ordered", ordered, "total_groups", 12, "rows", List.of(
+                        List.of("alice", "box.com", 300), List.of("bob", "github.com", 200)))));
+    }
+}

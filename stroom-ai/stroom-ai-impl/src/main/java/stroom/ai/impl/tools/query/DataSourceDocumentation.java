@@ -1,0 +1,713 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.query;
+
+import stroom.ai.impl.tools.StroomLinks;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.DocumentDocumentationTool;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.importexport.shared.Dependency;
+import stroom.importexport.shared.DependencyCriteria;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+/// The documentation that says what a data source's fields hold, which its field names often don't: e.g. that an
+/// index's `document.description` is a tweet's text. Gathered from where people and the build tools write it:
+///
+/// - the data source's own Documentation tab;
+/// - the Documentation docs in its folder that are about it: named after it (where the build tools document an
+///   existing index) or after a pipeline that feeds it (where they document an index's build), or that mention it;
+/// - for each pipeline that feeds it, the pipeline's Documentation tab and the Documentation doc beside the pipeline
+///   with its name (where the build tools document a pipeline they build, with a field mapping from the source's
+///   fields to the index's);
+/// - for a View, the same for the index or pipeline it reads.
+///
+/// The pipelines that feed an index are those that depend on it, and for an Elastic index those that use its
+/// cluster and write to its Elasticsearch index by name (`indexName`), as an Elastic indexing filter does without
+/// naming the index doc.
+///
+/// Read as the user: every document is checked for View, links in the dependency graph are checked at both ends,
+/// and what can't be read is left out without saying it exists. Every check fails closed.
+public class DataSourceDocumentation {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSourceDocumentation.class);
+
+    /// The most characters of documentation given for one data source.
+    static final int MAX_CHARS = 20_000;
+    /// The most characters of one document's documentation given.
+    static final int MAX_CHARS_PER_DOC = 8_000;
+    /// The most pipelines feeding a data source whose documentation is read.
+    static final int MAX_PIPELINES = 5;
+    /// The most pipelines using an Elastic index's cluster that are read to find those writing to it.
+    static final int MAX_CLUSTER_PIPELINES = 100;
+    /// The most Documentation docs in a data source's folder that are read to find those about it.
+    static final int MAX_FOLDER_DOCS = 50;
+    /// The most docs in its folder given only because they mention it (not named after it or a pipeline).
+    static final int MAX_MENTIONING_DOCS = 3;
+    // One step of a plain path: an element's name, with no predicate, axis or function.
+    private static final Pattern ELEMENT_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_.\\-]*");
+    // An HTML comment, which may span lines; an unclosed one runs to the end.
+    private static final Pattern COMMENT = Pattern.compile("<!--.*?(-->|\\z)", Pattern.DOTALL);
+
+    /// The property of an Elastic indexing filter that names the Elasticsearch index it writes to.
+    static final String INDEX_NAME_PROPERTY = "indexName";
+
+    private final DocumentAccess documentAccess;
+    private final DataSourceAccess dataSourceAccess;
+    private final Provider<DocFinder> docFinderProvider;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
+    private final XsltStages xsltStages;
+
+    @Inject
+    DataSourceDocumentation(final DocumentAccess documentAccess,
+                            final DataSourceAccess dataSourceAccess,
+                            final Provider<DocFinder> docFinderProvider,
+                            final Provider<DocDependencyService> docDependencyServiceProvider,
+                            final XsltStages xsltStages) {
+        this.documentAccess = documentAccess;
+        this.dataSourceAccess = dataSourceAccess;
+        this.docFinderProvider = docFinderProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
+        this.xsltStages = xsltStages;
+    }
+
+    /// Gathers a data source's documentation, and records in the audit log the documents read for it.
+    ///
+    /// @param session    The session, e.g. the chat.
+    /// @param dataSource A data source the user can use.
+    /// @param purpose    Why, e.g. "Documentation read by the describe_data_source tool".
+    /// @return Each piece of documentation, in the order above, with what it documents. Empty if there is none.
+    public List<Documented> find(final ToolSession session, final DocRef dataSource, final String purpose) {
+        final Map<String, Documented> found = new LinkedHashMap<>();
+        // The data source's own Documentation tab, which Use is enough to see, as the query editor shows it.
+        dataSourceAccess.documentation(dataSource).ifPresent(text ->
+                found.put("tab:" + dataSource.getUuid(), new Documented(dataSource, dataSource,
+                        "its Documentation tab", text)));
+
+        final List<DocRef> sources = sources(dataSource);
+        // A View reads an index or a pipeline's output: theirs say what its fields hold too.
+        sources.stream().skip(1).forEach(source -> ownTab(source, "the Documentation tab of the index it reads")
+                .ifPresent(doc -> found.putIfAbsent("tab:" + source.getUuid(), doc)));
+        final List<String> mentions = new ArrayList<>();
+        final List<DocRef> pipelines = pipelines(sources, mentions);
+        for (final DocRef source : sources) {
+            folderDocs(source, pipelines, mentions).forEach(doc -> found.putIfAbsent(doc.from().getUuid(), doc));
+        }
+        for (final DocRef pipeline : pipelines) {
+            ownTab(pipeline, "the Documentation tab of a pipeline that writes to it")
+                    .ifPresent(doc -> found.putIfAbsent("tab:" + pipeline.getUuid(), doc));
+            besideDoc(pipeline).ifPresent(doc -> found.putIfAbsent(doc.from().getUuid(), doc));
+        }
+
+        // Some hold nothing but what the build tools keep hidden.
+        final List<Documented> docs = found.values().stream()
+                .filter(doc -> !doc.text().isBlank())
+                .toList();
+        final List<DocRef> read = docs.stream()
+                .map(Documented::from)
+                .filter(docRef -> !docRef.equals(dataSource))
+                .distinct()
+                .toList();
+        if (!read.isEmpty()) {
+            documentAccess.logViews(session, read, purpose);
+        }
+        return docs;
+    }
+
+    /// @param dataSource A data source the user can use.
+    /// @return The pipelines the user can view that feed it (at most [#MAX_PIPELINES]), as [#find] reads their
+    /// documentation: for a View, those feeding the index it reads.
+    public List<DocRef> feedingPipelines(final DocRef dataSource) {
+        return pipelines(sources(dataSource), new ArrayList<>());
+    }
+
+    /// The index plans of the pipelines feeding a data source, each read once: for the many lookups of one call
+    /// (a field for the user, the host, the Action...), so the pipelines and their plans aren't read again for each.
+    ///
+    /// @param dataSource A data source the user can use.
+    /// @return The pipelines feeding it ([#feedingPipelines]) and the index plan kept with each one's indexing XSLT.
+    public FeedingPlans feedingPlans(final DocRef dataSource) {
+        return plansOf(feedingPipelines(dataSource));
+    }
+
+    /// @param pipelines Pipelines feeding an index ([#feedingPipelines]).
+    /// @return The index plan kept with each one's indexing XSLT, each read once (only those the user can view).
+    public FeedingPlans plansOf(final List<DocRef> pipelines) {
+        final Map<DocRef, List<FieldPlan>> plans = new LinkedHashMap<>();
+        for (final DocRef pipeline : NullSafe.list(pipelines)) {
+            plans.putIfAbsent(pipeline, plans(pipeline));
+        }
+        return new FeedingPlans(List.copyOf(plans.keySet()), plans);
+    }
+
+    /// Where a field of an index comes from, by the index plan kept with the indexing XSLT of the first pipeline
+    /// feeding it whose plan has it (as the build tools keep it). Several pipelines may feed one index, each with
+    /// its own plan: [FeedingPlans#planned] gives every pipeline's.
+    ///
+    /// @param pipelines The pipelines feeding the index ([#feedingPipelines]).
+    /// @param field     The index field's name.
+    /// @return The field as planned, with the pipeline whose plan it is in; empty if no plan the user can read
+    /// has it.
+    public Optional<Planned> planned(final List<DocRef> pipelines, final String field) {
+        return plansOf(pipelines).planned(field).stream().findFirst();
+    }
+
+    /// The reverse of [#planned]: the fields of an index whose source, in the index plan kept with the indexing XSLT
+    /// of a pipeline feeding it, is an event-logging path, e.g. the field holding `EventSource/User/Id`. Only a
+    /// plain field whose source is the path itself is taken ([#sourceIs]): not one whose source is more than the
+    /// path (a union, `@StreamId`, a test), an item of an array of objects, a constant, nor one with a transform,
+    /// as none of those holds the path's value as it is. Plans the user can't view are never read.
+    ///
+    /// @param pipelines The pipelines feeding the index ([#feedingPipelines]).
+    /// @param path      The path from the Event element, e.g. `EventSource/User/Id`; a step `*` matches any one
+    ///                  element, e.g. `EventDetail/*/Action`.
+    /// @return Each such field with the pipeline whose plan it is in, in the pipelines' and plans' order; empty if
+    /// none.
+    public List<Planned> plannedFrom(final List<DocRef> pipelines, final String path) {
+        return plansOf(pipelines).plannedFrom(path);
+    }
+
+    /// @param source A planned field's source, an XPath from the Event element.
+    /// @param path   An event-logging path, a step `*` matching any one element.
+    /// @return True if the source is that path, step for step (a leading `./` or `/` and spaces aside).
+    public static boolean sourceIs(final String source, final String path) {
+        if (NullSafe.isBlankString(source) || NullSafe.isBlankString(path)) {
+            return false;
+        }
+        final String[] given = plainPath(source).split("/", -1);
+        final String[] wanted = plainPath(path).split("/", -1);
+        if (given.length != wanted.length) {
+            return false;
+        }
+        for (int i = 0; i < given.length; i++) {
+            if (!ELEMENT_NAME.matcher(given[i]).matches()
+                || !("*".equals(wanted[i]) || wanted[i].equals(given[i]))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // A path without spaces round it or a leading ./ or /.
+    private static String plainPath(final String path) {
+        String plain = path.strip();
+        if (plain.startsWith("./")) {
+            plain = plain.substring(2);
+        } else if (plain.startsWith("/")) {
+            plain = plain.substring(1);
+        }
+        return plain;
+    }
+
+    // The index plans kept with a pipeline's indexing XSLTs, read from the pipeline as Stroom runs it (an XSLT
+    // inherited from its template included), each the user can view; a plan that doesn't read is none. Where no XSLT
+    // can be told to index, any XSLT's index plan. A pipeline whose template can't be read has none (failing
+    // closed: what it inherits can't be known).
+    private List<FieldPlan> plans(final DocRef pipeline) {
+        final List<FieldPlan> out = new ArrayList<>();
+        final MergedPipeline merged = merged(pipeline).orElse(null);
+        if (merged == null) {
+            return out;
+        }
+        final List<StagedXslt> staged = xsltStages.classify(merged);
+        final List<StagedXslt> indexing = XsltStages.of(staged, Stage.INDEXING);
+        for (final StagedXslt xslt : indexing.isEmpty()
+                ? staged
+                : indexing) {
+            if (xslt.xslt() == null) {
+                continue;
+            }
+            documentAccess.read(xslt.xslt(), XsltDoc.class)
+                    .flatMap(doc -> KeptMapping.readMapping(doc.getDescription()))
+                    .filter(kept -> "index".equals(kept.kind()))
+                    .flatMap(kept -> plan(kept.payload()))
+                    .ifPresent(out::add);
+        }
+        return out;
+    }
+
+    // The pipeline as Stroom runs it, read as the user; empty where it, or its template, can't be read.
+    private Optional<MergedPipeline> merged(final DocRef pipeline) {
+        try {
+            return MergedPipeline.load(documentAccess, pipeline.getUuid());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read pipeline " + pipeline, e);
+            return Optional.empty();
+        }
+    }
+
+    // The plan, or empty where it doesn't read.
+    private static Optional<FieldPlan> plan(final Map<String, Object> payload) {
+        try {
+            return Optional.of(FieldPlan.fromJson(payload));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read a kept index plan", e);
+            return Optional.empty();
+        }
+    }
+
+    /// The field rows of the documentation's Markdown tables, as the build tools write a field mapping: a table
+    /// whose first column names each field (`` `name` ``), with columns such as Description, From and Sample values.
+    ///
+    /// @param docs The data source's documentation, as [#find] gave it.
+    /// @return Each field's first row, by its name: each cell by its column's name.
+    public static Map<String, Map<String, String>> fieldRows(final List<Documented> docs) {
+        final Map<String, Map<String, String>> out = new LinkedHashMap<>();
+        for (final Documented doc : docs) {
+            List<String> head = null;
+            boolean rule = false;
+            for (final String line : doc.text().split("\n", -1)) {
+                final String row = line.strip();
+                if (!row.startsWith("|")) {
+                    head = null;
+                    continue;
+                }
+                final List<String> cells = cells(row);
+                if (head == null) {
+                    head = cells;
+                    rule = false;
+                    continue;
+                }
+                if (!rule) {
+                    rule = true;
+                    continue;
+                }
+                if (cells.isEmpty()) {
+                    continue;
+                }
+                final String name = ToolText.strip(cells.getFirst(), "`").strip();
+                if (name.isEmpty() || out.containsKey(name)) {
+                    continue;
+                }
+                final Map<String, String> byColumn = new LinkedHashMap<>();
+                for (int i = 1; i < Math.min(head.size(), cells.size()); i++) {
+                    byColumn.put(head.get(i), cells.get(i));
+                }
+                out.put(name, byColumn);
+            }
+        }
+        return out;
+    }
+
+    // A Markdown table row's cells, stripped; an escaped pipe (\|) is part of its cell.
+    private static List<String> cells(final String row) {
+        final List<String> out = new ArrayList<>();
+        final StringBuilder cell = new StringBuilder();
+        final String inner = row.substring(1, row.endsWith("|") && row.length() > 1
+                ? row.length() - 1
+                : row.length());
+        for (int i = 0; i < inner.length(); i++) {
+            final char ch = inner.charAt(i);
+            if (ch == '\\' && i + 1 < inner.length() && inner.charAt(i + 1) == '|') {
+                cell.append('|');
+                i++;
+            } else if (ch == '|') {
+                out.add(cell.toString().strip());
+                cell.setLength(0);
+            } else {
+                cell.append(ch);
+            }
+        }
+        out.add(cell.toString().strip());
+        return out;
+    }
+
+    // The data source, and for a View the indexes it reads (not a pipeline).
+    private List<DocRef> sources(final DocRef dataSource) {
+        final List<DocRef> sources = new ArrayList<>();
+        sources.add(dataSource);
+        if ("View".equals(dataSource.getType())) {
+            linked(dataSource, false).stream()
+                    .filter(docRef -> !PipelineDoc.TYPE.equals(docRef.getType()))
+                    .forEach(sources::add);
+        }
+        return sources;
+    }
+
+    // The pipelines feeding the sources, at most MAX_PIPELINES; an Elastic index's Elasticsearch index name is
+    // added to the mentions.
+    private List<DocRef> pipelines(final List<DocRef> sources, final List<String> mentions) {
+        final List<DocRef> pipelines = new ArrayList<>();
+        for (final DocRef source : sources) {
+            // Pipelines that write to an index depend on it; a View depends on the pipeline it uses.
+            final boolean view = "View".equals(source.getType());
+            final List<DocRef> feeding = new ArrayList<>(linked(source, !view));
+            if (ElasticIndexDoc.TYPE.equals(source.getType())) {
+                feeding.addAll(elasticPipelines(source, mentions));
+            }
+            for (final DocRef pipeline : feeding) {
+                if (PipelineDoc.TYPE.equals(pipeline.getType()) && !pipelines.contains(pipeline)
+                    && pipelines.size() < MAX_PIPELINES) {
+                    pipelines.add(pipeline);
+                }
+            }
+        }
+        return pipelines;
+    }
+
+    /// @param text Markdown, or null.
+    /// @return It without HTML comments (`<!-- … -->`), and without the blank lines they leave.
+    static String withoutComments(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return COMMENT.matcher(text).replaceAll("").replaceAll("\\n{3,}", "\n\n").strip();
+    }
+
+    /// @param links How to link to the documents, for the caller.
+    /// @param docs  The data source's documentation, as [#find(int, DocRef, String)] gave it.
+    /// @return It, for the agent, at most [#MAX_CHARS] in all; empty if there is none.
+    public static String note(final StroomLinks links, final List<Documented> docs) {
+        if (docs.isEmpty()) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("\n\nDocumentation (what its fields hold, e.g. a field "
+                                                   + "mapping from the source's fields; use it to pick fields):");
+        int used = 0;
+        for (final Documented doc : docs) {
+            sb.append("\n\n### ").append(links.document(doc.from())).append(" (")
+                    .append(doc.from().getType()).append("): ").append(doc.what());
+            if (!doc.from().equals(doc.of())) {
+                sb.append(" of ").append(doc.of().getType()).append(" '").append(doc.of().getName()).append('\'');
+            }
+            sb.append('\n');
+            final int room = Math.max(0, Math.min(MAX_CHARS_PER_DOC, MAX_CHARS - used));
+            final String text = doc.text().strip();
+            sb.append(text, 0, Math.min(text.length(), room));
+            if (text.length() > room) {
+                sb.append("\n[cut short; read the rest with read_document or document_documentation, uuid ")
+                        .append(doc.from().getUuid()).append(']');
+            }
+            used += Math.min(text.length(), room);
+        }
+        return sb.toString();
+    }
+
+    /// @param index    An Elastic index doc.
+    /// @param mentions Given the Elasticsearch index name, to look for in documentation.
+    /// @return The pipelines the user can view that use its cluster and write to its Elasticsearch index by name.
+    /// Empty if the user can't view the index doc, as its settings can't then be read.
+    private List<DocRef> elasticPipelines(final DocRef index, final List<String> mentions) {
+        final ElasticIndexDoc doc = documentAccess.read(index, ElasticIndexDoc.class).orElse(null);
+        if (doc == null || NullSafe.isBlankString(doc.getIndexName()) || doc.getClusterRef() == null) {
+            return List.of();
+        }
+        mentions.add(doc.getIndexName());
+        final Pattern indexName = wildcard(doc.getIndexName());
+        final List<DocRef> writing = new ArrayList<>();
+        final List<DocRef> usingCluster = linked(doc.getClusterRef(), true).stream()
+                .filter(docRef -> PipelineDoc.TYPE.equals(docRef.getType()))
+                .limit(MAX_CLUSTER_PIPELINES)
+                .toList();
+        for (final DocRef pipeline : usingCluster) {
+            // Its effective properties: an index name it inherits from its template counts.
+            final boolean writes = merged(pipeline).map(MergedPipeline::properties).orElse(Map.of()).entrySet()
+                    .stream()
+                    .filter(property -> INDEX_NAME_PROPERTY.equals(property.getKey().name()))
+                    .map(Map.Entry::getValue)
+                    .anyMatch(name -> name instanceof final String text && indexName.matcher(text).matches());
+            if (writes) {
+                writing.add(pipeline);
+            }
+        }
+        return writing;
+    }
+
+    // An Elasticsearch index name, which may have `*` wild cards, as a pattern matching the names it covers.
+    private static Pattern wildcard(final String indexName) {
+        final StringBuilder sb = new StringBuilder();
+        for (final String part : indexName.strip().split("\\*", -1)) {
+            if (!sb.isEmpty()) {
+                sb.append(".*");
+            }
+            sb.append(Pattern.quote(part));
+        }
+        return Pattern.compile(sb.toString(), Pattern.CASE_INSENSITIVE);
+    }
+
+    /// @param source    A data source, or the index a View reads.
+    /// @param pipelines The pipelines that feed it.
+    /// @param mentions  Other names for it, e.g. its Elasticsearch index name.
+    /// @return The Documentation docs in its folder the user can view that are named after it or a pipeline that
+    /// feeds it, or whose text mentions its name, UUID or other names.
+    private List<Documented> folderDocs(final DocRef source,
+                                        final List<DocRef> pipelines,
+                                        final List<String> mentions) {
+        final DocRef folder = documentAccess.parent(source).orElse(null);
+        if (folder == null) {
+            return List.of();
+        }
+        final Set<String> names = new HashSet<>();
+        NullSafe.consume(source.getName(), names::add);
+        pipelines.forEach(pipeline -> NullSafe.consume(pipeline.getName(), names::add));
+        final List<String> words = new ArrayList<>(mentions);
+        NullSafe.consume(source.getName(), words::add);
+        words.add(source.getUuid());
+
+        final List<Documented> docs = new ArrayList<>();
+        final List<Documented> mentioning = new ArrayList<>();
+        final List<ExplorerNode> children = documentAccess.children(folder).stream()
+                .filter(node -> DocumentationDoc.TYPE.equals(node.getDocRef().getType()))
+                .limit(MAX_FOLDER_DOCS)
+                .toList();
+        for (final ExplorerNode child : children) {
+            final DocRef docRef = child.getDocRef();
+            final String text = documentAccess.read(docRef, DocumentationDoc.class)
+                    .map(DocumentationDoc::getData)
+                    .filter(NullSafe::isNonBlankString)
+                    .orElse(null);
+            if (text == null) {
+                continue;
+            }
+            final boolean named = names.contains(docRef.getName());
+            final String lower = text.toLowerCase(Locale.ROOT);
+            final boolean mentioned = words.stream()
+                    .filter(NullSafe::isNonBlankString)
+                    .anyMatch(word -> lower.contains(word.toLowerCase(Locale.ROOT)));
+            if (named) {
+                docs.add(new Documented(docRef, source, "the Documentation doc beside it", text));
+            } else if (mentioned && mentioning.size() < MAX_MENTIONING_DOCS) {
+                mentioning.add(new Documented(docRef, source, "a Documentation doc beside it that mentions it",
+                        text));
+            }
+        }
+        // Those named after it first, as the most likely to be about it.
+        docs.addAll(mentioning);
+        return docs;
+    }
+
+    // A document's Documentation tab, if the user can view it and it has one.
+    private Optional<Documented> ownTab(final DocRef docRef, final String what) {
+        if (!documentAccess.canView(docRef)) {
+            return Optional.empty();
+        }
+        return documentAccess.read(docRef)
+                .flatMap(DocumentDocumentationTool::description)
+                .filter(NullSafe::isNonBlankString)
+                .map(text -> new Documented(docRef, docRef, what, text));
+    }
+
+    // The Documentation doc with the same name as a pipeline that writes to the data source, in the pipeline's folder,
+    // if the user can view it.
+    private Optional<Documented> besideDoc(final DocRef docRef) {
+        if (NullSafe.isBlankString(docRef.getName())) {
+            return Optional.empty();
+        }
+        try {
+            final String folder = AgentInstructions.normalise(documentAccess.path(docRef));
+            for (final DocRef doc : NullSafe.list(docFinderProvider.get().findByName(DocumentationDoc.TYPE,
+                    docRef.getName(), false))) {
+                if (docRef.getName().equals(doc.getName())
+                    && folder.equals(AgentInstructions.normalise(documentAccess.path(doc)))) {
+                    final Optional<String> text = documentAccess.read(doc, DocumentationDoc.class)
+                            .map(DocumentationDoc::getData)
+                            .filter(NullSafe::isNonBlankString);
+                    if (text.isPresent()) {
+                        return Optional.of(new Documented(doc, docRef,
+                                "the Documentation doc beside a pipeline that writes to it", text.get()));
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the documentation beside " + docRef, e);
+        }
+        return Optional.empty();
+    }
+
+    /// @param docRef       A document.
+    /// @param toDependants True for the documents that use it, false for those it uses.
+    /// @return Them, each checked for View at both ends, as the dependency graph's own check lets a link through
+    /// if checking fails.
+    private List<DocRef> linked(final DocRef docRef, final boolean toDependants) {
+        final String qualifier = (toDependants
+                ? DependencyCriteria.FIELD_DEF_TO_UUID
+                : DependencyCriteria.FIELD_DEF_FROM_UUID).getFilterQualifier();
+        try {
+            final ResultPage<Dependency> page = docDependencyServiceProvider.get().fetchDependencies(
+                    new DependencyCriteria(new PageRequest(0, 100), null, qualifier + ":=" + docRef.getUuid()),
+                    Set.of());
+            final List<DocRef> linked = new ArrayList<>();
+            for (final Dependency dependency : NullSafe.list(NullSafe.get(page, ResultPage::getValues))) {
+                final DocRef self = toDependants
+                        ? dependency.getTo()
+                        : dependency.getFrom();
+                final DocRef other = toDependants
+                        ? dependency.getFrom()
+                        : dependency.getTo();
+                if (self != null && other != null && docRef.getUuid().equals(self.getUuid())
+                    && documentAccess.canView(other) && !linked.contains(other)) {
+                    linked.add(other);
+                }
+            }
+            return linked;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the links of " + docRef, e);
+            return List.of();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The index plans of the pipelines feeding an index, read once. Several pipelines may feed one index, each
+    /// with its own plan: where their plans agree on a field, one field; where they differ, each pipeline's.
+    ///
+    /// @param pipelines The pipelines, in the order found.
+    /// @param plans     The index plans kept with each one's indexing XSLT (none where it keeps none, or can't be
+    ///                  read).
+    public record FeedingPlans(List<DocRef> pipelines, Map<DocRef, List<FieldPlan>> plans) {
+
+        /// Copies the collections.
+        public FeedingPlans {
+            pipelines = List.copyOf(NullSafe.list(pipelines));
+            plans = Map.copyOf(NullSafe.map(plans));
+        }
+
+        /// @return No pipelines, no plans.
+        public static FeedingPlans none() {
+            return new FeedingPlans(List.of(), Map.of());
+        }
+
+        /// @return True if no pipeline's plan was read.
+        public boolean isEmpty() {
+            return plans.values().stream().allMatch(List::isEmpty);
+        }
+
+        /// @param field An index field's name.
+        /// @return The field as each pipeline's plan has it, in the pipelines' order (the first plan of each that
+        /// has it); empty if none has it.
+        public List<Planned> planned(final String field) {
+            final List<Planned> out = new ArrayList<>();
+            for (final DocRef pipeline : pipelines) {
+                for (final FieldPlan plan : plans.getOrDefault(pipeline, List.of())) {
+                    final Optional<PlannedField> found = plan.leafFields().stream()
+                            .filter(leaf -> leaf.name().equals(field))
+                            .findFirst();
+                    if (found.isPresent()) {
+                        out.add(new Planned(found.get(), pipeline));
+                        break;
+                    }
+                }
+            }
+            return out;
+        }
+
+        /// As [DataSourceDocumentation#plannedFrom], over these plans.
+        ///
+        /// @param path An event-logging path; a step `*` matches any one element.
+        /// @return Each field whose source is the path, with the pipeline whose plan it is in, in the pipelines'
+        /// and plans' order; empty if none.
+        public List<Planned> plannedFrom(final String path) {
+            final List<Planned> out = new ArrayList<>();
+            if (NullSafe.isBlankString(path)) {
+                return out;
+            }
+            for (final DocRef pipeline : pipelines) {
+                for (final FieldPlan plan : plans.getOrDefault(pipeline, List.of())) {
+                    for (final PlannedField field : NullSafe.list(plan.fields())) {
+                        if (field.items().isEmpty() && field.constant() == null && field.transform() == null
+                            && sourceIs(field.source(), path)) {
+                            out.add(new Planned(field, pipeline));
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+
+        /// The pipelines feeding the index with plans, by the field each one's plan maps a path to: one entry
+        /// where they agree, one for each field where they differ.
+        ///
+        /// @param path An event-logging path.
+        /// @return The pipelines by the field their plan maps it to (only those mapping it), in the order found.
+        public Map<String, List<DocRef>> fieldsFrom(final String path) {
+            return byField(plannedFrom(path));
+        }
+
+        /// @param planned Fields as plans have them ([#planned], [#plannedFrom]).
+        /// @return The pipelines by field (each pipeline once, at its first field), in the order given.
+        public static Map<String, List<DocRef>> byField(final List<Planned> planned) {
+            final Map<String, List<DocRef>> out = new LinkedHashMap<>();
+            final Set<DocRef> seen = new HashSet<>();
+            for (final Planned one : NullSafe.list(planned)) {
+                if (seen.add(one.pipeline())) {
+                    out.computeIfAbsent(one.field().name(), k -> new ArrayList<>()).add(one.pipeline());
+                }
+            }
+            return out;
+        }
+    }
+
+
+    /// A field of an index as the plan kept with a feeding pipeline's indexing XSLT has it.
+    ///
+    /// @param field    The planned field: its source path, type and description.
+    /// @param pipeline The pipeline.
+    public record Planned(PlannedField field, DocRef pipeline) {
+
+    }
+
+
+    /// A piece of a data source's documentation.
+    ///
+    /// @param from The document it is in, e.g. a Documentation doc or a pipeline.
+    /// @param of   The document it documents, e.g. the data source or a pipeline that feeds it.
+    /// @param what Where in `from` it is, e.g. "its Documentation tab".
+    /// @param text The documentation.
+    public record Documented(DocRef from, DocRef of, String what, String text) {
+
+        /// The text without HTML comments, where the build tools keep what they need (a mapping, field
+        /// descriptions, an index template), hidden from people and only noise to the agent.
+        public Documented {
+            text = withoutComments(text);
+        }
+    }
+}

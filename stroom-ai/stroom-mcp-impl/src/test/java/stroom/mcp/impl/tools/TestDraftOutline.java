@@ -1,0 +1,393 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.ToolOutputs;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.LargeResults;
+import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.util.json.JsonUtil;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+
+/// A draft too large for a client to take whole is saved to the workspace, and its result gives the mapping's
+/// outline: seen in eval cases 35, 36 and 56 on Haiku, drafts of 74,000 to 168,000 characters past Claude Code's
+/// limit, so the agent never saw them and wrote mappings of its own.
+class TestDraftOutline {
+
+    // A draft past it only by its long Description, which the outline cuts.
+    private static final int LIMIT = 4_000;
+    private static final String LONG_TEXT = "A user logs on. ".repeat(300);
+    private static final ToolCaller CLIENT = new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "claude-code");
+
+    @Test
+    void stroomAisOwnChatIsGivenTheDraftWhole() {
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        final Map<String, Object> result = drafted();
+        final Map<String, Object> before = new LinkedHashMap<>(result);
+
+        DraftOutline.outlineIfLarge(ToolCaller.STROOM_AI_CHAT, result, Optional.of(new SessionWorkspace(chats, 1)),
+                "acme-v1", 100);
+
+        assertThat(result).isEqualTo(before);
+        Mockito.verifyNoInteractions(chats);
+    }
+
+    @Test
+    void aDraftWithinTheLimitIsGivenWhole() {
+        final Map<String, Object> result = drafted();
+        final Map<String, Object> before = new LinkedHashMap<>(result);
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.empty(), "acme-v1", 1_000_000);
+
+        assertThat(result).isEqualTo(before);
+    }
+
+    @Test
+    void aDraftPastTheLimitIsSavedWholeAndOutlined() {
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> result = drafted();
+        final Object mapping = result.get("mapping");
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "acme v1",
+                LIMIT);
+
+        final ArgumentCaptor<String> written = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<WorkspacePath> path = ArgumentCaptor.forClass(WorkspacePath.class);
+        Mockito.verify(chats).write(anyInt(), path.capture(), written.capture(), any());
+        assertThat(path.getValue().toString()).isEqualTo("/outputs/drafts/acme_v1.json");
+        assertThat(JsonUtil.readValue(written.getValue(), Map.class)).isEqualTo(mapping);
+        assertThat(result).doesNotContainKey("mapping")
+                .containsEntry("mapping_saved", "/outputs/drafts/acme_v1.json")
+                .containsEntry("notes", List.of("a note"));
+        assertThat(result.get("mapping_outline")).isEqualTo(Map.of(
+                "input", "json",
+                "common", List.of("EventTime/TimeCreated choose from time, ts (yours to decide)",
+                        "EventDetail/Description <- msg"),
+                "events", List.of(
+                        Map.of("name", "Authenticate-Logon", "type_id", "= 'Authenticate-Logon'",
+                                "recognised_by", List.of("action = login"),
+                                "description", "= '" + LONG_TEXT.substring(0, 80) + "...'",
+                                "vendor_code_data", List.of("action <- action"),
+                                "writes", List.of("EventDetail/Authenticate/Action = 'Logon'"),
+                                "other_data", 2),
+                        Map.of("name", "uncatalogued", "type_id", "= 'Unknown'",
+                                "recognised_by", List.of("uncatalogued records (no other rule recognises them)"),
+                                "description", "(common's) <- msg",
+                                "writes", List.of(), "other_data", 0, "catch_all", true))));
+        assertThat((String) result.get("hint")).startsWith("The draft is too large to show whole here")
+                .contains("saved whole, for this session, at /outputs/drafts/acme_v1.json", "changes=", "jq")
+                .endsWith("Build it as drafted.");
+    }
+
+    @Test
+    void theHintSaysTheDraftIsKeptForLaterSessionsOnlyWithABuild() {
+        // From a review: it always said "kept with the build, for your later sessions too", and promised the saved
+        // file, in the session's own workspace, to later sessions.
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> withBuild = drafted();
+        DraftOutline.outlineIfLarge(CLIENT, withBuild, Optional.of(new SessionWorkspace(chats, 1)), "acme-v1",
+                LIMIT);
+        final Map<String, Object> noBuild = drafted();
+        DraftOutline.outlineIfLarge(CLIENT, noBuild, Optional.of(new SessionWorkspace(chats, 1)), null, LIMIT);
+
+        assertThat((String) withBuild.get("hint"))
+                .contains("saved whole, for this session, at /outputs/drafts/acme-v1.json",
+                        "The server keeps the draft with the build, for your later sessions too");
+        assertThat((String) noBuild.get("hint"))
+                .contains("saved whole, for this session, at /outputs/drafts/",
+                        "The server keeps the draft for this session only (draft with build= to keep it for your "
+                        + "later sessions)")
+                .doesNotContain("later sessions too");
+    }
+
+    @Test
+    void theVendorsCodeIsReadAsTheDraftWritesItNotFromTheSourceTypeField() {
+        // From a review: the outline had its own copy of the rule, which took the build's source type field for
+        // vendor's code too.
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "json");
+        mapping.put("events", List.of(Map.of("name", "Authenticate-Logon",
+                "when", List.of(Map.of("field", "log_type", "equals", "auth"),
+                        Map.of("field", "action", "equals", "login")),
+                "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Authenticate-Logon"),
+                        Map.of("path", "EventDetail/Authenticate/Data", "data_name", "log_type", "field",
+                                "log_type"),
+                        Map.of("path", "EventDetail/Authenticate/Data", "data_name", "action", "field", "action"),
+                        Map.of("path", "EventDetail/Authenticate/Data", "data_name", "detail", "field",
+                                "detail")))));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", mapping);
+        result.put("hint", LONG_TEXT);
+        final Catalogue catalogue = new Catalogue(List.of(), Catalogue.CatchAll.PROPOSED,
+                new Catalogue.Scope("log_type", List.of("auth")));
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "acme-v1",
+                catalogue, LIMIT);
+
+        final Map<String, Object> outline = JsonValues.map(result.get("mapping_outline"));
+        final Map<String, Object> rule = JsonValues.maps(outline.get("events")).getFirst();
+        assertThat(rule).containsEntry("vendor_code_data", List.of("action <- action"))
+                .containsEntry("other_data", 2);
+    }
+
+    @Test
+    void anOutlinePastTheLimitListsTheRulesThatFitAndSaysHowManyMore() {
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        for (int i = 0; i < 200; i++) {
+            rules.add(Map.of("name", "Process-Code" + i,
+                    "when", List.of(Map.of("field", "code", "equals", "c" + i)),
+                    "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Process-Code" + i),
+                            Map.of("path", "EventDetail/Process/Action", "value", "Execute"),
+                            Map.of("path", "EventDetail/Process/Data", "data_name", "code", "field", "code"))));
+        }
+        result.put("mapping", Map.of("input", "json", "events", rules));
+        final int limit = 6_000;
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "big", limit);
+
+        assertThat(JsonUtil.writeValueAsString(result, false).length()).isLessThanOrEqualTo(limit);
+        @SuppressWarnings("unchecked") final Map<String, Object> outline =
+                (Map<String, Object>) result.get("mapping_outline");
+        @SuppressWarnings("unchecked") final List<Map<String, Object>> listed =
+                (List<Map<String, Object>>) outline.get("events");
+        assertThat(listed).isNotEmpty().hasSizeLessThan(200)
+                .allSatisfy(rule -> assertThat(rule).doesNotContainKey("writes")
+                        .containsKeys("type_id", "recognised_by", "vendor_code_data"));
+        assertThat((String) outline.get("rules_not_listed")).startsWith((200 - listed.size()) + " more rules")
+                .endsWith("/outputs/drafts/big.json");
+    }
+
+    @Test
+    void anOutlinedDraftsDataPlacementListsEachActionElementsElementsOnce() {
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.write(anyInt(), any(WorkspacePath.class), anyString(), any())).thenReturn(7);
+        final Map<String, Object> result = drafted();
+        final List<String> elements = List.of("Source/Device/HostName", "Destination/Device/HostName");
+        result.put("data_placement", Map.of("event_source", List.of("Device/HostName"), "rules", List.of(
+                Map.of("rule", "a", "data", List.of("x"), "action", "Export", "action_elements", elements),
+                Map.of("rule", "b", "data", List.of("y"), "action", "Export", "action_elements", elements))));
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "acme", LIMIT);
+
+        assertThat(result.get("data_placement")).isEqualTo(Map.of(
+                "event_source", List.of("Device/HostName"),
+                "action_elements", Map.of("Export", elements),
+                "rules", List.of(Map.of("rule", "a", "data", List.of("x"), "action", "Export"),
+                        Map.of("rule", "b", "data", List.of("y"), "action", "Export"))));
+    }
+
+    @Test
+    void aDraftStillTooLargeOnceOutlinedHasItsOtherPartsOutlinedAndSavedWhole() {
+        // Seen in eval case 68 (300 event types): 58,000 characters outlined, the source notes, the notes and
+        // data_placement each some 15,000, listing every event type.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = new LinkedHashMap<>();
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        final List<String> events = new ArrayList<>();
+        final List<Map<String, Object>> placed = new ArrayList<>();
+        for (int i = 0; i < 300; i++) {
+            rules.add(Map.of("name", "process_code" + i,
+                    "when", List.of(Map.of("field", "code", "equals", "EV" + i)),
+                    "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Process-Code" + i))));
+            events.add("Process-Code" + i + " (code = EV" + i + ") -> Process");
+            placed.add(Map.of("rule", "process_code" + i, "data", List.of("code"), "action", "Process"));
+        }
+        result.put("mapping", Map.of("input", "data_splitter", "events", rules));
+        result.put("source_notes", Map.of("fields", List.of("code -> EventDetail/TypeId"), "catalogued", true,
+                "events", events, "not_in_sample", events.subList(0, 180)));
+        result.put("notes", List.of("Ask the user for EventSource/System/Name and Environment.",
+                "Drafted from the catalogue of event types: " + String.join("; ", events)));
+        result.put("data_placement", Map.of("event_source", List.of("Device/HostName"), "rules", placed));
+        result.put("schema_check", Map.of("valid", true, "warnings", List.of("[" + String.join(", ",
+                events.stream().map(e -> e.substring(0, e.indexOf(' '))).toList()) + "] required ['EventTime'] "
+                + "are left out when their input fields are empty.")));
+        result.put("schema_version", "4.1.0");
+        result.put("hint", "Build it as drafted.");
+        final Map<String, Object> before = new LinkedHashMap<>(result);
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.of(new SessionWorkspace(chats, 1)), "eval-68",
+                LargeResults.WHOLE_RESULT_CHARS);
+
+        assertThat(LargeResults.length(result)).isLessThanOrEqualTo(LargeResults.WHOLE_RESULT_CHARS);
+        assertThat(result).containsEntry("mapping_saved", "/outputs/drafts/eval-68.json")
+                .containsEntry("schema_version", "4.1.0")
+                .containsKeys("mapping_outline", "whole_result");
+        assertThat((String) result.get("hint")).startsWith("The draft is too large to show whole here");
+        assertThat(JsonValues.strings(result.get("notes"))).first().isEqualTo("Ask the user for "
+                                                                             + "EventSource/System/Name and "
+                                                                             + "Environment.");
+        assertThat((String) ((Map<?, ?>) result.get("source_notes")).get("events")).startsWith("300: ");
+        assertThat(JsonValues.maps(((Map<?, ?>) result.get("data_placement")).get("rules"))).containsExactly(
+                Map.of("data", List.of("code"), "action", "Process", "rules", 300, "e_g", "process_code0"));
+        final Map<?, ?> saved = JsonUtil.readValue(TestLargeResults.written(chats,
+                "/outputs/draft_translation_mapping/eval-68.json"), Map.class);
+        assertThat(saved.get("source_notes")).isEqualTo(before.get("source_notes"));
+        assertThat(saved.get("notes")).isEqualTo(before.get("notes"));
+        assertThat(JsonValues.map(JsonUtil.readValue(TestLargeResults.written(chats, "/outputs/drafts/eval-68.json"),
+                Map.class)).get("events")).isEqualTo(rules);
+    }
+
+    @Test
+    void theChatsStubOfALargeDraftCarriesItsNotesAndItsOutline() {
+        // Seen in chat 183: a 61 KB draft stubbed with its first 30 lines, its notes read with jq.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = largeDraft();
+        final Map<String, Object> before = JsonValues.deepCopy(result);
+        assertThat(LargeResults.length(result)).isBetween(50_000, 80_000);
+
+        final Map<String, Object> outline = LargeResults.forCaller(ToolCaller.STROOM_AI_CHAT, result,
+                (caller, said, limit) -> DraftOutline.outlineIfLarge(caller, said,
+                        Optional.of(new SessionWorkspace(chats, 1)), "acme-v1", limit));
+        final String path = "/outputs/turn-1/call-2.txt";
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)), path,
+                outline);
+
+        // The result itself whole, for the chat to save.
+        assertThat(result).isEqualTo(before);
+        assertThat(outline).containsKeys("mapping_outline", "mapping_saved").doesNotContainKey("mapping");
+        assertThat(LargeResults.length(outline)).isLessThan(LargeResults.length(result) / 3);
+        assertThat(stub)
+                .contains("saved to the workspace file " + path)
+                .contains("notes:\n- Ask the user for EventSource/System/Name and Environment.")
+                .contains("- Decide the action element of Process-Code59.")
+                .contains("The tool's outline of it")
+                .contains("\"mapping_outline\"")
+                .contains("\"mapping_saved\": \"/outputs/drafts/acme-v1.json\"")
+                .doesNotContain("It starts with these");
+        assertThat(stub.length()).isLessThan(LargeResults.CHAT_OUTLINE_CHARS + ToolOutputs.MAX_INLINE_CHARS * 4);
+    }
+
+    @Test
+    void theChatsStubOfALargeDraftCarriesItsSchemaCheckOnce() {
+        // Seen in chats 184 to 186: the schema check's problems, unfilled and warnings read from the saved draft 17
+        // times, as only the draft's top-level problems were among the parts given in full.
+        final ChatWorkspace chats = TestLargeResults.writable();
+        final Map<String, Object> result = largeDraft();
+        final List<String> problems = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            problems.add("Rule process_code" + i + ": EventDetail/Process needs one of Command, Executable "
+                         + "(what the event is of), and nothing the draft gives is written there.");
+        }
+        final Map<String, Object> schemaCheck = new LinkedHashMap<>();
+        schemaCheck.put("ok", false);
+        schemaCheck.put("problems", problems);
+        schemaCheck.put("unfilled", "Some rules' action elements need parts the draft couldn't fill (problems says "
+                                    + "which): fill each before build_translation_xslt.");
+        schemaCheck.put("warnings", List.of("[process_code0, process_code1] required ['EventTime'] are left out "
+                                            + "when their input fields are empty."));
+        result.put("schema_check", schemaCheck);
+
+        final Map<String, Object> outline = LargeResults.forCaller(ToolCaller.STROOM_AI_CHAT, result,
+                (caller, said, limit) -> DraftOutline.outlineIfLarge(caller, said,
+                        Optional.of(new SessionWorkspace(chats, 1)), "acme-v1", limit));
+        final String stub = ToolOutputs.stub(ToolOutputs.forSaving(JsonUtil.writeValueAsString(result, false)),
+                "/outputs/turn-1/call-2.txt", outline);
+
+        final String actOn = stub.substring(stub.indexOf("What it says to act on"), stub.indexOf("The tool's outline"));
+        assertThat(actOn)
+                .contains("schema_check.problems:\n- Rule process_code0: EventDetail/Process needs one of")
+                .contains("- Rule process_code7: ")
+                .contains("schema_check.unfilled:\nSome rules' action elements need parts")
+                .contains("schema_check.warnings:\n- [process_code0, process_code1] required ['EventTime']");
+        // In the order given: the draft's notes, then what its schema check refuses, then its warnings.
+        assertThat(actOn.indexOf("notes:")).isLessThan(actOn.indexOf("schema_check.problems:"));
+        assertThat(actOn.indexOf("schema_check.unfilled:")).isLessThan(actOn.indexOf("schema_check.warnings:"));
+        // Said once: given in full above, they are left out of the outline.
+        assertThat(stub.split("Rule process_code7: ", -1)).hasSize(2);
+        assertThat(stub.split("need parts the draft couldn't fill", -1)).hasSize(2);
+        assertThat(stub.split("are left out when their input fields are empty", -1)).hasSize(2);
+    }
+
+    @Test
+    void withoutAWorkspaceTheDraftIsGivenWhole() {
+        final Map<String, Object> result = drafted();
+
+        DraftOutline.outlineIfLarge(CLIENT, result, Optional.empty(), "acme-v1", 100);
+
+        assertThat(result).containsKey("mapping").doesNotContainKey("mapping_outline");
+    }
+
+    // A draft of 60 event types, its notes long, as chat 183's was (61 KB).
+    private static Map<String, Object> largeDraft() {
+        final List<Map<String, Object>> rules = new ArrayList<>();
+        final List<String> notes = new ArrayList<>();
+        notes.add("Ask the user for EventSource/System/Name and Environment.");
+        for (int i = 0; i < 60; i++) {
+            rules.add(Map.of("name", "process_code" + i,
+                    "when", List.of(Map.of("field", "code", "equals", "EV" + i)),
+                    "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Process-Code" + i),
+                            Map.of("path", "EventDetail/Description", "value", "Code " + i + " was run. "
+                                                                                 .repeat(70)),
+                            Map.of("path", "EventDetail/Process/Data", "data_name", "code", "field", "code"))));
+            notes.add("Decide the action element of Process-Code" + i + ".");
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", new LinkedHashMap<>(Map.of("input", "json", "events", rules)));
+        result.put("notes", notes);
+        result.put("schema_version", "4.1.0");
+        result.put("hint", "Decide what the notes ask, then build_translation_xslt.");
+        return result;
+    }
+
+    private static Map<String, Object> drafted() {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "json");
+        mapping.put("common", List.of(Map.of("path", "EventTime/TimeCreated", "choose_from", List.of("time", "ts")),
+                Map.of("path", "EventDetail/Description", "field", "msg")));
+        mapping.put("events", List.of(
+                Map.of("name", "Authenticate-Logon", "when", List.of(Map.of("field", "action", "equals", "login")),
+                        "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Authenticate-Logon"),
+                                Map.of("path", "EventDetail/Description", "value", LONG_TEXT),
+                                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                                Map.of("path", "EventDetail/Authenticate/Data", "data_name", "action",
+                                        "field", "action"),
+                                Map.of("path", "EventDetail/Authenticate/Data", "data_name", "a", "field", "a")),
+                        "data", List.of("b")),
+                Map.of("name", "uncatalogued", "catch_all", true,
+                        "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Unknown")))));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("mapping", mapping);
+        result.put("notes", List.of("a note"));
+        result.put("hint", "Build it as drafted.");
+        return result;
+    }
+}

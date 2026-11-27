@@ -1,0 +1,967 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.catalogue;
+
+import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Several;
+import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
+import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.generation.Condition;
+import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.sample.ToolJson;
+
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// The catalogue's check against the scope's records, read as processing reads them. The records are shaped as the
+/// Pega Platform loggers' (seen in user testing, 2026-11-19): JSON lines whose `event` is a JSON string, the logger
+/// in `event.logger_name`; SecurityEventLogger writes several event types told apart by `eventType`, SOAPService
+/// requests, responses and faults told apart only by their message.
+class TestCatalogueCheck {
+
+    private static final String SECURITY = "com.pega.pegarules.web.security.SecurityEventLogger";
+    private static final String SOAP = "com.pega.pegarules.integration.engine.internal.services.soap.SOAPService";
+    private static final String REST = "com.pega.pegarules.integration.engine.internal.services.rest."
+                                       + "RESTServiceRequestProcessorImpl";
+    private static final String EXECUTABLE = "com.pega.pegarules.session.internal.mgmt.Executable";
+    private static final String SOURCE_TYPE_FIELD = "event>log_type";
+    private static final TranslationMapping READING = CatalogueSample.reading("json", null, null, List.of("event"),
+            null, null, null);
+    private static final List<String> SECURITY_TYPES = List.of("Access group change", "Operator record change",
+            "Password change", "Ruleset unlock");
+    private static final List<Integer> SECURITY_COUNTS = List.of(7, 5, 4, 9);
+
+    private int serial;
+
+    @Test
+    void eachEventTypeAndEachWayIsCounted() {
+        final Catalogue catalogue = catalogue(securityTypes(EventType.AGENT_KNOWLEDGE).toArray(EventType[]::new));
+
+        final CatalogueCheckResult check = check(catalogue, pegaLines());
+
+        assertThat(check.counts()).containsOnlyKeys("Update-AccessGroup", "Update-Operator", "Update-Password",
+                "Unlock-Ruleset");
+        assertThat(check.counts().get("Update-AccessGroup").records()).isEqualTo(7);
+        assertThat(check.counts().get("Update-Password").byWay()).containsExactly(4);
+        assertThat(check.counts().get("Unlock-Ruleset").records()).isEqualTo(9);
+        assertThat(check.overlaps()).isEmpty();
+        assertThat(check.several()).isEmpty();
+        assertThat(check.problems()).isEmpty();
+        // The SOAP, REST and Executable records: none recognises them.
+        assertThat(check.uncatalogued().records()).isEqualTo(21 + 6 + 1);
+    }
+
+    // Seen in testing: the catch-all said every uncatalogued record would become Unknown, whatever drops the build's
+    // mapping held.
+    @Test
+    void theUncataloguedRecordsTheBuildsMappingDropsAreCountedApart() {
+        final Catalogue catalogue = catalogue(securityTypes(EventType.AGENT_KNOWLEDGE).toArray(EventType[]::new));
+        final CatalogueSample sample = CatalogueSample.read(READING, String.join("\n", pegaLines()), null,
+                LocalCheck.JSON_PARSER_CUT, null);
+        // The draft's own drop_when, and one the catalogue's drop rules wrote (theirs, not the mapping's).
+        final Map<String, Object> draft = Map.of("drop_when", List.of(
+                Map.of("reason", "SOAP noise", "when", List.of(Map.of("field", "event.logger_name", "equals", SOAP))),
+                Map.of("reason", SourceNotes.DROPPED_REASON + ": Old rule", "when", List.of(Map.of("field",
+                        "event.level", "equals", "INFO")))));
+        // The build's latest mapping: an events rule with drop: true.
+        final Map<String, Object> latest = Map.of("events", List.of(Map.of("name", "rest", "drop", true, "when",
+                List.of(Map.of("field", "event.logger_name", "equals", REST)))));
+
+        final CatalogueCheckResult none = CatalogueCheck.check(catalogue, sample, null);
+        final CatalogueCheckResult dropped = CatalogueCheck.check(catalogue, sample, null,
+                CatalogueCheck.Drafted.of(draft).withDropsOf(latest));
+
+        assertThat(none.uncatalogued().dropped()).isZero();
+        assertThat(none.uncatalogued().unknown()).isEqualTo(21 + 6 + 1);
+        // The SOAP records by the draft's drop_when, the REST ones by the latest mapping's rule; the Executable one
+        // becomes Unknown. The catalogue's own drop_when (by its reason) is left to the catalogue.
+        assertThat(dropped.uncatalogued().records()).isEqualTo(21 + 6 + 1);
+        assertThat(dropped.uncatalogued().dropped()).isEqualTo(21 + 6);
+        assertThat(dropped.uncatalogued().unknown()).isEqualTo(1);
+        assertThat(dropped.toJson().get("uncatalogued")).asString().contains("dropped_by_mapping=27");
+        assertThat(CatalogueCheck.Drafted.dropsOf(draft)).hasSize(1);
+    }
+
+    @Test
+    void aDescriptionNamingItsRecordCountOrTheScopesIsAProblem() {
+        // Seen in chat 192: the agent's descriptions ended "...; 214 in-scope records", a note about the build that
+        // the translation wrote into every event's EventDetail/Description.
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            lines.add(line(event("Exchange", "Workload", "ExchangeOnline", "Operation", "Send")));
+        }
+        for (int i = 0; i < 3; i++) {
+            lines.add(line(event("Teams", "Workload", "MicrosoftTeams", "Operation", "MessageSent")));
+        }
+        final EventType send = described("Send-MailMessage", "A message was sent from a mailbox; 12 in-scope "
+                                                             + "records.", equalsTo("event.Operation", "Send"));
+        final EventType post = described("Send-TeamMessage", "A message was posted in Teams (1,500 a day, 15 in "
+                                                             + "the sample).",
+                equalsTo("event.Operation", "MessageSent"));
+
+        final CatalogueCheckResult check = check(catalogue(send, post), lines);
+
+        assertThat(said(check)).anySatisfy(problem -> assertThat(problem).contains("Send-MailMessage",
+                        "names 12, its record count in the sample", "written into every event"))
+                .anySatisfy(problem -> assertThat(problem).contains("Send-TeamMessage",
+                        "names 15, the scope's record count"));
+        assertThat(check.refused()).isTrue();
+
+        // What happened, with numbers of its own (under ten, or not a count), is no problem.
+        final EventType plain = described("Send-MailMessage", "A message was sent from a mailbox to 2 or more "
+                                                              + "recipients (Exchange 2019).",
+                equalsTo("event.Operation", "Send"));
+        assertThat(check(catalogue(plain), lines).problems()).isEmpty();
+    }
+
+    @Test
+    void aWayOfRecognisingIsCountedOnItsOwnAndTwoWaysOfOneTypeMayOverlap() {
+        final EventType soap = type("Process-SOAPService", "SOAP message", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SOAP)),
+                way(startsWith("event.message", "Request:")));
+
+        final CatalogueCheckResult check = check(catalogue(soap), pegaLines());
+
+        assertThat(check.counts().get("Process-SOAPService").records()).isEqualTo(21);
+        assertThat(check.counts().get("Process-SOAPService").byWay()).containsExactly(21, 10);
+        assertThat(check.overlaps()).isEmpty();
+    }
+
+    @Test
+    void oneEventTypeForTheSecurityLoggerMayBeSeveralByEventType() {
+        final EventType seeded = type("Process-SecurityEventLogger", "Security event", EventType.DRAFT,
+                way(equalsTo("event.logger_name", SECURITY)));
+
+        final CatalogueCheckResult check = check(catalogue(withSoap(seeded)), pegaLines());
+
+        assertThat(check.several()).hasSize(1);
+        final Several several = check.several().getFirst();
+        assertThat(several.typeId()).isEqualTo("Process-SecurityEventLogger");
+        assertThat(several.byField().field()).isEqualTo("event.eventType");
+        assertThat(several.byField().values()).containsExactly(Map.entry("Ruleset unlock", 9),
+                Map.entry("Access group change", 7), Map.entry("Operator record change", 5),
+                Map.entry("Password change", 4));
+        // The draft's seed can't be confirmed until it is split or said to be one.
+        assertThat(several.blocking()).isTrue();
+        assertThat(check.refused()).isTrue();
+        assertThat(check.toJson().get("several")).isEqualTo(List.of(Map.of("type_id", "Process-SecurityEventLogger",
+                "by_field", Map.of("field", "event.eventType", "values", Map.of("Ruleset unlock", 9,
+                        "Access group change", 7, "Operator record change", 5, "Password change", 4)),
+                "shapes", List.of(), "blocking", true)));
+    }
+
+    @Test
+    void anEventTypeOfTheAgentsMayBeSeveralWithoutBlockingAndOneSaidToBeOneIsNot() {
+        final EventType agents = type("Process-SecurityEventLogger", "Security event", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY)));
+        final EventType saidOne = new EventType("Process-SecurityEventLogger", "Security event", null, "Process",
+                null, null, null, null, null, List.of(way(equalsTo("event.logger_name", SECURITY))), false,
+                EventType.DRAFT, "high", "every security event is translated alike", EventType.PROPOSED);
+
+        assertThat(check(catalogue(agents), pegaLines()).several()).singleElement()
+                .satisfies(several -> assertThat(several.blocking()).isFalse());
+        assertThat(check(catalogue(saidOne), pegaLines()).several()).isEmpty();
+    }
+
+    @Test
+    void theSoapLoggersRequestsResponsesAndFaultsAreToldByTheirMessage() {
+        final CatalogueCheckResult check = check(catalogue(soapTypes()), pegaLines());
+
+        assertThat(check.counts().get("Process-SOAPRequest").records()).isEqualTo(10);
+        assertThat(check.counts().get("Process-SOAPResponse").records()).isEqualTo(8);
+        assertThat(check.counts().get("Alert-SOAPFault").records()).isEqualTo(3);
+        assertThat(check.overlaps()).isEmpty();
+        assertThat(check.problems()).isEmpty();
+    }
+
+    @Test
+    void anOverlapIsRefusedWithTheFieldsThatTellTheTypesOtherRecordsApart() {
+        // Responses recognised by their start only: a fault is a response too.
+        final EventType response = type("Process-SOAPResponse", "SOAP response", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SOAP), startsWith("event.message", "Response:")));
+        final EventType fault = type("Alert-SOAPFault", "SOAP fault", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SOAP), contains("event.message", "Fault>")));
+        final List<String> lines = pegaLines();
+
+        final CatalogueCheckResult check = check(catalogue(response, fault), lines);
+
+        assertThat(check.refused()).isTrue();
+        assertThat(check.overlaps()).singleElement().satisfies(overlap -> {
+            assertThat(overlap.typeIds()).containsExactly("Process-SOAPResponse", "Alert-SOAPFault");
+            assertThat(lines.get(overlap.record())).contains("Fault>");
+            assertThat(overlap.text()).contains("Fault>");
+            assertThat(overlap.records()).isEqualTo(3);
+            assertThat(overlap.tellingFields()).isNotEmpty();
+            assertThat(overlap.tellingFields().getFirst().field()).isEqualTo("event.status");
+            assertThat(overlap.tellingFields().getFirst().values()).containsExactly(
+                    Map.entry("Process-SOAPResponse", List.of("Success")),
+                    Map.entry("Alert-SOAPFault", List.of("Failure")));
+        });
+        @SuppressWarnings("unchecked") final Map<String, Object> first =
+                ((List<Map<String, Object>>) check.toJson().get("overlaps")).getFirst();
+        assertThat(first).containsOnlyKeys("record", "text", "type_ids", "telling_fields");
+        assertThat(first.get("telling_fields")).asList().first().isEqualTo(Map.of("field", "event.status",
+                "Process-SOAPResponse", List.of("Success"), "Alert-SOAPFault", List.of("Failure")));
+    }
+
+    @Test
+    void uncataloguedRecordsAreGroupedByShapeWithTheirExamplesAndTheRareOnesAmongThem() {
+        final CatalogueCheckResult check = check(catalogue(securityTypes(EventType.AGENT_KNOWLEDGE)
+                .toArray(EventType[]::new)), pegaLines());
+
+        assertThat(check.uncatalogued().shapes()).hasSizeGreaterThanOrEqualTo(3);
+        assertThat(check.uncatalogued().shapes().stream().mapToInt(CatalogueCheckResult.Shape::records).sum())
+                .isEqualTo(28);
+        // Commonest first, the rare one (seen once) among them.
+        assertThat(check.uncatalogued().shapes().getFirst().records()).isGreaterThanOrEqualTo(
+                check.uncatalogued().shapes().getLast().records());
+        assertThat(check.uncatalogued().shapes()).anySatisfy(shape -> {
+            assertThat(shape.records()).isEqualTo(1);
+            assertThat(shape.examples()).singleElement().asString().contains(EXECUTABLE);
+        });
+        assertThat(check.uncatalogued().shapes()).allSatisfy(shape -> assertThat(shape.signature())
+                .startsWith("fields:"));
+        // The examples of a shape differ: the first, then the one that differs most from it.
+        final CatalogueCheckResult.Shape rest = check.uncatalogued().shapes().stream()
+                .filter(shape -> shape.examples().getFirst().contains("RESTService")).findFirst().orElseThrow();
+        assertThat(rest.examples()).hasSize(5).doesNotHaveDuplicates();
+        @SuppressWarnings("unchecked") final Map<String, Object> compact =
+                (Map<String, Object>) check.toJson().get("uncatalogued");
+        assertThat(compact.get("records")).isEqualTo(28);
+        assertThat((List<?>) compact.get("shapes")).allSatisfy(shape -> assertThat((List<?>) ((Map<?, ?>) shape)
+                .get("examples")).hasSizeLessThanOrEqualTo(CatalogueCheckResult.EXAMPLES_SHOWN));
+    }
+
+    @Test
+    void theCompactFormShowsTheCommonestShapesAndTheRarest() {
+        final List<String> lines = new ArrayList<>();
+        // Twelve shapes, each one field of its own: the commonest has 12 records, the rarest 1.
+        for (int s = 0; s < 12; s++) {
+            for (int r = 0; r <= s; r++) {
+                lines.add(line(event("other.Logger", "f" + s, "v" + r)));
+            }
+        }
+        final CatalogueCheckResult check = check(catalogue(type("Process-Nothing", "Nothing",
+                EventType.AGENT_KNOWLEDGE, way(equalsTo("event.logger_name", "none")))), lines);
+
+        assertThat(check.uncatalogued().shapes()).hasSize(12);
+        @SuppressWarnings("unchecked") final List<Map<String, Object>> shown = (List<Map<String, Object>>)
+                ((Map<String, Object>) check.toJson().get("uncatalogued")).get("shapes");
+        assertThat(shown).hasSize(CatalogueCheckResult.SHAPES_SHOWN);
+        assertThat(shown.stream().map(shape -> shape.get("records")).toList())
+                .containsExactly(12, 11, 10, 9, 8, 7, 6, 3, 2, 1);
+    }
+
+    @Test
+    void recordsWhoseHeldValuesDontParseAreCountedWithWhyAndAmongTheUncatalogued() {
+        final List<String> lines = new ArrayList<>(pegaLines());
+        final Map<String, Object> outer = new LinkedHashMap<>();
+        outer.put("time", 1795050001660L);
+        outer.put("host", "pega-web-1");
+        // A bad escape in the held JSON.
+        outer.put("event", "{\"logger_name\": \"" + SECURITY + "\", \"message\": \"bad \\u12zz\"}");
+        lines.add(ToolJson.dumps(outer));
+
+        final CatalogueCheckResult check = check(catalogue(securityTypes(EventType.AGENT_KNOWLEDGE)
+                .toArray(EventType[]::new)), lines);
+
+        assertThat(check.unparsed().records()).isEqualTo(1);
+        assertThat(check.unparsed().why()).singleElement().asString().startsWith("event: ");
+        // Among the uncatalogued records, as processing writes them to the catch-all (found in review, 2026-11-27:
+        // left out of them, the catch-all's form never counted them).
+        assertThat(check.uncatalogued().records()).isEqualTo(29);
+        assertThat(check.uncatalogued().unparsed()).isEqualTo(1);
+        assertThat(check.toJson().get("unparsed")).isEqualTo(Map.of("records", 1, "why", check.unparsed().why()));
+    }
+
+    @Test
+    void aConditionOnAFieldNoRecordHasIsRefusedNamingTheFieldTheRecordsHave() {
+        final EventType typo = type("Update-Password", "Password change", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY), equalsTo("event.EventType", "Password change")));
+
+        final CatalogueCheckResult check = check(catalogue(typo), pegaLines());
+
+        assertThat(said(check)).containsExactly("Update-Password#0: no record has the field event.EventType (the "
+                                                + "records have event.eventType): name a field as the records "
+                                                + "spell it");
+    }
+
+    @Test
+    void aConditionTheCheckCantEvaluateIsListedAsNotCheckedWithoutRefusing() {
+        // Settled with the check and the translation lanes (2026-11-19): an xpath, a dictionary, a record-scope test
+        // or a field an extraction gives is said, not blocking, never silently skipped.
+        final EventType byXpath = type("Update-Password", "Password change", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY), Condition.fromJson(Map.of("xpath",
+                        "string(event)", "contains", "Password"))));
+
+        final CatalogueCheckResult check = check(catalogue(byXpath), pegaLines());
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.refused()).isFalse();
+        assertThat(check.notChecked()).singleElement().satisfies(problem -> {
+            assertThat(problem.typeId()).isEqualTo("Update-Password");
+            assertThat(problem.way()).isZero();
+            assertThat(problem.problem()).contains("can't be checked against the records here");
+        });
+        assertThat(check.toJson().get("not_checked")).isEqualTo(List.of(check.notChecked().getFirst().toJson()));
+    }
+
+    @Test
+    void aRegexThatRunsPastItsBudgetIsRefusedAndNotRun() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 5; n++) {
+            lines.add(line(event(SECURITY, "message", "a".repeat(27) + "!")));
+        }
+        final EventType backtracks = type("Update-Thing", "Thing", EventType.AGENT_KNOWLEDGE,
+                way(matches("event.message", "^(\\w+\\s?)*$")));
+        final CatalogueSample sample = CatalogueSample.read(READING, String.join("\n", lines), null,
+                LocalCheck.JSON_PARSER_CUT, null).withRegexBudget(Duration.ofMillis(50));
+        final long started = System.nanoTime();
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(backtracks), sample, null);
+
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(5));
+        assertThat(said(check)).singleElement().asString().startsWith("Update-Thing#0: the regex of event.message "
+                                                                      + "ran past 50 ms over the sample's records "
+                                                                      + "and was stopped");
+        assertThat(check.counts().get("Update-Thing").records()).isZero();
+    }
+
+    @Test
+    void aRegexOrContainsOverLongValuesWhereStartsWithOrContainsWouldDoIsRefusedWithThatSuggestion() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 3; n++) {
+            lines.add(line(event(SOAP, "message", "Request: <soapenv:Envelope>" + "x".repeat(12_000))));
+            lines.add(line(event(SOAP, "message", "Response: <soapenv:Envelope>" + "y".repeat(12_000))));
+        }
+        final String text = String.join("\n", lines);
+
+        assertThat(saidOf(text, matches("event.message", "^Request:"))).singleElement().asString()
+                .isEqualTo("Process-SOAPRequest#0: the regex of event.message reads values longer than 10,000 "
+                           + "characters (6 record(s)), and starts_with 'Request:' recognises the same records: "
+                           + "use starts_with");
+        assertThat(saidOf(text, matches("event.message", "Request: <soap"))).singleElement().asString()
+                .endsWith("contains 'Request: <soap' recognises the same records: use contains");
+        assertThat(saidOf(text, contains("event.message", "Request:"))).singleElement().asString()
+                .startsWith("Process-SOAPRequest#0: contains over event.message reads values longer than 10,000 "
+                            + "characters")
+                .endsWith("starts_with 'Request:' recognises the same records: use starts_with");
+        // A regex no literal test can stand in for is left to the time budget.
+        assertThat(saidOf(text, matches("event.message", "^Re(q|x)uest:"))).isEmpty();
+    }
+
+    @Test
+    void aRegexOverAValueProcessingCutsIsStillOverALongValue() {
+        // Seen in the e2e regex guard: a top-level body past 10,000 characters, cut by processing's JSONParser to
+        // exactly 10,000, was taken for a short value and its regex let through.
+        final TranslationMapping reading = CatalogueSample.reading("json", null, null, null, null, null, null);
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 4; n++) {
+            lines.add("{\"action\": \"login\", \"body\": \"" + (n % 2 == 0
+                    ? "L".repeat(10_050)
+                    : "short") + "\"}");
+        }
+        final EventType bulk = type("Import-Bulk", "Bulk import", EventType.AGENT_KNOWLEDGE,
+                way(matches("body", "^L+$")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(bulk), CatalogueSample.read(reading,
+                String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null), null);
+
+        assertThat(said(check)).singleElement().asString().contains("reads values longer than 10,000",
+                "use starts_with");
+    }
+
+    @Test
+    void aReadingOfRepeatedGroupsChecksEachItemAsARecord() {
+        // Seen in the reference eval (cases 16, 40 and 69): one object wrapping the records (for_each), whose item
+        // fields were refused as "no record has the field": the rules take the items.
+        final TranslationMapping reading = TranslationMapping.parse(Map.of("input", "json", "json_layout", "lines",
+                "for_each", "events", "events", List.of(Map.of("name", "r", "fields", List.of()))));
+        final String batches = "{\"source\": \"a\", \"events\": [{\"action\": \"login\"}, {\"action\": "
+                               + "\"logout\"}]}\n{\"source\": \"b\", \"events\": [{\"action\": \"login\"}]}\n";
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("action", "login")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(logon), CatalogueSample.read(reading,
+                batches, null, LocalCheck.JSON_PARSER_CUT, null), null);
+
+        assertThat(said(check)).isEmpty();
+        assertThat(check.toJson().get("counts")).isEqualTo(Map.of("Authenticate-Logon", Map.of("records", 2,
+                "by_way", List.of(2))));
+        assertThat(check.uncatalogued().records()).isEqualTo(1);
+
+        // The same batches as one JSON array.
+        final TranslationMapping array = TranslationMapping.parse(Map.of("input", "json", "json_layout", "array",
+                "for_each", "events", "events", List.of(Map.of("name", "r", "fields", List.of()))));
+        final CatalogueCheckResult inArray = CatalogueCheck.check(catalogue(logon), CatalogueSample.read(array,
+                "[" + batches.strip().replace("\n", ",") + "]", null, LocalCheck.JSON_PARSER_CUT, null), null);
+        assertThat(said(inArray)).isEmpty();
+        assertThat(inArray.uncatalogued().records()).isEqualTo(1);
+    }
+
+    @Test
+    void aConditionThatDependsOnProcessingsStringCutIsRefusedNamingTheSetting() {
+        final Map<String, Object> held = new LinkedHashMap<>();
+        held.put("padding", "p".repeat(10_050));
+        held.put("logger_name", SECURITY);
+        final List<String> lines = new ArrayList<>(pegaLines());
+        lines.add(line(held));
+        final EventType security = type("Process-SecurityEventLogger", "Security event", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY)));
+
+        final CatalogueCheckResult check = check(catalogue(security), lines);
+
+        // The held field itself is cut, so none of its keys are there: said so (seen in testing: refused only as
+        // "depends on processing's string cut", the agent left to guess why).
+        assertThat(said(check)).singleElement().asString().isEqualTo(
+                "Process-SecurityEventLogger#0: 'event' is longer than stringTruncateLength (10,000 characters) on 1 "
+                + "record(s), so in processing none of its keys (logger_name among them) can be read there: the cut "
+                + "text isn't JSON, and the condition on event.logger_name never holds on them; raise the pipeline's "
+                + "stringTruncateLength (long_values=whole), or test a field outside 'event'");
+        // Cut short, its held JSON doesn't parse: counted as such.
+        assertThat(check.unparsed().records()).isEqualTo(1);
+        assertThat(check.counts().get("Process-SecurityEventLogger").records()).isEqualTo(25);
+    }
+
+    @Test
+    void aDropRulesConditionInsideACutHeldFieldSaysWhetherItsRecordsAreDropped() {
+        final Map<String, Object> held = new LinkedHashMap<>();
+        held.put("padding", "p".repeat(10_050));
+        held.put("logger_name", SECURITY);
+        final List<String> lines = new ArrayList<>(pegaLines());
+        lines.add(line(held));
+        final EventType kept = type("Process-SecurityEventLogger", "Security event", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY)));
+        final EventType positive = type("Security events", "Security events", EventType.USER_CONFIRMED,
+                way(equalsTo("event.logger_name", SECURITY))).droppedByUser();
+        final Map<String, Object> notSecurity = new LinkedHashMap<>();
+        notSecurity.put("field", "event.logger_name");
+        notSecurity.put("equals", SECURITY);
+        notSecurity.put("not", true);
+        final EventType negated = type("Other loggers", "Other loggers", EventType.USER_CONFIRMED,
+                way(Condition.fromJson(notSecurity))).droppedByUser();
+
+        // A positive condition never holds where the held field is cut: the drop rule never drops those records.
+        assertThat(said(check(catalogue(positive), lines))).singleElement().asString()
+                .startsWith("Security events#0: 'event' is longer than stringTruncateLength (10,000 characters) on 1 "
+                            + "record(s)")
+                .contains("the condition on event.logger_name never holds on them, so this drop rule never drops "
+                          + "them;");
+        // A negated one always holds there: the drop rule drops them whatever they hold.
+        assertThat(said(check(catalogue(kept, negated), lines))).filteredOn(said -> said.startsWith("Other"))
+                .singleElement().asString()
+                .contains("the condition on event.logger_name holds on them whatever they hold, so this drop rule "
+                          + "drops them whatever they hold;");
+    }
+
+    @Test
+    void anEventTypeOfRecordsWhoseSourceTypeTheCutHidesIsRefused() {
+        // Seen in eval case 112 on Haiku (2026-11-26): logons with long stack traces, recognised by a contains on
+        // the held text (which the cut keeps), their source type field read inside it: in processing the group's
+        // pipeline passed them over as of no source type, while the check counted them as logons.
+        final List<String> lines = new ArrayList<>();
+        lines.add(line(securityEvent("")));
+        lines.add(line(securityEvent("p".repeat(10_050))));
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(contains("event", "Login failed")));
+        final EventType dropped = type("Security noise", "Security noise", EventType.USER_CONFIRMED,
+                way(contains("event", "Login failed"))).droppedByUser();
+
+        assertThat(said(check(catalogue(logon), lines))).containsExactly("Authenticate-Logon: the source type "
+                + "field event>log_type is read from a value longer than stringTruncateLength (10,000 characters) on "
+                + "1 record(s): processing cuts the value there, the source type can't be read from the cut text, and "
+                + "the group's pipeline passes those records over untranslated, whatever they hold; keep long values "
+                + "whole (long_values=whole, the pipeline's stringTruncateLength raised), or read the source type "
+                + "from a field outside the long value");
+        // Kept whole (the parser's limit raised past the longest): nothing is cut.
+        assertThat(said(CatalogueCheck.check(catalogue(logon), CatalogueSample.read(READING, String.join("\n",
+                lines), null, 20_000, null), null))).isEmpty();
+        // A drop rule's records are untranslated either way.
+        assertThat(said(check(catalogue(dropped), lines))).isEmpty();
+    }
+
+    // A security logon whose event holds its source type first, then its padding.
+    private static Map<String, Object> securityEvent(final String padding) {
+        final Map<String, Object> held = new LinkedHashMap<>();
+        held.put("log_type", "Security");
+        held.put("logger_name", SECURITY);
+        held.put("eventType", "Login");
+        held.put("message", "Login failed" + padding);
+        return held;
+    }
+
+    @Test
+    void aConditionOnALongPlainFieldThatDependsOnTheCutIsSaidAsBefore() {
+        final Map<String, Object> record = new LinkedHashMap<>();
+        record.put("body", "p".repeat(10_050) + "TAIL");
+        final Map<String, Object> contains = new LinkedHashMap<>();
+        contains.put("field", "body");
+        contains.put("contains", "TAIL");
+        final EventType tail = type("Process-Tail", "Tail", EventType.USER_CONFIRMED,
+                way(Condition.fromJson(contains))).droppedByUser();
+        final TranslationMapping reading = TranslationMapping.parse(Map.of("input", "json", "events",
+                List.of(Map.of("name", "r", "fields", List.of()))));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(tail), CatalogueSample.read(reading,
+                ToolJson.dumps(record), null, LocalCheck.JSON_PARSER_CUT, null), null);
+
+        assertThat(said(check)).anySatisfy(said -> assertThat(said).isEqualTo(
+                "Process-Tail#0: whether the condition on body holds depends on processing's string cut: on 1 "
+                + "record(s) it holds read whole but not as processing reads them, its strings cut at "
+                + "stringTruncateLength (10,000 characters), so in processing this drop rule doesn't drop them: "
+                + "test what comes before the cut, or raise the pipeline's stringTruncateLength"));
+    }
+
+    @Test
+    void anEventTypeRecognisedByEveryRecordOfItsLineFormatMustBeItsOnlyOne() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 4; n++) {
+            lines.add(variantLine("syslog", event(SECURITY, "eventType", "Password change")));
+            lines.add(variantLine("kv", event(SOAP, "message", "Request: " + n)));
+        }
+        final EventType syslog = type("Process-Syslog", "Syslog line", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("variant", "syslog")));
+        final EventType password = type("Update-Password", "Password change", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.eventType", "Password change")));
+        final EventType kv = type("Process-SOAPRequest", "SOAP request", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("variant", "kv")));
+        final CatalogueSample sample = CatalogueSample.read(READING, String.join("\n", lines), null,
+                LocalCheck.JSON_PARSER_CUT, "variant");
+
+        final CatalogueCheckResult shared = CatalogueCheck.check(catalogue(syslog, password, kv), sample, null);
+        final CatalogueCheckResult alone = CatalogueCheck.check(catalogue(syslog, kv), sample, null);
+
+        assertThat(said(shared)).containsExactly("Process-Syslog#0: it is recognised by every record of its line "
+                                                 + "format (variant is syslog), which only the line format's only "
+                                                 + "event type is: Update-Password recognises 4 of its records; "
+                                                 + "tell them apart");
+        assertThat(shared.overlaps()).hasSize(1);
+        assertThat(said(alone)).isEmpty();
+        assertThat(alone.counts().get("Process-Syslog").records()).isEqualTo(4);
+    }
+
+    @Test
+    void theCataloguesOwnProblemsAndItsOrderAreGiven() {
+        final EventType loose = type("Process-SOAPService", "SOAP message", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SOAP)));
+        final EventType onSourceType = type("Process-Integration", "Integration", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.log_type", "Integration"), equalsTo("event.logger_name", REST)));
+
+        final CatalogueCheckResult check = check(catalogue(loose, onSourceType), pegaLines());
+
+        assertThat(check.order()).containsExactly("Process-Integration", "Process-SOAPService");
+        assertThat(said(check)).singleElement().asString().startsWith("Process-Integration#0: condition on "
+                                                                      + "event.log_type: it reads the build's "
+                                                                      + "source type field (event>log_type, "
+                                                                      + "recorded by the survey");
+        assertThat(check.toJson()).containsOnlyKeys("counts", "overlaps", "uncatalogued", "unparsed", "several",
+                "problems", "order");
+        assertThat(check.toJson().get("problems")).isEqualTo(List.of(Map.of("type_id", "Process-Integration", "way",
+                0, "problem", check.problems().getFirst().problem())));
+    }
+
+    @Test
+    void aSoleEventTypeIsRecognisedByEveryRecord() {
+        final CatalogueCheckResult check = check(catalogue(type("Process-PegaEvent", "Pega event",
+                EventType.AGENT_KNOWLEDGE)), pegaLines());
+
+        assertThat(check.counts().get("Process-PegaEvent").records()).isEqualTo(25 + 21 + 6 + 1);
+        assertThat(check.counts().get("Process-PegaEvent").byWay()).isEmpty();
+        assertThat(check.uncatalogued().records()).isZero();
+        assertThat(check.problems()).isEmpty();
+    }
+
+    @Test
+    void conditionsAreCheckedOverXmlRecordsByLocalName() {
+        final String xml = "<Events xmlns=\"urn:x\"><Event><Op>Logon</Op><User>a</User></Event>"
+                           + "<Event><Op>Logoff</Op><User>b</User></Event><Event><Op>Logon</Op><User>c</User></Event>"
+                           + "</Events>";
+        final TranslationMapping reading = CatalogueSample.reading("xml", "Event", "urn:x", null, null, null, null);
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("Op", "Logon")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(logon),
+                CatalogueSample.read(reading, xml, null, 0, null), null);
+
+        assertThat(check.counts().get("Authenticate-Logon").records()).isEqualTo(2);
+        assertThat(check.uncatalogued().records()).isEqualTo(1);
+        assertThat(check.uncatalogued().shapes().getFirst().examples().getFirst()).contains("Logoff");
+    }
+
+    @Test
+    void aConditionOnAnArrayFieldHoldsWhenAnyItemDoes() {
+        final List<String> lines = List.of("{\"category\": [\"authentication\", \"iam\"]}",
+                "{\"category\": [\"network\"]}");
+        final TranslationMapping reading = CatalogueSample.reading("json", null, null, null, null, null, null);
+        final EventType auth = type("Authenticate-User", "Authentication", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("category", "authentication")));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(auth),
+                CatalogueSample.read(reading, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null),
+                null);
+
+        assertThat(check.counts().get("Authenticate-User").records()).isEqualTo(1);
+    }
+
+    @Test
+    void anEqualsOnAValueUniqueToItsRecordIsRefusedSuggestingStartsWithOrANamedGroup() {
+        final List<String> lines = modifiedObjects(30, 0);
+        final String first = "Object " + uuid(0) + " has been modified";
+        final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.message", first)));
+
+        final CatalogueCheckResult check = check(catalogue(modified), lines);
+
+        assertThat(check.refused()).isTrue();
+        assertThat(said(check)).containsExactly("Update-Object#0: '" + first + "' is one of 30 values of the field "
+                + "event.message that differ only in a part that varies (written 'Object <uuid> has been modified'): "
+                + "an event type recognised by one of them recognises next to no records, and in processing every "
+                + "record with a new value would be uncatalogued; recognise the event type by what its values "
+                + "share: starts_with their fixed start, or matches with a regex whose named group (names) keeps "
+                + "the part that varies");
+    }
+
+    @Test
+    void aOneOfOnValuesUniqueToTheirRecordsIsRefused() {
+        final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
+                way(Condition.fromJson(Map.of("field", "event.message", "one_of", List.of(
+                        "Object " + uuid(1) + " has been modified", "Object " + uuid(2) + " has been modified")))));
+
+        final CatalogueCheckResult check = check(catalogue(modified), modifiedObjects(30, 0));
+
+        assertThat(check.refused()).isTrue();
+        assertThat(said(check)).singleElement().asString()
+                .contains("one of 30 values of the field event.message that differ only in a part that varies")
+                .contains("starts_with their fixed start, or matches with a regex whose named group");
+    }
+
+    @Test
+    void aValueManyRecordsHoldOnAVariedFieldIsNotRefused() {
+        // 25 messages each its own, and a heartbeat five records hold: the field is varied, the value is not.
+        final List<String> lines = modifiedObjects(25, 5);
+        final EventType heartbeat = type("Process-Heartbeat", "Heartbeat", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.message", "Heartbeat")));
+
+        final CatalogueCheckResult check = check(catalogue(heartbeat), lines);
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.counts().get("Process-Heartbeat").records()).isEqualTo(5);
+    }
+
+    @Test
+    void aRareCodeOnAFieldOfFewValuesIsNotRefused() {
+        // A real vendor code seen once in the sample: the field has three values over 40 records.
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 40; n++) {
+            final String code = n == 0
+                    ? "4740"
+                    : n % 2 == 0
+                            ? "4624"
+                            : "4625";
+            lines.add(line(event("com.example.Audit", "code", code, "message", "Event " + n)));
+        }
+        final EventType locked = type("Lock-Account", "Account locked", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.code", "4740")));
+
+        final CatalogueCheckResult check = check(catalogue(locked), lines);
+
+        assertThat(check.problems()).isEmpty();
+        assertThat(check.counts().get("Lock-Account").records()).isEqualTo(1);
+    }
+
+    @Test
+    void codesEachSeenOnceAreNotRefused() {
+        // Seen in the full e2e run (eval cases 32 and 35): a sample of one record an event type, each its own code,
+        // numeric (a Windows event's EventID) or a word (an action). Their values have no part that varies.
+        final List<String> lines = new ArrayList<>();
+        final List<String> words = List.of("Login", "Logout", "Create", "Delete", "View", "Export", "Import",
+                "Share", "Unshare", "Lock", "Unlock", "Approve", "Reject", "Restore", "Archive", "Rename", "Move",
+                "Copy", "Print", "Search", "Download", "Upload");
+        for (int n = 0; n < words.size(); n++) {
+            lines.add(line(event("com.example.Audit", "code", String.valueOf(4600 + n), "action", words.get(n))));
+        }
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.code", "4600")));
+        final EventType login = type("Authenticate-Login", "Login", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.action", "Login"), equalsTo("event.code", "4600")));
+
+        assertThat(check(catalogue(logon), lines).problems()).isEmpty();
+        assertThat(check(catalogue(login), lines).problems()).isEmpty();
+    }
+
+    @Test
+    void aValueWrittenAsTooFewOthersAreIsNotRefused() {
+        // Two values written alike may be two event types' own messages; three is a pattern.
+        final EventType modified = type("Update-Object", "Object modified", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.message", "Object " + uuid(0) + " has been modified")));
+
+        assertThat(check(catalogue(modified), modifiedObjects(CatalogueCheck.UNIQUE_WRITTEN_VALUES - 1, 0))
+                .problems()).isEmpty();
+        assertThat(check(catalogue(modified), modifiedObjects(CatalogueCheck.UNIQUE_WRITTEN_VALUES, 0)).problems())
+                .singleElement()
+                .satisfies(problem -> assertThat(problem.problem()).contains("differ only in a part that varies"));
+    }
+
+    @Test
+    void threeHundredEventTypesOverThousandsOfRecordsAreCheckedInSeconds() {
+        final int types = 300;
+        final int records = 6_000;
+        final List<String> lines = new ArrayList<>(records);
+        for (int n = 0; n < records; n++) {
+            final int type = n % types;
+            lines.add(line(event("com.example.Logger" + (type / 2), "eventType", "Op" + (type % 2), "userid",
+                    "user" + (n % 37), "message", "Did thing " + type + " for user " + n + " " + "z".repeat(200))));
+        }
+        final List<EventType> catalogued = new ArrayList<>();
+        for (int type = 0; type < types; type++) {
+            catalogued.add(type("Process-Thing" + type, "Thing " + type, EventType.AGENT_KNOWLEDGE,
+                    way(equalsTo("event.logger_name", "com.example.Logger" + (type / 2)),
+                            equalsTo("event.eventType", "Op" + (type % 2)),
+                            matches("event.message", "^Did thing " + type + " ")),
+                    way(equalsTo("event.logger_name", "com.example.Logger" + (type / 2)),
+                            contains("event.message", "thing " + type + " for"))));
+        }
+        final long started = System.nanoTime();
+
+        // The regex budget is the check's guard against a slow pattern, not what this test measures: a generous
+        // one, so a loaded machine (seen: load average 20 with an eval run alongside) can't trip it.
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(catalogued.toArray(EventType[]::new)),
+                CatalogueSample.read(READING, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null)
+                        .withRegexBudget(Duration.ofSeconds(5)), null);
+
+        final Duration took = Duration.ofNanos(System.nanoTime() - started);
+        assertThat(took).isLessThan(Duration.ofSeconds(10));
+        assertThat(check.counts()).hasSize(types);
+        assertThat(check.counts().values()).allSatisfy(count -> assertThat(count.records()).isEqualTo(20));
+        assertThat(check.overlaps()).isEmpty();
+        assertThat(check.uncatalogued().records()).isZero();
+        assertThat(check.problems()).isEmpty();
+    }
+
+    @Test
+    void aFewRecordsOfAnEventTypeAreGivenWithTheValuesItsConditionsTestAsRead() {
+        // For the user who asks what an event type's records look like while confirming it (explain=).
+        final EventType password = securityTypes(EventType.AGENT_KNOWLEDGE).stream()
+                .filter(type -> "Update-Password".equals(type.typeId()))
+                .findFirst()
+                .orElseThrow();
+        final EventType sole = type("Process-All", "Everything", EventType.AGENT_KNOWLEDGE);
+        final CatalogueSample sample = CatalogueSample.read(READING, String.join("\n", pegaLines()), null,
+                LocalCheck.JSON_PARSER_CUT, null);
+
+        final Map<String, List<CatalogueCheck.Example>> examples = CatalogueCheck.examples(sample,
+                List.of(password, sole), 3);
+
+        assertThat(examples.get("Update-Password")).hasSize(3).allSatisfy(example -> {
+            assertThat(example.values()).containsEntry("event.eventType", "Password change")
+                    .containsEntry("event.logger_name", SECURITY);
+            assertThat(example.text()).contains("\\\"eventType\\\": \\\"Password change\\\"");
+            assertThat(example.text().length()).isLessThanOrEqualTo(CatalogueCheckResult.EXCERPT + 1);
+        });
+        // The password changes come after the access group and operator record changes (7 and 5 records).
+        assertThat(examples.get("Update-Password")).extracting(CatalogueCheck.Example::record)
+                .containsExactly(12, 13, 14);
+        // Recognised by every record, it tests no field.
+        assertThat(examples.get("Process-All")).hasSize(3).allSatisfy(example -> assertThat(example.toJson())
+                .containsOnlyKeys("record", "text"));
+    }
+
+    // The scope's records: the security logger's four event types, the SOAP logger's requests, responses and faults,
+    // REST requests, and one rare record.
+    private List<String> pegaLines() {
+        final List<String> lines = new ArrayList<>();
+        for (int t = 0; t < SECURITY_TYPES.size(); t++) {
+            for (int n = 0; n < SECURITY_COUNTS.get(t); n++) {
+                final String user = "operator" + (serial++);
+                final String target = "target" + (serial++);
+                lines.add(line(event(SECURITY, "log_type", "Security", "level", "INFO", "userid", user,
+                        "eventCategory", "Security administration event", "eventType", SECURITY_TYPES.get(t),
+                        "target", target, "message", SECURITY_TYPES.get(t) + " by " + user + " for " + target)));
+            }
+        }
+        for (int n = 0; n < 10; n++) {
+            lines.add(line(soap("Success", "Request: <soapenv:Envelope><soapenv:Body><clm:SubmitClaim><clm:Id>" + n
+                                           + "</clm:Id></clm:SubmitClaim></soapenv:Body></soapenv:Envelope>")));
+        }
+        for (int n = 0; n < 8; n++) {
+            lines.add(line(soap("Success", "Response: <soapenv:Envelope><soapenv:Body><clm:SubmitClaimResponse>"
+                                           + "<clm:CaseId>C-" + n + "</clm:CaseId></clm:SubmitClaimResponse>"
+                                           + "</soapenv:Body></soapenv:Envelope>")));
+        }
+        for (int n = 0; n < 3; n++) {
+            lines.add(line(soap("Failure", "Response: <soapenv:Envelope><soapenv:Body><soapenv:Fault><faultcode>"
+                                           + "Server." + n + "</faultcode></soapenv:Fault></soapenv:Body>"
+                                           + "</soapenv:Envelope>")));
+        }
+        for (int n = 0; n < 6; n++) {
+            lines.add(line(event(REST, "log_type", "Integration", "level", "INFO", "httpMethod", n % 2 == 0
+                    ? "GET"
+                    : "POST", "path", "/prweb/api/v1/cases/" + n, "statusCode", 200 + n, "message",
+                    "GET /prweb/api/v1/cases/" + n + " returned 200 in " + (n * 100) + " ms")));
+        }
+        lines.add(line(event(EXECUTABLE, "log_type", "Integration", "level", "WARN", "activity", "Pega-Run",
+                "message", "Activity ran long")));
+        return lines;
+    }
+
+    // Records each of a modified object, its message holding the object's UUID, then heartbeats alike.
+    private static List<String> modifiedObjects(final int modified, final int heartbeats) {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < modified; n++) {
+            lines.add(line(event("com.example.Audit", "message", "Object " + uuid(n) + " has been modified")));
+        }
+        for (int n = 0; n < heartbeats; n++) {
+            lines.add(line(event("com.example.Audit", "message", "Heartbeat")));
+        }
+        return lines;
+    }
+
+    private static String uuid(final int n) {
+        return new UUID(0x3f2a5c7e9b1d4f60L + n, 0x8a9b0c1d2e3f4051L * (n + 1)).toString();
+    }
+
+    private Map<String, Object> soap(final String status, final String message) {
+        return event(SOAP, "log_type", "Integration", "level", "INFO", "userid", "user" + (serial++ % 3),
+                "CorrelationId", "c-" + (serial++), "serviceName", "ClaimsService", "serviceMethod", "SubmitClaim",
+                "status", status, "message", message);
+    }
+
+    private static Map<String, Object> event(final String logger, final Object... keysAndValues) {
+        final Map<String, Object> event = new LinkedHashMap<>();
+        event.put("logger_name", logger);
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            event.put(String.valueOf(keysAndValues[i]), keysAndValues[i + 1]);
+        }
+        return event;
+    }
+
+    // A record as the shipper writes it: its own fields, and the source's as a JSON string.
+    private static String line(final Map<String, Object> event) {
+        final Map<String, Object> outer = new LinkedHashMap<>();
+        outer.put("time", 1795050001660L);
+        outer.put("host", "pega-web-1");
+        outer.put("event", ToolJson.dumps(event));
+        return ToolJson.dumps(outer);
+    }
+
+    private static String variantLine(final String variant, final Map<String, Object> event) {
+        final Map<String, Object> outer = new LinkedHashMap<>();
+        outer.put("variant", variant);
+        outer.put("event", ToolJson.dumps(event));
+        return ToolJson.dumps(outer);
+    }
+
+    private static CatalogueCheckResult check(final Catalogue catalogue, final List<String> lines) {
+        return CatalogueCheck.check(catalogue, CatalogueSample.read(READING, String.join("\n", lines), null,
+                LocalCheck.JSON_PARSER_CUT, null), null);
+    }
+
+    private static List<String> saidOf(final String text, final Condition condition) {
+        final EventType request = type("Process-SOAPRequest", "SOAP request", EventType.AGENT_KNOWLEDGE,
+                way(condition));
+        return said(CatalogueCheck.check(catalogue(request), CatalogueSample.read(READING, text, null, 0, null),
+                null));
+    }
+
+    private static List<String> said(final CatalogueCheckResult check) {
+        final List<String> out = new ArrayList<>();
+        for (final Problem problem : check.problems()) {
+            out.add(problem.typeId() + (problem.way() >= 0
+                    ? "#" + problem.way()
+                    : "") + ": " + problem.problem());
+        }
+        return out;
+    }
+
+    private static List<EventType> securityTypes(final String basis) {
+        final List<String> typeIds = List.of("Update-AccessGroup", "Update-Operator", "Update-Password",
+                "Unlock-Ruleset");
+        final List<EventType> out = new ArrayList<>();
+        for (int t = 0; t < SECURITY_TYPES.size(); t++) {
+            out.add(type(typeIds.get(t), SECURITY_TYPES.get(t), basis, way(equalsTo("event.logger_name", SECURITY),
+                    equalsTo("event.eventType", SECURITY_TYPES.get(t)))));
+        }
+        return out;
+    }
+
+    private static EventType[] soapTypes() {
+        return new EventType[]{
+                type("Process-SOAPRequest", "SOAP request", EventType.AGENT_KNOWLEDGE,
+                        way(equalsTo("event.logger_name", SOAP), startsWith("event.message", "Request:"))),
+                type("Process-SOAPResponse", "SOAP response", EventType.AGENT_KNOWLEDGE,
+                        way(equalsTo("event.logger_name", SOAP), startsWith("event.message", "Response:"),
+                                not(contains("event.message", "Fault>")))),
+                type("Alert-SOAPFault", "SOAP fault", EventType.AGENT_KNOWLEDGE,
+                        way(equalsTo("event.logger_name", SOAP), contains("event.message", "Fault>")))};
+    }
+
+    private static EventType[] withSoap(final EventType type) {
+        final List<EventType> types = new ArrayList<>(List.of(type));
+        types.addAll(List.of(soapTypes()));
+        return types.toArray(EventType[]::new);
+    }
+
+    private static Catalogue catalogue(final EventType... types) {
+        return new Catalogue(List.of(types), null, new Catalogue.Scope(SOURCE_TYPE_FIELD,
+                List.of("Integration", "Security")));
+    }
+
+    private static EventType type(final String typeId, final String title, final String basis, final Way... ways) {
+        return new EventType(typeId, title, null, "Process", null, null, null, null, null, List.of(ways), false,
+                basis, "high", null, EventType.PROPOSED);
+    }
+
+    private static EventType described(final String typeId, final String description, final Condition condition) {
+        return new EventType(typeId, typeId, description, "Process", null, null, null, null, null,
+                List.of(way(condition)), false, EventType.AGENT_KNOWLEDGE, "high", null, EventType.PROPOSED);
+    }
+
+    private static Way way(final Condition... conditions) {
+        return new Way(List.of(conditions), List.of());
+    }
+
+    private static Condition equalsTo(final String field, final String value) {
+        return Condition.fromJson(Map.of("field", field, "equals", value));
+    }
+
+    private static Condition startsWith(final String field, final String value) {
+        return Condition.fromJson(Map.of("field", field, "starts_with", value));
+    }
+
+    private static Condition contains(final String field, final String value) {
+        return Condition.fromJson(Map.of("field", field, "contains", value));
+    }
+
+    private static Condition matches(final String field, final String regex) {
+        return Condition.fromJson(Map.of("field", field, "matches", regex));
+    }
+
+    private static Condition not(final Condition condition) {
+        final Map<String, Object> json = new LinkedHashMap<>(condition.toJson(DumpMode.COMPACT));
+        json.put("not", true);
+        return Condition.fromJson(json);
+    }
+}

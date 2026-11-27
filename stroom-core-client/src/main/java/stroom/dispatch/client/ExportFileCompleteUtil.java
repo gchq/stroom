@@ -26,6 +26,7 @@ import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
 
 public final class ExportFileCompleteUtil {
 
@@ -95,10 +96,10 @@ public final class ExportFileCompleteUtil {
     private static void download(final LocationManager locationManager, final ResourceGeneration result) {
         // Change the browser location to download the zip file.
         // The name is needed so the browser has a default name for the download, but is not used
-        // by the servlet
+        // by the servlet. Encoded, as a document's name can hold e.g. a '#' or a '%'.
         locationManager.replace(GWT.getHostPageBaseURL() +
                                 "resourcestore/" +
-                                result.getResourceKey().getName() +
+                                URL.encodePathSegment(result.getResourceKey().getName()) +
                                 "?uuid=" +
                                 result.getResourceKey().getKey());
     }

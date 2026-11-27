@@ -1,0 +1,8 @@
+EventTime,UserId,Action,Gateway,SourceIp
+2026-11-17T07:58:00.000Z,jsmith,ConnectFailed,vpn-gw-1,198.51.100.7
+2026-11-17T07:59:10.000Z,jsmith,Connect,vpn-gw-1,198.51.100.7
+2026-11-18T10:19:30.000Z,jsmith,ConnectFailed,vpn-gw-2,203.0.113.40
+2026-11-18T10:19:55.000Z,jsmith,Connect,vpn-gw-2,203.0.113.40
+2026-11-18T18:02:00.000Z,bob,Connect,vpn-gw-1,198.51.100.22
+2026-11-19T11:29:00.000Z,jsmith,Connect,vpn-gw-1,198.51.100.7
+2026-11-20T06:44:00.000Z,bob,ConnectFailed,vpn-gw-1,198.51.100.22

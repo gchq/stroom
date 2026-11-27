@@ -1,0 +1,298 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.validation;
+
+import stroom.ai.impl.tools.validation.EventSchema.Child;
+
+import org.junit.jupiter.api.Test;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/// What the event-logging XSD allows below Event, read from the 4.1.0 schema.
+class TestEventSchema {
+
+    private static final EventSchema SCHEMA = EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);
+
+    @Test
+    void testAPathResolvesToItsChainOfChildren() {
+        final List<Child> chain = SCHEMA.resolve("Event/EventSource/User/Id");
+        assertThat(chain).extracting(Child::name).containsExactly("EventSource", "User", "Id");
+        assertThat(SCHEMA.isLeaf(chain.getLast().decl())).isTrue();
+        assertThat(SCHEMA.resolve("")).isEmpty();
+    }
+
+    @Test
+    void testAPathTheSchemaHasNotSaysWhatItMayHaveMeant() {
+        assertThatThrownBy(() -> SCHEMA.resolve("EventSource/Usr"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("'Event/EventSource' has no child 'Usr'. Did you mean ['User'")
+                .hasMessageContaining(" Allowed here: [");
+        // A value of an enumeration is said to be one.
+        assertThatThrownBy(() -> SCHEMA.resolve("EventDetail/Authenticate/Logon"))
+                .hasMessageContaining("'Logon' is a value of: ['Event/EventDetail/Authenticate/Action'");
+    }
+
+    @Test
+    void testPathsNamedAreShortestFirst() {
+        final List<String> users = SCHEMA.pathsNamed("User");
+        assertThat(users.getFirst()).isEqualTo("Event/EventSource/User");
+        assertThat(users).contains("Event/EventDetail/Authenticate/User");
+        assertThat(SCHEMA.pathsNamed("Nowhere")).isEmpty();
+    }
+
+    @Test
+    void testRepeatableElementsAreKnown() {
+        assertThat(SCHEMA.canRepeat("EventDetail/Unknown/Data")).isTrue();
+        assertThat(SCHEMA.canRepeat("EventTime/TimeCreated")).isFalse();
+        assertThat(SCHEMA.canRepeat("concat(a, b)")).isFalse();
+    }
+
+    @Test
+    void testAnElementInARepeatingGroupRepeats() {
+        // View's objects: a choice whose members are each maxOccurs 1, inside a reference to MultiObjectGroup with
+        // maxOccurs unbounded.
+        assertThat(child("EventDetail/View", "Folder").repeatable()).isTrue();
+        assertThat(child("EventDetail/Move/Source", "Email").repeatable()).isTrue();
+        assertThat(child("EventDetail/Authorise", "User").repeatable()).isTrue();
+        assertThat(SCHEMA.canRepeat("EventDetail/View/Folder/Path")).isTrue();
+    }
+
+    @Test
+    void testAnElementRepeatsInItsOwnParentNotBecauseOfOneAbove() {
+        // Send/Payload's Email repeats (MultiObjectGroup), but each Email has one From (maxOccurs 1 in
+        // EmailComplexType's sequence).
+        assertThat(child("EventDetail/Send/Payload", "Email").repeatable()).isTrue();
+        assertThat(child("EventDetail/Send/Payload/Email", "From").repeatable()).isFalse();
+        assertThat(child("EventDetail/Send/Payload/Email/From", "EmailAddress").repeatable()).isFalse();
+
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Send/Payload/Email")).isTrue();
+        assertThat(SCHEMA.repeatsInPlace("Event/EventDetail/View/Folder")).isTrue();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Send/Payload/Email/From")).isFalse();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/View/Outcome")).isFalse();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/*/Folder")).isTrue();
+        assertThat(SCHEMA.repeatsInPlace("EventDetail/Nowhere")).isFalse();
+        assertThat(SCHEMA.repeatsInPlace("concat(a, b)")).isFalse();
+
+        // A value an element: the leaf or the element holding it repeats in its parent.
+        assertThat(SCHEMA.takesSeveralInPlace("EventDetail/Send/Destination/User/EmailAddress")).isTrue();
+        assertThat(SCHEMA.takesSeveralInPlace("EventDetail/Unknown/Data")).isTrue();
+        assertThat(SCHEMA.takesSeveralInPlace("EventDetail/Send/Payload/Email/From/EmailAddress")).isFalse();
+        assertThat(SCHEMA.takesSeveralInPlace("EventSource/User/Id")).isFalse();
+
+        // A path can still select several values in one event (what an index field needs): an Email each.
+        assertThat(SCHEMA.canRepeat("EventDetail/Send/Payload/Email/From/EmailAddress")).isTrue();
+        assertThat(SCHEMA.canRepeat("EventDetail/*/Resource/HTTPMethod")).isTrue();
+    }
+
+    @Test
+    void testMembersOfAChoiceInARepeatingGroupMayBeMixed() {
+        final Child object = child("EventDetail/View", "Object");
+        final Child folder = child("EventDetail/View", "Folder");
+        assertThat(object.choice()).isNotNull().isEqualTo(folder.choice());
+        assertThat(object.alternative()).isFalse();
+        assertThat(folder.alternative()).isFalse();
+        assertThat(object.required()).isFalse();
+        // One of them is still needed.
+        assertThat(SCHEMA.requiredChoices().get(folder.choice())).contains("Object", "Folder");
+    }
+
+    @Test
+    void testMembersOfAOneOfChoiceAreAlternatives() {
+        // Network's Bind, Connect, Close...: a choice that occurs once, in nothing that repeats.
+        final Child connect = child("EventDetail/Network", "Connect");
+        final Child close = child("EventDetail/Network", "Close");
+        assertThat(connect.choice()).isNotNull().isEqualTo(close.choice());
+        assertThat(connect.alternative()).isTrue();
+        assertThat(close.alternative()).isTrue();
+        assertThat(connect.repeatable()).isFalse();
+        // Its Data may repeat, but is still one of the choice's members.
+        final Child data = child("EventDetail/Network", "Data");
+        assertThat(data.repeatable()).isTrue();
+        assertThat(data.alternative()).isTrue();
+        // EventDetail's actions too.
+        assertThat(child("EventDetail", "View").alternative()).isTrue();
+        assertThat(child("EventDetail", "View").repeatable()).isFalse();
+    }
+
+    @Test
+    void testAnElementThatOccursOnceInASequenceThatDoesNotRepeatOccursOnce() {
+        // View's Outcome follows the repeating objects in a sequence that occurs once.
+        final Child outcome = child("EventDetail/View", "Outcome");
+        assertThat(outcome.repeatable()).isFalse();
+        assertThat(outcome.choice()).isNull();
+        assertThat(outcome.alternative()).isFalse();
+        assertThat(child("EventTime", "TimeCreated").repeatable()).isFalse();
+        assertThat(SCHEMA.canRepeat("EventDetail/View/Outcome/Success")).isFalse();
+    }
+
+    @Test
+    void testAChoiceThatRepeatsItselfLetsItsMembersBeMixedIn352() {
+        // 3.5.2's View holds its objects in a choice with maxOccurs unbounded.
+        final EventSchema schema352 = EventSchema.parse(resource352());
+        final Child object = child(schema352, "EventDetail/View", "Object");
+        final Child folder = child(schema352, "EventDetail/View", "Folder");
+        assertThat(folder.repeatable()).isTrue();
+        assertThat(object.alternative()).isFalse();
+        assertThat(folder.alternative()).isFalse();
+        assertThat(child(schema352, "EventDetail/View", "Outcome").repeatable()).isFalse();
+        assertThat(child(schema352, "EventDetail", "View").alternative()).isTrue();
+    }
+
+    @Test
+    void testKnownPathsAreTold() {
+        assertThat(SCHEMA.hasPath("EventSource/User/Id")).isTrue();
+        assertThat(SCHEMA.hasPath("Event/EventTime/TimeCreated")).isTrue();
+        // A wildcard step stands for any child; predicates and a trailing attribute aren't judged.
+        assertThat(SCHEMA.hasPath("EventDetail/*/Data[@Name='x']/@Value")).isTrue();
+        assertThat(SCHEMA.hasPath("EventDetail/Unknown/Data/@Value")).isTrue();
+        // An element no Event has there.
+        assertThat(SCHEMA.hasPath("EventSource/User/Mail")).isFalse();
+        assertThat(SCHEMA.hasPath("EventDetail/*/Nonsense")).isFalse();
+        // An expression rather than a path counts as known.
+        assertThat(SCHEMA.hasPath("concat(a, b)")).isTrue();
+    }
+
+    @Test
+    void testALeafsTypeAndValues() {
+        final Child created = SCHEMA.resolve("EventTime/TimeCreated").getLast();
+        assertThat(SCHEMA.baseType(created.decl())).isEqualTo("dateTime");
+        assertThat(SCHEMA.enumeration(created.decl())).isNull();
+        final Child action = SCHEMA.resolve("EventDetail/Authenticate/Action").getLast();
+        assertThat(SCHEMA.enumeration(action.decl())).contains("Logon", "Logoff");
+    }
+
+    @Test
+    void testTheDomIsNotReadOnceTheSchemaIsMade() {
+        // Before, children, paths and values were worked out from the DOM as they were asked for, from whichever
+        // thread asked (HeldSchemas shares one schema), and a Xerces DOM is not safe to read from several threads.
+        // Here the DOM is emptied once the schema is made: nothing it gives changes.
+        final EventSchema schema = EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);
+        final Map<String, Object> before = everything(schema);
+        final NodeList all = schema.event().getOwnerDocument().getElementsByTagName("*");
+        final List<Element> elements = new ArrayList<>();
+        for (int i = 0; i < all.getLength(); i++) {
+            elements.add((Element) all.item(i));
+        }
+        for (final Element element : elements) {
+            while (element.getFirstChild() != null) {
+                element.removeChild(element.getFirstChild());
+            }
+        }
+
+        assertThat(everything(schema)).isEqualTo(before);
+    }
+
+    @Test
+    void testOneSchemaGivesTheSameAnswersOnManyThreadsAtOnce() throws Exception {
+        final EventSchema schema = EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);
+        final Map<String, Object> expected = everything(EventSchema.parse(HeldSchemasWorld.XSD_4_1_0));
+        final ExecutorService executor = Executors.newFixedThreadPool(8);
+        try {
+            final CountDownLatch start = new CountDownLatch(1);
+            final List<Future<Map<String, Object>>> answers = new ArrayList<>();
+            for (int i = 0; i < 8; i++) {
+                answers.add(executor.submit(() -> {
+                    start.await();
+                    return everything(schema);
+                }));
+            }
+            start.countDown();
+            for (final Future<Map<String, Object>> answer : answers) {
+                assertThat(answer.get(60, TimeUnit.SECONDS)).isEqualTo(expected);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void testAnXsdThatIsNotEventLoggingIsRefused() {
+        assertThatThrownBy(() -> EventSchema.parse("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"/>"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static Child child(final String parent, final String name) {
+        return child(SCHEMA, parent, name);
+    }
+
+    private static Child child(final EventSchema schema, final String parent, final String name) {
+        return schema.children(schema.resolve(parent).getLast().decl()).stream()
+                .filter(child -> name.equals(child.name()))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private static String resource352() {
+        try (InputStream in = TestEventSchema.class.getResourceAsStream(
+                "/stroom/ai/impl/tools/generation/event-logging-v3.5.2.xsd")) {
+            return new String(Objects.requireNonNull(in).readAllBytes(), StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    // What the schema gives for every path below Event, four levels down: names, order, leaves, types, values,
+    // patterns, descriptions, repeats, and the paths and values indexed.
+    private static Map<String, Object> everything(final EventSchema schema) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        final Deque<String> queue = new ArrayDeque<>(List.of(""));
+        while (!queue.isEmpty()) {
+            final String path = queue.removeFirst();
+            final List<Child> chain = schema.resolve(path);
+            final Element decl = chain.isEmpty()
+                    ? schema.event()
+                    : chain.getLast().decl();
+            final List<String> children = schema.children(decl).stream()
+                    .map(child -> child.name() + "/" + child.index() + "/" + child.required() + "/"
+                                  + child.repeatable() + "/" + (child.choice() != null))
+                    .toList();
+            out.put(path, List.of(children, schema.isLeaf(decl), String.valueOf(schema.baseType(decl)),
+                    String.valueOf(schema.enumeration(decl)), schema.patterns(decl), chain.isEmpty()
+                            ? ""
+                            : schema.describe(chain), schema.canRepeat(path)));
+            if (path.split("/").length < 4) {
+                schema.children(decl).forEach(child -> queue.add(path.isEmpty()
+                        ? child.name()
+                        : path + "/" + child.name()));
+            }
+        }
+        out.put("paths named User", schema.pathsNamed("User"));
+        out.put("paths with Logon", schema.pathsWithValue("Logon"));
+        out.put("required choices", schema.requiredChoices().size());
+        return out;
+    }
+}

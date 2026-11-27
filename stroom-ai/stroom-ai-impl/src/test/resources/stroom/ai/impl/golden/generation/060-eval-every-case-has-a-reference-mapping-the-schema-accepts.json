@@ -1,0 +1,235 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "eventtime",
+    "regex": "^(\\d{13})",
+    "names": [
+     "eventtime_ms"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "eventtime_ms",
+    "time_format": "epoch_ms"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "VPN Portal"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "fortigate"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "devname"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "remip"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "msg"
+   }
+  ],
+  "events": [
+   {
+    "name": "signed in",
+    "when": [
+     {
+      "field": "action",
+      "equals": "tunnel-up"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     }
+    ]
+   },
+   {
+    "name": "failed sign in",
+    "when": [
+     {
+      "field": "action",
+      "equals": "ssl-login-fail"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-FailedLogon"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "value": "false"
+     }
+    ]
+   },
+   {
+    "name": "signed out",
+    "when": [
+     {
+      "field": "action",
+      "equals": "tunnel-down"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "Authenticate-Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[signed in] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[failed sign in] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[signed out] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
+  ],
+  "events": [
+   {
+    "event": "signed in",
+    "when": [
+     "data[@name='action']/@value = 'tunnel-up'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[logid]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "failed sign in",
+    "when": [
+     "data[@name='action']/@value = 'ssl-login-fail'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[logid]",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "signed out",
+    "when": [
+     "data[@name='action']/@value = 'tunnel-down'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[logid]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

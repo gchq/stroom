@@ -1,0 +1,1161 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.CallProgress;
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolArgs;
+import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolDefinition;
+import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.catalogue.CaughtShapes;
+import stroom.ai.impl.tools.cef.CefDraft;
+import stroom.ai.impl.tools.cef.CefEvents;
+import stroom.ai.impl.tools.cef.CefPlan;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.generation.EventRule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XmlElement;
+import stroom.ai.impl.tools.generation.XmlParser;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.indexing.FieldPlans;
+import stroom.ai.impl.tools.indexing.PlannedField;
+import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.streams.StreamSummaries;
+import stroom.ai.impl.tools.validation.EventStreams;
+import stroom.ai.impl.workspace.ToolTimeoutException;
+import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
+import stroom.meta.shared.MetaRow;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+/// `review_coverage` - whole-feed coverage of an events pipeline: kinds of event the sample missed, which only appear
+/// once the feed is processed.
+///
+/// The generated translation logs, into each raw stream's Error stream, every record no rule matched ("No event
+/// mapping matched record N (action=view | ...)", WARN) and every record a rule keeps as Unknown ("Kept as Unknown
+/// by rule 'other': record N (...)", INFO), with the values its rules test. So the pipeline's Error streams name
+/// which raw streams and records were missed, and of what kind, without reading the raw data. A feed may hold
+/// hundreds of thousands of streams: they are read in bounded batches by Id (`continue_from` carries on), only clean
+/// ones skipped where Stroom counts them, and what is kept is bounded. Nothing is processed: reprocessing is approved
+/// by the user (reprocess_streams, create_processor_filter), or done by them in production.
+///
+/// A change to the events pipeline reaches the pipelines that read its Events (indexing, CEF output): their
+/// processor filters name it or its Events feed ([ProcessorFilters#followOnPipelines]). Each is checked against the
+/// Events the changed pipeline writes for the records it missed, with what to change, and, for Elasticsearch, what
+/// the cluster's admin has to do before those streams are indexed again.
+///
+/// On an aggregated feed ([SourceTypeCoverage]) the kinds found are judged against what the pipeline translates: a
+/// source type group's pipeline against its group's source types (kinds of another group's source types left to
+/// that group's pipeline, the rest outside the group passed over), a whole translation against the build's scope.
+/// A group's records passed over are counted from the raw streams it processed (its XSLT logs nothing of them); a
+/// whole translation's lines of source type values its survey didn't see are reported, for the user to survey the
+/// feed again. A source type met in a kind missed that the
+/// registry lacks is added to the build's registry as `new` (the one write, and only in a build).
+///
+/// Read as the user. It takes a run slot, says where it is, stops at once when its thread is interrupted, and
+/// stops reading Error streams before the session's time limit for a long call, saying where to carry on.
+class ReviewCoverageTool extends AbstractBuiltInTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReviewCoverageTool.class);
+
+    static final String NAME = "review_coverage";
+    static final String PIPELINE_UUID_ARG = "pipeline_uuid";
+    static final String CONTINUE_FROM_ARG = "continue_from";
+    static final String MAX_STREAMS_ARG = "max_streams";
+    static final String EVENTS_STREAM_IDS_ARG = "events_stream_ids";
+    static final String FOLLOW_ON_ARG = "follow_on";
+    static final String CHANGED_PIPELINE_UUID_ARG = "changed_pipeline_uuid";
+    static final String RAW_STREAM_IDS_ARG = "raw_stream_ids";
+    static final int DEFAULT_MAX_STREAMS = 500;
+    static final int MAX_STREAMS = 5_000;
+    /// Affected streams named one by one; more are reprocessed by criteria on the feed.
+    static final int EXACT_LIMIT = 200;
+    /// The most records stepped for the Events a follow-on pipeline is checked against.
+    static final int FOLLOW_ON_RECORDS = 200;
+    static final String CANCELLED = "Reading was stopped: the call was cancelled.";
+    // The tool the uncatalogued records' event types are proposed with (catalogue_event_types).
+    static final String CATALOGUE_EVENT_TYPES = CatalogueEventTypesTool.NAME;
+    // How a group the catch-all caught is found (found_as).
+    private static final String CAUGHT_BY = "caught by catch-all rule";
+    // The most logged values and examples a shape of uncatalogued records shows.
+    private static final int MOST_SHAPE_VALUES = 5;
+    private static final int MOST_SHAPE_EXAMPLES = 3;
+    private static final DateTimeFormatter ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            .withZone(ZoneOffset.UTC);
+
+    private final DocumentAccess documentAccess;
+    private final KeptMappings keptMappings;
+    private final CoverageReads reads;
+    private final ProcessorFilters processorFilters;
+    private final PipelineShapes pipelineShapes;
+    private final IndexTemplateAgreements indexTemplateAgreements;
+    private final PipelineStepping stepping;
+    private final EventStreams eventStreams;
+    private final WriteGuard guard;
+    private final SourceTypeCoverage sourceTypes;
+    // An aggregated feed's source type groups; none in tests that make the tool themselves.
+    private Provider<SourceTypeGroups> groupsProvider;
+
+    @Inject
+    ReviewCoverageTool(final DocumentAccess documentAccess,
+                       final KeptMappings keptMappings,
+                       final CoverageReads reads,
+                       final ProcessorFilters processorFilters,
+                       final PipelineShapes pipelineShapes,
+                       final IndexTemplateAgreements indexTemplateAgreements,
+                       final PipelineStepping stepping,
+                       final EventStreams eventStreams,
+                       final WriteGuard guard,
+                       final SourceTypeCoverage sourceTypes) {
+        this.documentAccess = documentAccess;
+        this.keptMappings = keptMappings;
+        this.reads = reads;
+        this.processorFilters = processorFilters;
+        this.pipelineShapes = pipelineShapes;
+        this.indexTemplateAgreements = indexTemplateAgreements;
+        this.stepping = stepping;
+        this.eventStreams = eventStreams;
+        this.guard = guard;
+        this.sourceTypes = sourceTypes;
+    }
+
+    /// Where an aggregated feed's source type groups are found (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param groups The feed's source type groups.
+    @Inject
+    void setGroups(final Provider<SourceTypeGroups> groups) {
+        this.groupsProvider = groups;
+    }
+
+    @Override
+    public ToolDefinition definition() {
+        return ToolDefinition.builder()
+                .name(NAME)
+                .description(BuildPlan.onboardingLabel(NAME)
+                             + "Whole-feed coverage of an events pipeline: kinds of event the sample missed, which "
+                             + "only appear once the feed is processed. The generated translation logs, into each "
+                             + "raw stream's Error stream, every record no rule matched and every record a rule "
+                             + "keeps as Unknown, with the values its rules test; this reads them, a bounded batch "
+                             + "of Error streams a call (continue_from carries on through a large feed), groups "
+                             + "them by kind with examples, and says so for the user. The affected raw streams "
+                             + "alone need processing again: named when few, by criteria on the feed when many; "
+                             + "the user approves any reprocessing. Then reviews the pipelines that read its Events "
+                             + "(indexing, CEF output) against the Events the pipeline writes for those records: "
+                             + "what each lacks, what to change, its documentation, and for Elasticsearch what the "
+                             + "cluster's admin must do before the streams are indexed again. On an aggregated "
+                             + "feed, a source type group's pipeline is judged against its group's source types "
+                             + "(another group's left to that group's pipeline, other_groups; the rest passed over, "
+                             + "not missed) and the records it passed over are counted from the raw streams it "
+                             + "processed; a whole translation is "
+                             + "judged against the build's scope, and the source type values its survey didn't see "
+                             + "are reported (unseen_source_types: suggest surveying the feed again). Source types "
+                             + "the registry lacks, in the kinds missed, are added to the build's registry as new; "
+                             + "otherwise it reads only.")
+                .parameters(ObjectSchema.builder()
+                        .addStringProperty(PIPELINE_UUID_ARG, "The events pipeline (Raw Events to Events), once it "
+                                                              + "has processed its feed, or much of it.")
+                        .addIntegerProperty(CONTINUE_FROM_ARG, "From an earlier call's progress.continue_from: read "
+                                                               + "the Error streams after it. A large feed is read "
+                                                               + "over several calls.")
+                        .addIntegerProperty(MAX_STREAMS_ARG, "Error streams to read in this call (1 to "
+                                                             + MAX_STREAMS + "; default " + DEFAULT_MAX_STREAMS
+                                                             + ").")
+                        .addProperty(EVENTS_STREAM_IDS_ARG, stringArraySchema("Events streams the changed pipeline "
+                                                                              + "wrote (e.g. after "
+                                                                              + "reprocess_streams in a build), to "
+                                                                              + "check the follow-on pipelines "
+                                                                              + "against; left out, the Events it "
+                                                                              + "writes for some missed records are "
+                                                                              + "stepped."))
+                        .addBooleanProperty(FOLLOW_ON_ARG, "Also review the pipelines that read its Events "
+                                                           + "(default true).")
+                        .addStringProperty(CHANGED_PIPELINE_UUID_ARG, "The copy with the change (a working copy or "
+                                                                      + "new version in a build), which can't "
+                                                                      + "process production streams: the follow-on "
+                                                                      + "pipelines are checked against the Events "
+                                                                      + "it gives, stepped over raw_stream_ids.")
+                        .addProperty(RAW_STREAM_IDS_ARG, stringArraySchema("With changed_pipeline_uuid: raw "
+                                                                           + "streams to step it over. Left out: "
+                                                                           + "the affected ones found, else the "
+                                                                           + "feed's newest."))
+                        .required(PIPELINE_UUID_ARG)
+                        .build())
+                .build();
+    }
+
+    @Override
+    public AiToolCategory category() {
+        return AiToolCategory.CONTENT;
+    }
+
+    @Override
+    public boolean usesRunSlot() {
+        // It reads up to 5,000 Error streams, and steps records.
+        return true;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        // In a build, it adds source types an aggregated feed's registry lacks to it as new.
+        return false;
+    }
+
+    @Override
+    public boolean isReadOnly(final ToolCall call) {
+        // Outside a build nothing is written: only a build changes a registry.
+        final String uuid = stringArg(call, PIPELINE_UUID_ARG);
+        try {
+            return uuid == null || guard.buildOf(new DocRef(PipelineDoc.TYPE, uuid)).isEmpty();
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean hasReadOnlyCalls() {
+        return true;
+    }
+
+    @Override
+    public boolean changesOnlyItsBuild() {
+        // Through WriteGuard, only the build's registry.
+        return true;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        return ToolPermissions.builder()
+                .requires(AppPermission.VIEW_DATA_PERMISSION)
+                .unlockedBy(AppPermission.STEPPING_PERMISSION)
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.EDIT)
+                .note("The pipeline's Error and Events streams are read, and records stepped (the Stepping "
+                      + "permission), as the user: only streams of feeds they may view. In a build, an aggregated "
+                      + "feed's registry is changed as the user.")
+                .build();
+    }
+
+    @Override
+    public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+        final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
+        if (pipelineUuid == null) {
+            return JsonResults.refused("Give pipeline_uuid: the events pipeline whose coverage to review.");
+        }
+        try {
+            final Request request = new Request(pipelineUuid,
+                    continueFrom(call),
+                    maxStreams(call),
+                    StartOnboardingTool.streamIds(call, EVENTS_STREAM_IDS_ARG),
+                    !argsMap(call).containsKey(FOLLOW_ON_ARG) || ToolArgs.flag(call, FOLLOW_ON_ARG),
+                    stringArg(call, CHANGED_PIPELINE_UUID_ARG),
+                    StartOnboardingTool.streamIds(call, RAW_STREAM_IDS_ARG));
+            return JsonResults.of(PipelineStepping.withinTimeLimit(context, () -> review(context, request)));
+        } catch (final ToolRefusal e) {
+            return JsonResults.refused(e);
+        } catch (final StreamReader.StreamReadException | PipelineUnreadableException e) {
+            return JsonResults.refused(e.getMessage());
+        } catch (final ToolTimeoutException e) {
+            return JsonResults.refused(CANCELLED);
+        } catch (final RuntimeException e) {
+            return JsonResults.refused(StreamSummaries.reason(e));
+        }
+    }
+
+    /// The review: `pipeline`, `progress`, `missed` (the kinds found, most records first, with examples),
+    /// `affected_raw_streams` (and `affected_raw_stream_ids`), `tell_user`, `next`, and with `follow_on`, `follow_on`
+    /// (each pipeline reviewed) and `follow_on_events`. On an aggregated feed, `source_types`
+    /// ([SourceTypeCoverage.Judged] says what it holds), `passed_over` and `other_groups` (the kinds outside what the
+    /// pipeline translates, and another group's).
+    ///
+    /// @param context The call's context.
+    /// @param request What is asked.
+    /// @return The review.
+    /// @throws ToolRefusal if the pipeline can't be read, or has processed nothing yet.
+    Map<String, Object> review(final ToolCallContext context, final Request request) {
+        final CallProgress progress = CallProgress.of(context);
+        final PipelineDoc pipelineDoc = documentAccess.read(new DocRef(PipelineDoc.TYPE, request.pipelineUuid()),
+                        PipelineDoc.class)
+                .orElseThrow(() -> new ToolRefusal("Pipeline " + request.pipelineUuid() + " can't be read: it "
+                                                   + "doesn't exist, or you don't have permission to view it"));
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, request.pipelineUuid(),
+                NullSafe.nonBlankStringElse(pipelineDoc.getName(), request.pipelineUuid()));
+        final Optional<KeptMappings.KeptXslt> kept = keptMappings.keptXslt(request.pipelineUuid());
+        final TranslationMapping mapping = kept.filter(k -> XsltSaves.TRANSLATION.equals(k.kept().kind()))
+                .map(k -> TranslationMapping.parse(k.kept().payload().get("mapping")))
+                .orElse(null);
+        final long after = Objects.requireNonNullElse(request.continueFrom(), 0L);
+        // A continue_from of 0 is no earlier call.
+        final boolean continued = after != 0;
+        progress.say("Reading the Error streams of " + pipeline.getName());
+        final CoverageReads.ErrorBatch batch = reads.errorBatch(pipeline, after, request.maxStreams());
+        final List<MetaRow> anyEvents = reads.anyEvents(pipeline);
+        if (batch.errors().isEmpty() && anyEvents.isEmpty() && !continued) {
+            throw new ToolRefusal("Pipeline '" + pipelineDoc.getName() + "' has processed nothing yet: its Error "
+                                  + "and Events streams are what this reads. create_processor_filter on its feed "
+                                  + "first.");
+        }
+        final CoverageReads.LoggedRecords logged = reads.logged(progress, batch.errors());
+        // Stopped before the call's time ran out: the next call carries on after the last Error stream read.
+        final boolean stopped = logged.read() < batch.errors().size();
+        final List<CoverageReads.ErrorStream> errors = batch.errors().subList(0, logged.read());
+        final Long more = stopped
+                ? Long.valueOf(errors.isEmpty()
+                ? after
+                : errors.getLast().id())
+                : batch.more();
+
+        final Map<List<Object>, Map<String, Object>> byKey = new LinkedHashMap<>();
+        final Map<Long, Long> raws = new LinkedHashMap<>();
+        // Every raw stream each group was logged in, its raw_streams list kept short (to 50) for the result: the
+        // streams to process again are read from these (found in review, 2026-11-27: read from the short lists, the
+        // affected count stopped at 50 and the list to process again was cut short).
+        final Map<Map<String, Object>, Set<Long>> rawsOfGroup = new IdentityHashMap<>();
+        for (final CoverageReads.Logged entry : logged.records()) {
+            raws.putIfAbsent(entry.raw(), entry.created());
+            final List<List<String>> pairs = new ArrayList<>();
+            new TreeMap<>(entry.values()).forEach((name, value) -> pairs.add(List.of(name, value)));
+            final List<Object> key = List.of(Objects.toString(entry.rule(), "\u0000"), entry.caught(), pairs);
+            final Map<String, Object> group = byKey.computeIfAbsent(key, k -> newGroup(entry));
+            @SuppressWarnings("unchecked") final List<Long> rawStreams = (List<Long>) group.get("raw_streams");
+            if (entry.rule() == null) {
+                group.put("records", (int) group.get("records") + 1);
+            } else if (!rawStreams.contains(entry.raw())) {
+                // A kept-Unknown kind is logged once a stream: its streams are counted, not its records.
+                group.put("streams", (int) group.get("streams") + 1);
+            }
+            rawsOfGroup.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(entry.raw());
+            if (!rawStreams.contains(entry.raw()) && rawStreams.size() < 50) {
+                rawStreams.add(entry.raw());
+            }
+            @SuppressWarnings("unchecked") final List<Map<String, Object>> examples =
+                    (List<Map<String, Object>>) group.get("examples");
+            if (examples.size() < 2) {
+                final Map<String, Object> example = new LinkedHashMap<>();
+                example.put("raw_stream", entry.raw());
+                // As step_records takes it, from 0: the log's record numbers are from 1 (seen in e2e: the record
+                // after the one missed was given).
+                example.put("record", entry.record() - 1);
+                examples.add(example);
+            }
+        }
+        final List<Map<String, Object>> found = new ArrayList<>(byKey.values());
+        found.sort(Comparator.comparingInt(g -> -size(g)));
+        // An aggregated feed: the kinds of source types outside the build's scope are passed over, not missed.
+        // A group's records passed over in processing are told from the raw streams it processed in this call's
+        // range of Ids: its XSLT logs nothing of them.
+        final CoverageReads.ProcessedRaws processed = mapping != null && mapping.module() != null
+                                                      && mapping.module().isGroup()
+                ? reads.processedRaws(pipeline, after, more, SourceTypeCoverage.MAX_PROCESSED_RAWS)
+                : null;
+        final Optional<SourceTypeCoverage.Judged> judged = sourceTypes.judge(context.session(), pipeline, mapping,
+                found, logged.sourceTypes(), processed);
+        final List<Map<String, Object>> groups = judged.map(SourceTypeCoverage.Judged::missed).orElse(found);
+        if (mapping != null) {
+            // A few raw records for examples; the grouping itself needs none.
+            final String converter = keptMappings.dataSplitter(request.pipelineUuid()).orElse(null);
+            for (final Map<String, Object> group : groups.subList(0, Math.min(10, groups.size()))) {
+                @SuppressWarnings("unchecked") final List<Map<String, Object>> examples =
+                        (List<Map<String, Object>>) group.get("examples");
+                for (final Map<String, Object> example : examples.subList(0, Math.min(1, examples.size()))) {
+                    example.put("holds", reads.example(mapping, converter, (long) example.get("raw_stream"),
+                            (int) example.get("record")));
+                }
+            }
+        }
+        final List<String> keptUnknown = new ArrayList<>();
+        if (mapping != null) {
+            NullSafe.list(mapping.events()).stream()
+                    .filter(rule -> NullSafe.isNonEmptyString(rule.allowUnknown()))
+                    .map(EventRule::name)
+                    .forEach(keptUnknown::add);
+        }
+        final String loggedUnknown = XsltGenerator.KEPT_UNKNOWN.split("'")[0];
+        final boolean logsUnknown = kept.isPresent() && NullSafe.string(kept.get().xslt().getData())
+                .contains(loggedUnknown);
+        final Set<Long> sampled = new TreeSet<>();
+        if ((!keptUnknown.isEmpty() || mapping == null) && !logsUnknown && !continued) {
+            sampled.addAll(sampledUnknown(pipeline, request.maxStreams(), groups));
+        }
+        final Set<Long> affectedIds = new TreeSet<>(raws.keySet());
+        if (judged.isPresent() && (!judged.get().passedOver().isEmpty() || !judged.get().otherGroups().isEmpty())) {
+            // Only the raw streams of the kinds missed within what the pipeline translates need processing again.
+            affectedIds.clear();
+            groups.forEach(group -> affectedIds.addAll(rawsOfGroup.getOrDefault(group, Set.of())));
+        }
+        affectedIds.addAll(sampled);
+        final List<Long> affectedList = List.copyOf(affectedIds);
+        // The affected streams' own time range: not that of every logged stream, those passed over among them. A
+        // sampled stream logged nothing, so its creation isn't known here.
+        final List<Long> created = affectedList.stream()
+                .map(raws::get)
+                .filter(Objects::nonNull)
+                .toList();
+        final Map<String, Object> affected = new LinkedHashMap<>();
+        affected.put("count", affectedList.size());
+        affected.put("first_id", affectedList.isEmpty()
+                ? null
+                : affectedList.getFirst());
+        affected.put("last_id", affectedList.isEmpty()
+                ? null
+                : affectedList.getLast());
+        affected.put("from", created.isEmpty()
+                ? null
+                : iso(created.stream().min(Long::compare).get()));
+        affected.put("to", created.isEmpty()
+                ? null
+                : iso(created.stream().max(Long::compare).get()));
+
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("pipeline", pipelineDoc.getName());
+        final Map<String, Object> progressed = new LinkedHashMap<>();
+        progressed.put("error_streams_read", errors.size());
+        progressed.put("after", after);
+        progressed.put("continue_from", more);
+        progressed.put("done", more == null);
+        if (more != null) {
+            progressed.put("note", "More Error streams to read: call again with continue_from, and add this call's "
+                                   + "findings to the earlier ones'.");
+        }
+        if (stopped) {
+            progressed.put("stopped_early", PipelineStepping.outOfTime(context, "after " + errors.size()
+                                                                                + " Error streams"));
+        }
+        result.put("progress", progressed);
+        result.put("missed", groups);
+        result.put("affected_raw_streams", affected);
+        if (!affectedList.isEmpty()) {
+            result.put("affected_raw_stream_ids", affectedList.subList(0, Math.min(EXACT_LIMIT,
+                    affectedList.size())));
+        }
+        tellUser(result, groups, affected, affectedList, keptUnknown, more, continued,
+                errors.size(), pipeline);
+        uncatalogued(result, groups, affectedList, pipeline);
+        judged.ifPresent(told -> sourceTypesSaid(result, told));
+        if (groupsProvider != null && kept.isPresent() && mapping != null && mapping.module() != null
+            && mapping.module().isGroup()) {
+            // Informational: a promoted module changes only by a new version, so a feed's groups may import
+            // different ones.
+            final List<String> versions = groupsProvider.get().mixedModuleVersionsOf(
+                    guard.buildOf(pipeline).orElse(null), kept.get().xslt().getUuid());
+            if (!versions.isEmpty()) {
+                result.put(BuildStatusTool.MODULE_VERSIONS, String.join(" ", versions));
+            }
+        }
+        cappedCounts(result, logged.capped());
+        if (request.followOn()) {
+            followOn(context, request, pipeline, kept, groups, affected, affectedList, anyEvents, more, result);
+        }
+        return result;
+    }
+
+    // What the review says of an aggregated feed's source types: what the pipeline was judged against (a group's
+    // source types, or the build's scope) and its share of the feed, the kinds outside it passed over or left to
+    // another group's pipeline, what the pipeline logged in processing, and the source types met that the registry
+    // lacks or the survey didn't see.
+    private static void sourceTypesSaid(final Map<String, Object> result, final SourceTypeCoverage.Judged judged) {
+        result.put("source_types", judged.said());
+        final StringBuilder said = new StringBuilder();
+        final Object share = JsonValues.mapOrEmpty(judged.said().get("scope")).get("share_percent");
+        final String shareSaid = share == null
+                ? ""
+                : " (about " + share + "% of the feed's records the survey read)";
+        if (judged.group() != null) {
+            said.append("Judged against source type group '").append(judged.group()).append("''s source types, ")
+                    .append(String.join(", ", JsonValues.strings(judged.said().get("group_source_types"))))
+                    .append(shareSaid).append(". ");
+        } else if (judged.scope() != null) {
+            said.append("Judged within build '").append(judged.scope().build()).append("''s scope, ")
+                    .append(judged.scope().said()).append(shareSaid).append(". ");
+        }
+        said.append(result.get("tell_user"));
+        if (!judged.passedOver().isEmpty()) {
+            result.put("passed_over", judged.passedOver());
+            said.append(" ").append(judged.passedOver().size()).append(" kind(s) of source types outside ")
+                    .append(judged.group() == null
+                            ? "the scope "
+                            : "the group ")
+                    .append(JsonValues.mapOrEmpty(judged.said().get("passed_over")).keySet())
+                    .append(" were passed over, not missed: this pipeline isn't meant to take them.");
+        }
+        if (!judged.otherGroups().isEmpty()) {
+            result.put("other_groups", judged.otherGroups());
+            final List<String> by = new ArrayList<>();
+            JsonValues.mapOrEmpty(judged.said().get("other_groups")).forEach((type, group) -> by.add(type + " ("
+                                                                                                    + group + ")"));
+            said.append(" ").append(judged.otherGroups().size()).append(" kind(s) of source types other groups' "
+                                                                        + "pipelines translate were left to them, "
+                                                                        + "not missed: ").append(String.join(", ",
+                    by)).append(".");
+        }
+        final Map<String, Object> passed = JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(judged.said().get(
+                "processing")).get("passed_over"));
+        if (!passed.isEmpty()) {
+            said.append(" In processing the group's pipeline passed over ").append(passed.get("records"))
+                    .append(" record(s) not of its source types, in ").append(passed.get("raw_streams"))
+                    .append(" raw stream(s): other groups', parked or new source types, as the user chose.");
+        }
+        final Map<String, Object> unseen = JsonValues.mapOrEmpty(judged.said().get("unseen_source_types"));
+        if (!unseen.isEmpty()) {
+            said.append(" Values of ").append(judged.said().get("field")).append(" the survey didn't see were met in "
+                                                                                 + "processing: ")
+                    .append(unseen.keySet()).append(". Their records were translated by the rules as any other; "
+                                                    + "suggest the user surveys the feed again to cover them "
+                                                    + "(survey_feed in a build on the feed).");
+        }
+        final List<String> found = JsonValues.strings(judged.said().get("new_source_types"));
+        if (!found.isEmpty()) {
+            said.append(" Source types the registry lacks were met: ").append(found).append(" (")
+                    .append(judged.said().get("registry")).append(").");
+        }
+        result.put("tell_user", said.toString());
+    }
+
+    // Unknown events sampled from the pipeline's newest Events streams, added to the groups; the raw streams they
+    // came from.
+    private Set<Long> sampledUnknown(final DocRef pipeline,
+                                     final int maxStreams,
+                                     final List<Map<String, Object>> groups) {
+        final CoverageReads.SampledUnknown found = reads.sampledUnknown(pipeline, Math.min(maxStreams, 200), 200);
+        mostCommon(found.kinds(), 20).forEach(kind -> {
+            final Map<String, Object> group = new LinkedHashMap<>();
+            group.put("found_as", "kept as Unknown (its newest Events sampled: its XSLT logs no Unknown records; "
+                                  + "save it again from its mapping and they are found exactly)");
+            final Map<String, Object> shownKind = new LinkedHashMap<>();
+            shownKind.put("TypeId", kind.getKey().typeId());
+            shownKind.put("Data", kind.getKey().data());
+            group.put("kind", shownKind);
+            group.put("events", kind.getValue());
+            group.put("example", found.examples().get(kind.getKey()));
+            groups.add(group);
+        });
+        return found.raws();
+    }
+
+    // Raw streams whose Error stream held as many log lines of a severity as Stroom writes: the records past them
+    // went unlogged, so their counts are short (an XSLT saved before kept-Unknown records were logged once a stream
+    // logged each one).
+    private static void cappedCounts(final Map<String, Object> result, final List<Long> capped) {
+        if (capped.isEmpty()) {
+            return;
+        }
+        final List<Long> streams = capped.stream().distinct().toList();
+        final Map<String, Object> said = new LinkedHashMap<>();
+        said.put("raw_streams", streams.subList(0, Math.min(EXACT_LIMIT, streams.size())));
+        said.put("count", streams.size());
+        said.put("note", "Stroom writes at most " + CoverageReads.MAX_WRITTEN_MARKERS + " log lines of a severity "
+                         + "to an Error stream; these raw streams' Error streams reached that, so the records past "
+                         + "it were not logged and the counts here are short. Saving the XSLT again from its mapping "
+                         + "logs each kind once a stream instead; processing these streams again gives exact "
+                         + "counts.");
+        result.put("counts_capped", said);
+        result.put("tell_user", result.get("tell_user") + " Counts are short for " + streams.size()
+                                + " raw stream(s): their Error streams reached Stroom's limit of "
+                                + CoverageReads.MAX_WRITTEN_MARKERS + " log lines (see counts_capped).");
+    }
+
+    private void tellUser(final Map<String, Object> result,
+                          final List<Map<String, Object>> groups,
+                          final Map<String, Object> affected,
+                          final List<Long> affectedIds,
+                          final List<String> keptUnknown,
+                          final Long more,
+                          final boolean continued,
+                          final int read,
+                          final DocRef pipeline) {
+        final String soFar = more == null && !continued
+                ? ""
+                : " (in the " + read + " Error streams this call read" + (continued
+                        ? ", after earlier calls"
+                        : "") + (more != null
+                        ? "; there are more"
+                        : "") + ")";
+        if (groups.isEmpty()) {
+            result.put("tell_user", "No untranslated events" + soFar + ": every record was translated by a rule"
+                                    + (keptUnknown.isEmpty()
+                    ? ""
+                    : " and none was kept as Unknown") + ".");
+            return;
+        }
+        final int total = groups.stream()
+                .mapToInt(g -> counted(g, "records") + counted(g, "events"))
+                .sum();
+        // A kept-Unknown or caught kind is logged once a stream, so its records aren't counted: said apart.
+        final long caught = groups.stream()
+                .filter(ReviewCoverageTool::caught)
+                .count();
+        final long kept = groups.stream().filter(g -> g.containsKey("streams")).count() - caught;
+        result.put("tell_user", "Found untranslated events" + soFar + ": " + total + " record(s) of "
+                                + (groups.size() - kept - caught) + " kind(s) the sample didn't have" + (kept == 0
+                ? ""
+                : ", and " + kept + " kind(s) kept as Unknown (logged once a stream, so not counted)")
+                                + (caught == 0
+                ? ""
+                : ", and " + CaughtShapes.of(caughtValues(groups)).size() + " shape(s) of uncatalogued records the "
+                  + "catch-all took (" + caught + " group(s) of logged values; proposed as event types for the user "
+                  + "to confirm: uncatalogued)")
+                                + ", in " + affectedIds.size() + " raw stream(s). " + needed(groups.size() - kept,
+                kept));
+        if (groups.size() == kept) {
+            // Kept as Unknown as the user agreed, and nothing else: no rule to add, nothing to process again (seen
+            // in the chat 163 review: told agreed Unknown kinds needed rules).
+            result.put("next", List.of("Show the user the kinds kept as Unknown (missed), as they agreed; nothing "
+                                       + "needs changing unless they now want a kind translated (then a rule for it "
+                                       + "with build_translation_xslt changes)."));
+            return;
+        }
+        final boolean inBuild = tags(pipeline).contains(WriteGuard.MANAGED);
+        final boolean many = affectedIds.size() > EXACT_LIMIT || more != null;
+        final String reprocess;
+        if (inBuild && !many) {
+            reprocess = "reprocess_streams with the affected raw streams, at most 10 a call: each call asks the "
+                        + "user's approval";
+        } else if (inBuild) {
+            reprocess = "Too many affected streams to reprocess one by one in a build: the user processes them "
+                        + "again in production once the change is promoted";
+        } else if (!many) {
+            reprocess = "Processing the affected raw streams again is the user's, once promoted: exactly these "
+                        + "streams (affected_raw_stream_ids; Stroom's data browser: select them, Reprocess, or a "
+                        + "processor filter on their Ids)";
+        } else {
+            reprocess = "Processing the affected streams again is the user's, once promoted. With this many, by "
+                        + "criteria rather than one by one: a processor filter on the feed's Raw Events created "
+                        + "from " + affected.get("from") + " to " + affected.get("to") + " (Ids "
+                        + affected.get("first_id") + " to " + affected.get("last_id") + ", over every batch read), "
+                        + "so every stream in that window is processed again, affected or not (Stroom supersedes "
+                        + "their Events streams). Every follow-on pipeline then takes that window again.";
+        }
+        result.put("next", List.of(
+                "Show the user the kinds found (missed) and their examples; step_records on an example to see it.",
+                "Add a rule for each kind not kept as Unknown with build_translation_xslt changes={events: [...]} "
+                + "and uuid=<its XSLT>"
+                + (inBuild
+                        ? ""
+                        : " (the pipeline is in production: copy_pipeline into a build first, a new version, and "
+                          + "change the copy)"),
+                "write_documentation with stream_ids = the sample streams plus some affected raw streams, so the new "
+                + "kinds are documented to the field; change = what was found and added (one version row when the "
+                + "build is promoted)",
+                reprocess));
+    }
+
+    // The records the catch-all caught in processing, grouped by shape and proposed for the catalogue (DESIGN.md,
+    // Event type catalogue, After the first build): `uncatalogued` with each shape's logged values and examples,
+    // and `next` names catalogue_event_types, the agent proposing an event type per shape (op: add), checked
+    // against the sample and these records, then confirmed by the user and applied in a new version.
+    private void uncatalogued(final Map<String, Object> result,
+                              final List<Map<String, Object>> groups,
+                              final List<Long> affectedIds,
+                              final DocRef pipeline) {
+        final List<Map<String, Object>> caught = groups.stream().filter(ReviewCoverageTool::caught).toList();
+        if (caught.isEmpty()) {
+            return;
+        }
+        final List<Map<String, Object>> shapes = new ArrayList<>();
+        for (final CaughtShapes.Shape shape : CaughtShapes.of(caughtValues(caught))) {
+            final Set<String> rules = new LinkedHashSet<>();
+            final List<Object> values = new ArrayList<>();
+            final Set<Long> rawStreams = new TreeSet<>();
+            final List<Map<String, Object>> examples = new ArrayList<>();
+            for (final int member : shape.members()) {
+                final Map<String, Object> group = caught.get(member);
+                rules.add(caughtRule(group));
+                if (values.size() < MOST_SHAPE_VALUES) {
+                    values.add(group.get("kind"));
+                }
+                JsonValues.listOrEmpty(group.get("raw_streams")).forEach(id -> rawStreams.add(((Number) id)
+                        .longValue()));
+                JsonValues.maps(group.get("examples")).stream()
+                        .limit(1)
+                        .filter(example -> examples.size() < MOST_SHAPE_EXAMPLES)
+                        .forEach(examples::add);
+            }
+            final Map<String, Object> said = new LinkedHashMap<>();
+            said.put("signature", shape.signature());
+            said.put("logged_by", List.copyOf(rules));
+            said.put("values", values);
+            said.put("raw_streams", List.copyOf(rawStreams));
+            said.put("examples", examples);
+            shapes.add(said);
+        }
+        final Map<String, Object> uncatalogued = new LinkedHashMap<>();
+        uncatalogued.put("shapes", shapes);
+        uncatalogued.put("note", "Records no event type of the catalogue recognises (uncatalogued records), which "
+                                 + "the catch-all translated as Unknown. Each shape (its logged values, the fields the "
+                                 + "rules test) is likely an event type of its own the sample didn't have.");
+        result.put("uncatalogued", uncatalogued);
+
+        final String build = guard.buildOf(pipeline).orElse(null);
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("build", NullSafe.nonBlankStringElse(build, "<the build of the new version>"));
+        arguments.put("stream_ids", affectedIds.subList(0, Math.min(EXACT_LIMIT, affectedIds.size())));
+        final Map<String, Object> next = new LinkedHashMap<>();
+        next.put("step", "catalogue");
+        next.put("do", (build == null
+                ? "The pipeline is in production: copy_pipeline into a build first (a new version), then "
+                : "")
+                       + "propose an event type for each shape of uncatalogued records (uncatalogued.shapes): "
+                       + CATALOGUE_EVENT_TYPES + " with proposals=[{op: add, type_id, title, event_detail, action, "
+                       + "recognised_by: [{when: [...]}] told by the shape's own fields and values, ...}], "
+                       + "stream_ids the build's sample streams and these raw streams, so each is checked against "
+                       + "the sample and the records caught; then confirm: true, for the user to confirm them. "
+                       + "draft_translation_mapping and build_translation_xslt then apply them in a new version of "
+                       + "the translation.");
+        final Map<String, Object> call = new LinkedHashMap<>();
+        call.put("tool", CATALOGUE_EVENT_TYPES);
+        call.put("arguments", arguments);
+        next.put("call", call);
+        next.put("then", result.get("next") instanceof final List<?> steps
+                ? steps
+                : List.of());
+        result.put("next", next);
+    }
+
+    // The values each caught group's records logged (none for a group whose XSLT logged none).
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, String>> caughtValues(final List<Map<String, Object>> groups) {
+        final List<Map<String, String>> values = new ArrayList<>();
+        for (final Map<String, Object> group : groups) {
+            if (!caught(group)) {
+                continue;
+            }
+            final Map<String, String> logged = new LinkedHashMap<>();
+            if (group.get("kind") instanceof final Map<?, ?> kind && !kind.containsKey("values")) {
+                ((Map<String, Object>) kind).forEach((name, value) -> logged.put(name, String.valueOf(value)));
+            }
+            values.add(logged);
+        }
+        return values;
+    }
+
+    private static boolean caught(final Map<String, Object> group) {
+        return String.valueOf(group.get("found_as")).startsWith(CAUGHT_BY);
+    }
+
+    // The catch-all rule that caught a group's records.
+    private static String caughtRule(final Map<String, Object> group) {
+        final String said = String.valueOf(group.get("found_as"));
+        final int quote = said.indexOf('\'');
+        return quote < 0
+                ? said
+                : said.substring(quote + 1, said.lastIndexOf('\''));
+    }
+
+    // What the mapping needs: a rule for each kind not kept as Unknown; those kept, as the user agreed, need none.
+    private static String needed(final long needing, final long kept) {
+        if (needing == 0) {
+            return "The kinds kept as Unknown were agreed with the user: they need no rule.";
+        }
+        return "The mapping needs a rule for each kind not kept as Unknown" + (kept == 0
+                ? ""
+                : " (those kept as Unknown were agreed with the user, and need none)")
+               + "; then only those streams need processing again, once the user approves.";
+    }
+
+    // The pipelines that read its Events, each reviewed against the Events the changed pipeline writes.
+    private void followOn(final ToolCallContext context,
+                          final Request request,
+                          final DocRef pipeline,
+                          final Optional<KeptMappings.KeptXslt> kept,
+                          final List<Map<String, Object>> groups,
+                          final Map<String, Object> affected,
+                          final List<Long> affectedIds,
+                          final List<MetaRow> anyEvents,
+                          final Long more,
+                          final Map<String, Object> result) {
+        final List<XmlElement> events = followOnEvents(context, request, pipeline, kept, groups, affectedIds,
+                anyEvents);
+        final Set<String> feeds = new LinkedHashSet<>();
+        anyEvents.forEach(row -> {
+            if (NullSafe.isNonBlankString(row.getMeta().getFeedName())) {
+                feeds.add(row.getMeta().getFeedName());
+            }
+        });
+        final List<Long> oldEvents = !affectedIds.isEmpty() && affectedIds.size() <= EXACT_LIMIT && more == null
+                ? reads.oldEvents(pipeline, affectedIds)
+                : affectedIds.isEmpty()
+                        ? List.of()
+                        : null;
+        CallProgress.of(context).say("Reviewing the pipelines that read the Events of " + pipeline.getName());
+        final List<Map<String, Object>> reviewed = new ArrayList<>();
+        for (final Map<String, Object> entry : processorFilters.followOnPipelines(pipeline.getUuid(), feeds)) {
+            try {
+                reviewed.add(reviewFollowOn(entry, events, affected, oldEvents));
+            } catch (final RuntimeException e) {
+                // One unreadable pipeline must not hide the others.
+                final Map<String, Object> failed = new LinkedHashMap<>(entry);
+                failed.put("error", head(StreamSummaries.reason(e), 200));
+                reviewed.add(failed);
+            }
+        }
+        result.put("follow_on", reviewed);
+        result.put("follow_on_events", events.isEmpty()
+                ? "none to check against: give events_stream_ids once the changed pipeline has written some"
+                : events.size() + " Events " + (!request.eventsStreamIds().isEmpty()
+                        ? "given"
+                        : request.changedPipelineUuid() != null
+                                ? "the changed copy gives, stepped"
+                                : "the pipeline writes now for some affected records"));
+    }
+
+    // The Events the follow-on pipelines are checked against: given, the changed copy's stepped, or the pipeline's
+    // own for some affected records.
+    private List<XmlElement> followOnEvents(final ToolCallContext context,
+                                            final Request request,
+                                            final DocRef pipeline,
+                                            final Optional<KeptMappings.KeptXslt> kept,
+                                            final List<Map<String, Object>> groups,
+                                            final List<Long> affectedIds,
+                                            final List<MetaRow> anyEvents) {
+        final List<XmlElement> events = new ArrayList<>();
+        if (!request.eventsStreamIds().isEmpty()) {
+            events.addAll(CefEvents.eventsOf(eventStreams.read(request.eventsStreamIds(),
+                    PipelineStepping.MAX_SAMPLE_RECORDS).eventsXml()));
+        } else if (request.changedPipelineUuid() != null) {
+            // Its Events, stepped: a copy in a build can't process production streams (seen: the prompts asked for
+            // "Events with the change", which only a step can give).
+            stepping.checkCanStep();
+            final SteppedPipeline loaded = stepping.load(request.changedPipelineUuid());
+            final Optional<KeptMappings.KeptXslt> changed = keptMappings.keptXslt(request.changedPipelineUuid());
+            List<Long> streams = request.rawStreamIds();
+            if (streams.isEmpty()) {
+                streams = exampleStreams(groups);
+            }
+            if (streams.isEmpty()) {
+                streams = reads.newestRaw(anyEvents);
+            }
+            final String element = changed.or(() -> kept)
+                    .map(KeptMappings.KeptXslt::element)
+                    .orElseGet(() -> loaded.defaultOutputs().getFirst());
+            events.addAll(stepped(context, loaded, streams, element));
+        } else if (!affectedIds.isEmpty() && kept.isPresent()) {
+            stepping.checkCanStep();
+            final SteppedPipeline loaded = stepping.load(pipeline.getUuid());
+            final List<Long> stepped = exampleStreams(groups);
+            events.addAll(stepped(context, loaded, stepped.isEmpty()
+                    ? affectedIds.subList(0, Math.min(3, affectedIds.size()))
+                    : stepped, kept.get().element()));
+        }
+        return events;
+    }
+
+    private List<XmlElement> stepped(final ToolCallContext context,
+                                     final SteppedPipeline loaded,
+                                     final List<Long> streams,
+                                     final String element) {
+        final List<XmlElement> events = new ArrayList<>();
+        try {
+            for (final String output : stepping.outputs(context, loaded, streams, element, null, FOLLOW_ON_RECORDS)
+                    .outputs().values()) {
+                try {
+                    events.addAll(CefEvents.eventsOf(output));
+                } catch (final XmlParser.XmlParseException e) {
+                    // Not Events: nothing to check against from this record.
+                }
+            }
+        } finally {
+            stepping.audit(context, streams, "Stepped stream(s) through " + loaded.name() + " with the " + NAME
+                                             + " tool");
+        }
+        return events;
+    }
+
+    // The first example's raw stream of each group that has one, sorted, at most 5.
+    private static List<Long> exampleStreams(final List<Map<String, Object>> groups) {
+        final Set<Long> streams = new TreeSet<>();
+        for (final Map<String, Object> group : groups) {
+            if (group.get("examples") instanceof final List<?> examples && !examples.isEmpty()) {
+                streams.add((Long) ((Map<?, ?>) examples.getFirst()).get("raw_stream"));
+            }
+        }
+        return streams.stream().limit(5).toList();
+    }
+
+    /// A pipeline that reads the Events, checked against them.
+    ///
+    /// @param entry     The pipeline (`uuid`, `name`, `filters`).
+    /// @param events    The Events the changed pipeline writes.
+    /// @param affected  The affected raw streams (`from`, `to`).
+    /// @param oldEvents The Events streams the affected raw streams wrote before (in the index), or null when too
+    ///                  many to name.
+    /// @return It with its `stage`, `backend`, `kind` and what it lacks, what to do, and for Elasticsearch what the
+    /// cluster's admin does first.
+    Map<String, Object> reviewFollowOn(final Map<String, Object> entry,
+                                       final List<XmlElement> events,
+                                       final Map<String, Object> affected,
+                                       final List<Long> oldEvents) {
+        final String uuid = (String) entry.get("uuid");
+        final PipelineShapes.Shape shape = pipelineShapes.shape(uuid);
+        final Optional<KeptMapping.Kept> kept = keptMappings.keptMapping(uuid);
+        final Map<String, Object> out = new LinkedHashMap<>(entry);
+        out.put("stage", shape.stage());
+        out.put("backend", shape.backend());
+        // A follow-on importing a module that no longer exists fails whatever the change (seen in chat 192).
+        final List<String> broken = pipelineShapes.brokenImports(uuid);
+        if (!broken.isEmpty()) {
+            out.put("imports_broken", broken.stream().map(line -> "Production pipeline '" + entry.get("name")
+                                                                  + "': " + line + ". Tell the user.").toList());
+        }
+        if (kept.isPresent() && XsltSaves.CEF.equals(kept.get().kind())) {
+            final CefPlan plan = CefPlan.fromJson(kept.get().payload());
+            final CefDraft.Extended extended = events.isEmpty()
+                    ? new CefDraft.Extended(List.of(), List.of())
+                    : CefDraft.extend(plan, events);
+            out.put("kind", "cef");
+            out.put("missing", extended.notes());
+            out.put("changes", extended.added());
+            out.put("to_do", extended.added().isEmpty()
+                    ? "nothing to change for these Events"
+                    : "draft_cef_mapping uuid=<its XSLT> overrides=<changes> stream_ids=<the new Events>, then "
+                      + "step_sample, draft_cef_mapping pipeline_uuid=... to review, write_documentation");
+            out.put("reprocessing", "Reprocessing the raw streams writes new Events streams, which this pipeline "
+                                    + "sends again whole: ArcSight receives the events those streams had already "
+                                    + "sent a second time (dedupe there, or accept it).");
+        } else if (kept.isPresent() && XsltSaves.INDEX.equals(kept.get().kind())) {
+            final FieldPlan plan = FieldPlan.fromJson(kept.get().payload());
+            final List<String> gaps = events.isEmpty()
+                    ? List.of()
+                    : indexGaps(plan, events);
+            out.put("kind", "index");
+            out.put("not_indexed", gaps);
+            out.put("to_do", gaps.isEmpty()
+                    ? "nothing to change for these Events"
+                    : "draft_index_mapping with these as extra_fields (the index's agreed template as the example), "
+                      + "save_xslt index_plan=... uuid=<its XSLT>, step_sample, write_documentation");
+            indexTemplateAgreements.elasticDestination(uuid).ifPresent(destination ->
+                    out.put("elasticsearch", elasticsearch(plan, destination, gaps, affected, oldEvents)));
+        } else {
+            out.put("kind", "indexing".equals(shape.stage()) || "forwarding".equals(shape.stage())
+                    ? "hand-written"
+                    : shape.stage());
+            out.put("to_do", "Its XSLT keeps no plan: step it over the new Events (step_sample) and check what it "
+                             + "writes for the new kinds (draft_cef_mapping pipeline_uuid=... for a CEF pipeline)");
+        }
+        out.put("documentation", "write_documentation for it again once changed (the change is recorded when the "
+                                 + "build is promoted)");
+        return out;
+    }
+
+    private static Map<String, Object> elasticsearch(final FieldPlan plan,
+                                                     final Map<String, Object> destination,
+                                                     final List<String> gaps,
+                                                     final Map<String, Object> affected,
+                                                     final List<Long> oldEvents) {
+        final Object index = destination.get("index name");
+        final String field = NullSafe.list(plan.fields()).stream()
+                .filter(f -> NullSafe.string(f.source()).contains("StreamId")
+                             || NullSafe.string(f.source()).contains("stream-id"))
+                .map(PlannedField::name)
+                .findFirst()
+                .orElse("StreamId");
+        final String delete;
+        if (oldEvents != null) {
+            delete = oldEvents.isEmpty()
+                    ? null
+                    : "POST " + index + "/_delete_by_query {\"query\": {\"terms\": {\"" + field + "\": " + oldEvents
+                      + "}}}";
+        } else {
+            // Too many to name: the streams are reprocessed by a time window, and so is what the index holds.
+            delete = "POST " + index + "/_delete_by_query with a query for the documents of the feed's Events "
+                     + "streams created from " + affected.get("from") + " to " + affected.get("to") + " (the "
+                     + "window the raw streams are reprocessed in): their " + field + " values, or the event time "
+                     + "field if the index has no feed field";
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("index", index);
+        out.put("cluster", destination.get("cluster"));
+        out.put("template", gaps.isEmpty()
+                ? "The index template needs no change for these Events."
+                : "New fields need the index template changed first: check_index_template with them, which the "
+                  + "user confirms, and the cluster's admin commits.");
+        out.put("admin", delete == null
+                ? "No Events streams of the affected raw streams were indexed yet."
+                : "Before the affected streams are processed again, the cluster's admin deletes what their old "
+                  + "Events streams put in the index, or those events are indexed twice: " + delete);
+        return out;
+    }
+
+    /// The Event paths no field of an index plan takes.
+    ///
+    /// @param plan   The index plan.
+    /// @param events Events.
+    /// @return The 25 most common, each `path (n of N events)`.
+    static List<String> indexGaps(final FieldPlan plan, final List<XmlElement> events) {
+        final List<String> sources = NullSafe.list(plan.leafFields()).stream().map(PlannedField::source).toList();
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        for (final XmlElement event : events) {
+            for (final String path : CefEvents.eventValues(event).keySet()) {
+                if (sources.stream().noneMatch(s -> FieldPlans.sourceMatches(stripLeadingSlashes(s), path))) {
+                    counts.merge(path, 1, Integer::sum);
+                }
+            }
+        }
+        return mostCommon(counts, 25).stream()
+                .map(e -> e.getKey() + " (" + e.getValue() + " of " + events.size() + " events)")
+                .toList();
+    }
+
+    // The most first, ties in the order first counted.
+    private static <K> List<Map.Entry<K, Integer>> mostCommon(final Map<K, Integer> counts, final int n) {
+        return counts.entrySet().stream()
+                .sorted(Comparator.comparingInt((Map.Entry<K, Integer> e) -> -e.getValue()))
+                .limit(n)
+                .toList();
+    }
+
+    private Set<String> tags(final DocRef pipeline) {
+        try {
+            return guard.tags(pipeline);
+        } catch (final RuntimeException e) {
+            return Set.of();
+        }
+    }
+
+    // A group's size, to sort by: its records, or a kept-Unknown kind's streams.
+    private static int size(final Map<String, Object> group) {
+        return group.get("records") instanceof final Integer records
+                ? records
+                : counted(group, "streams");
+    }
+
+    // A count a group holds, 0 when it has none (or the key holds why not).
+    private static int counted(final Map<String, Object> group, final String key) {
+        return group.get(key) instanceof final Integer count
+                ? count
+                : 0;
+    }
+
+    private static Map<String, Object> newGroup(final CoverageReads.Logged entry) {
+        final Map<String, Object> group = new LinkedHashMap<>();
+        group.put("found_as", entry.rule() == null
+                ? "no rule matched"
+                : entry.caught()
+                        ? CAUGHT_BY + " '" + entry.rule() + "'"
+                        : "kept as Unknown by rule '" + entry.rule() + "'");
+        group.put("kind", entry.values().isEmpty()
+                ? Map.of("values", "not logged (an XSLT saved before they were): see the examples")
+                : new LinkedHashMap<>(entry.values()));
+        if (entry.rule() == null) {
+            group.put("records", 0);
+        } else {
+            // Logged once a stream for each kind (the XSLT's mcp_log_kind): its records aren't counted.
+            group.put("streams", 0);
+            group.put("records", "not counted: logged once a stream");
+        }
+        group.put("raw_streams", new ArrayList<Long>());
+        group.put("examples", new ArrayList<Map<String, Object>>());
+        return group;
+    }
+
+    private static String iso(final long ms) {
+        return ms == 0
+                ? null
+                : ISO.format(Instant.ofEpochMilli(ms));
+    }
+
+    private static String stripLeadingSlashes(final String source) {
+        int i = 0;
+        while (i < source.length() && source.charAt(i) == '/') {
+            i++;
+        }
+        return source.substring(i);
+    }
+
+    private static String head(final String text, final int n) {
+        return text.length() <= n
+                ? text
+                : text.substring(0, n);
+    }
+
+    private Long continueFrom(final ToolCall call) {
+        final String given = stringArg(call, CONTINUE_FROM_ARG);
+        if (given == null) {
+            return null;
+        }
+        try {
+            return (long) Double.parseDouble(given);
+        } catch (final NumberFormatException e) {
+            throw new ToolRefusal("continue_from is an Error stream Id (a number), from an earlier call's "
+                                  + "progress.continue_from");
+        }
+    }
+
+    private int maxStreams(final ToolCall call) {
+        if (stringArg(call, MAX_STREAMS_ARG) == null) {
+            return DEFAULT_MAX_STREAMS;
+        }
+        final Integer given = intArg(call, MAX_STREAMS_ARG);
+        if (given == null || given < 1 || given > MAX_STREAMS) {
+            throw new ToolRefusal("max_streams must be a whole number from 1 to " + MAX_STREAMS);
+        }
+        return given;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a call asks.
+    ///
+    /// @param pipelineUuid        The events pipeline.
+    /// @param continueFrom        The Error stream Id to read after, or null.
+    /// @param maxStreams          The most Error streams to read.
+    /// @param eventsStreamIds     Events streams the changed pipeline wrote.
+    /// @param followOn            True to review the pipelines that read its Events.
+    /// @param changedPipelineUuid The copy with the change, or null.
+    /// @param rawStreamIds        Raw streams to step the copy over.
+    record Request(String pipelineUuid,
+                   Long continueFrom,
+                   int maxStreams,
+                   List<Long> eventsStreamIds,
+                   boolean followOn,
+                   String changedPipelineUuid,
+                   List<Long> rawStreamIds) {
+
+    }
+}

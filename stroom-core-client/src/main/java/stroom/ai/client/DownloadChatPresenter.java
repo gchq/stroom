@@ -33,8 +33,17 @@ public class DownloadChatPresenter extends MyPresenterWidget<DownloadChatPresent
         return getView().isIncludeDataContexts();
     }
 
+    /**
+     * @return True if the user wants the model's reasoning and tool activity in the download.
+     */
+    public boolean isIncludeActivity() {
+        return getView().isIncludeActivity();
+    }
+
     public interface DownloadChatView extends View, Focus {
 
         boolean isIncludeDataContexts();
+
+        boolean isIncludeActivity();
     }
 }

@@ -1,0 +1,395 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.e2e;
+
+import stroom.mcp.impl.McpTestClient;
+import stroom.util.json.JsonUtil;
+
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// The user's vendor and event reference documentation, kept in Stroom and used, driving the real tools. Every numbered
+/// part is covered:
+///
+/// 1. Documentation small enough to pass along: record_source_notes keeps it verbatim, the draft follows its
+///    notes, the stepped events carry what it says, a contradicting mapping is reported, the documentation lists
+///    the source fields with their meanings, and promotion puts the notes and the reference beside the feed.
+/// 2. A long vendor manual kept in parts, read a passage at a time, every reply within a budget; and a status-code
+///    table already in Stroom registered by uuid.
+/// 3. An event catalogue guessed from a firewall sample is refused, then followed once corrected; a hand-written
+///    XSLT writing every record as Unknown is blocked, and the draft's mapping saved over it steps clean.
+///
+/// A long Documentation doc read whole comes back as Stroom's read_document gives one (saved to the session's
+/// workspace, with its outline).
+@SuppressWarnings("unchecked")
+class TestE2eSourceDocs extends AbstractE2eTest {
+
+    private static final String SAMPLE = """
+            ts,host,evt,usr,src,res
+            2026-10-01T08:00:00Z,dc01,4624,alice,10.0.0.1,0x0
+            2026-10-01T08:05:00Z,dc01,4625,bob,10.0.0.2,0xC000006A
+            2026-10-01T08:10:00Z,dc01,4634,alice,10.0.0.1,0x0
+            """;
+    private static final String REFERENCE = """
+            # Acme directory audit log reference
+
+            ## Fields
+
+            | Field | Meaning |
+            | --- | --- |
+            | evt | Event id: what happened (see Events) |
+            | usr | The account the event is about |
+            | src | The workstation's IP address |
+            | res | Status: 0x0 success, 0xC000006A failed (bad password) |
+
+            ## Events
+
+            | evt | Meaning |
+            | --- | --- |
+            | 4624 | An account logged on |
+            | 4625 | An account failed to log on |
+            | 4634 | An account logged off |
+            """;
+    private static final List<Map<String, Object>> FIELDS = List.of(
+            Map.of("field", "usr", "meaning", "The account the event is about", "event_logging_path",
+                    "EventSource/User/Id"),
+            Map.of("field", "src", "meaning", "The workstation's IP address", "event_logging_path",
+                    "EventSource/Client/IPAddress"),
+            Map.of("field", "res", "meaning", "Status", "values", Map.of("0x0", "success", "0xC000006A",
+                    "failed: bad password")),
+            Map.of("field", "evt", "meaning", "Event id: what happened"));
+    // The documentation's event types, as the agent proposes them through catalogue_event_types.
+    private static final List<Map<String, Object>> EVENT_TYPES = List.of(
+            documented("Authenticate-Logon", "Authenticate", "4624", "An account logged on", "Logon"),
+            withKeys(documented("Authenticate-FailedLogon", "Authenticate", "4625", "An account failed to log on",
+                    "Logon"), "success", false),
+            documented("Authenticate-Logoff", "Authenticate", "4634", "An account logged off", "Logoff"));
+    private static final int REPLY_BUDGET = 64_000;
+    // Characters the agent sends per record_source_notes call for a long document.
+    private static final int PART = 400_000;
+    private static final String CODES = """
+            # Status codes
+
+            | res | Meaning |
+            | --- | --- |
+            | 0xC000006A | Bad password |
+            | 0xC0000234 | Account locked out |
+            """;
+    private static final String FIREWALL = """
+            timestamp,device,event_type,src_ip,src_port,dst_ip,dst_port,protocol,action,rule_id,username,message
+            2026-10-01T09:00:12+10:00,FW1,TRAFFIC,192.0.2.10,54321,198.51.100.20,443,TCP,ALLOW,1001,,HTTPS allowed
+            2026-10-01T09:01:05+10:00,FW1,TRAFFIC,203.0.113.45,49822,192.0.2.25,22,TCP,DENY,2003,,SSH blocked
+            2026-10-01T09:02:17+10:00,FW1,TRAFFIC,192.0.2.11,53002,198.51.100.53,53,UDP,ALLOW,1002,,DNS allowed
+            2026-10-01T09:10:00+10:00,FW1,ADMIN,192.0.2.5,50000,192.0.2.1,443,HTTPS,LOGIN_SUCCESS,0,admin,Logged in
+            2026-10-01T09:11:00+10:00,FW1,ADMIN,192.0.2.5,50000,192.0.2.1,443,HTTPS,LOGIN_FAILED,0,root,Bad password
+            """;
+    // Event types guessed from the sample, two with action elements the schema doesn't have.
+    private static final List<Map<String, Object>> GUESSED = List.of(
+            withKeys(eventType("Permit-Traffic", "Allow", "medium", when("action", "equals", "ALLOW")),
+                    "title", "Network traffic allowed"),
+            withKeys(eventType("Deny-Traffic", "Deny", "medium", when("action", "equals", "DENY")),
+                    "title", "Network traffic blocked"),
+            withKeys(eventType("Authenticate-AdminLogon", "Authenticate", "medium", when("action", "equals",
+                    "LOGIN_SUCCESS")), "action", "Logon", "success", true, "actor", "username"),
+            withKeys(eventType("Authenticate-AdminFailedLogon", "Authenticate", "medium", when("action", "equals",
+                    "LOGIN_FAILED")), "action", "Logon", "success", false, "actor", "username"));
+    // Every record as an empty Unknown, as the agent's XSLT wrote the TRAFFIC records.
+    private static final String UNKNOWN_XSLT = """
+            <?xml version="1.1" encoding="UTF-8"?>
+            <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="event-logging:3" \
+            xmlns:stroom="stroom"
+                xpath-default-namespace="records:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
+            version="2.0">
+              <xsl:template match="records">
+                <Events xsi:schemaLocation="event-logging:3 file://event-logging-vVERSION.xsd" Version="VERSION">
+                  <xsl:apply-templates/>
+                </Events>
+              </xsl:template>
+              <xsl:template match="record">
+                <Event>
+                  <EventTime><TimeCreated><xsl:value-of select="stroom:format-date(data[@name='timestamp']/@value, \
+            'yyyy-MM-dd''T''HH:mm:ssXXX')"/></TimeCreated></EventTime>
+                  <EventSource><System><Name>FW</Name><Environment>Eval</Environment></System><Generator>hand\
+            </Generator>
+                    <Device><HostName><xsl:value-of select="data[@name='device']/@value"/></HostName></Device>\
+            </EventSource>
+                  <EventDetail><TypeId><xsl:value-of select="data[@name='event_type']/@value"/></TypeId><Unknown/>\
+            </EventDetail>
+                </Event>
+              </xsl:template>
+            </xsl:stylesheet>
+            """;
+
+    @Override
+    boolean followsNext() {
+        return true;
+    }
+
+    @Test
+    void small() {
+        final String build = "e2e-srcdocs";
+        final String feed = "E2E-SRCDOCS";
+        // ### 1. documentation kept in Stroom, and the notes from it used
+        createFeed(build, feed);
+        final long raw = upload(feed, SAMPLE);
+        surveyed(build, feed, List.of(raw));
+        final Map<String, Object> noted = agreed("record_source_notes", args("build", build, "source",
+                "Acme directory", "summary", "The directory audit log.", "fields", FIELDS,
+                "documents", List.of(Map.of("title", "audit log reference", "text", REFERENCE))));
+        final List<Map<String, Object>> kept = list(noted, "documents_kept");
+        assertThat(kept).as("the reference kept verbatim in Stroom").hasSize(1);
+        assertThat(kept.getFirst()).containsEntry("name", "Acme directory reference - audit log reference");
+        assertThat(documentation((String) kept.getFirst().get("uuid"))).as("its tables as the vendor wrote them")
+                .contains("| 4625 | An account failed to log on |");
+
+        // The documentation's event types catalogued (basis documentation) and confirmed by the user.
+        saveTextConverter(build, feed, CSV_SPLITTER);
+        proposed(build, List.of(raw), EVENT_TYPES);
+        confirmedCatalogue(build);
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "source_name", "Acme directory", "system_name", "Acme directory", "environment", "Eval",
+                "build", build, "schema_version", VERSION));
+        assertThat(strings(draft, "notes").getFirst()).as("drafted from the notes")
+                .startsWith("Drafted from the source documentation");
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", draft.get("mapping"),
+                "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
+        assertThat(saved.get("ok")).as("saved: %s", saved.get("problems")).isEqualTo(true);
+        final String pipeline = (String) createPipeline(build, feed + "-Events",
+                templateUuid("translation", "Event Data (Text)")).get("uuid");
+        final Map<String, Object> stepped = stepSample(pipeline, List.of(raw));
+        assertThat(stepped.get("verdict")).as("stepped clean: %s", said(list(stepped, "groups")))
+                .isEqualTo("clean");
+        assertThat(translationOutput(pipeline, raw, 1)).as("the failed logon (evt=4625, record 2) comes out as the "
+                                                 + "documentation says: TypeId 'Logon failed', a Logon that did not "
+                                                 + "succeed")
+                .contains("<TypeId>Authenticate-FailedLogon</TypeId>", "<Success>false</Success>",
+                        "<Action>Logon</Action>");
+
+        // ### a mapping that translates a confirmed event type otherwise is put to the user (ConfirmedEventTypes)
+        final Map<String, Object> wrong = copy((Map<String, Object>) draft.get("mapping"));
+        for (final Map<String, Object> rule : E2eFixtures.rules(wrong)) {
+            if (jsonOf(rule).contains("Authenticate-FailedLogon")) {
+                final List<Map<String, Object>> fields = new ArrayList<>(E2eFixtures.entries(rule).stream()
+                        .filter(field -> !"EventDetail/Authenticate/Action".equals(field.get("path")))
+                        .toList());
+                fields.add(Map.of("path", "EventDetail/Authenticate/Action", "value", "Logoff"));
+                rule.put("fields", fields);
+            }
+        }
+        final Map<String, Object> checked = json("build_translation_xslt", args("mapping", wrong, "stream_ids",
+                List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
+        assertThat(jsonOf(checked)).as("reported: %s", checked).contains("Authenticate-FailedLogon");
+
+        // ### documented with the source fields, promoted beside the feed
+        final Map<String, Object> written = agreed("write_documentation", args("build", build, "pipeline_uuid",
+                pipeline, "markdown", "## Purpose and data\n\nDirectory logons.\n", "change", "Created",
+                "stream_ids", List.of(raw)));
+        final String section = String.valueOf(written.getOrDefault("field_mapping", ""));
+        assertThat(section).as("the field mapping lists each source field with what the documentation says")
+                .contains("### Source fields", "`0xC000006A`: failed: bad password");
+        assertThat(section.lines().findFirst().orElse("")).as("the section says which records its counts are of")
+                .startsWith("Counts are of ").contains("of stream " + raw);
+        final String folder = "System/E2E Feeds/srcdocs";
+        final Map<String, Object> result = agreed("promote_build", args("build", build, "destinations", Map.of(
+                "Feed", folder, "Pipeline", folder, "XSLT", folder, "TextConverter", folder)));
+        dump("promote_build", result.get("promoted"));
+        for (final String name : List.of("Acme directory source notes",
+                "Acme directory reference - audit log reference")) {
+            assertThat(documentsIn(folder, "Documentation", name)).as("'%s' beside the feed, in %s", name, folder)
+                    .isNotEmpty();
+        }
+    }
+
+    @Test
+    void large() {
+        // ### 2. a long manual kept in parts, read a passage at a time; a table already in Stroom registered
+        final String build = "e2e-srcdocs-large";
+        final String text = manual(4000);
+        final List<String> parts = new ArrayList<>();
+        for (int i = 0; i < text.length(); i += PART) {
+            parts.add(text.substring(i, Math.min(text.length(), i + PART)));
+        }
+        final Map<String, Integer> replies = new LinkedHashMap<>();
+        final List<Map<String, Object>> kept = new ArrayList<>();
+        for (int n = 1; n <= parts.size(); n++) {
+            final Map<String, Object> noted = agreed("record_source_notes", args("build", build, "source",
+                    "Acme directory", "summary", "The directory event reference.", "fields", List.of(),
+                    "events", List.of(), "documents", List.of(Map.of("title", "event reference part " + n, "text",
+                            parts.get(n - 1), "source", "event-reference.md"))));
+            replies.put("record_source_notes part " + n, jsonOf(noted).length());
+            kept.addAll(list(noted, "documents_kept"));
+        }
+        assertThat(text.length()).as("a manual of over a million characters").isGreaterThan(1_000_000);
+        assertThat(kept).as("kept in %s parts, one call each", parts.size()).hasSize(parts.size());
+        // A table the user had already made in Stroom (in the UI, say): registered by uuid, left where it is.
+        final String table = documentationDoc("System/MCP Workspace/" + build, "status codes", CODES);
+        final Map<String, Object> noted = agreed("record_source_notes", args("build", build, "source",
+                "Acme directory", "summary", "The directory event reference.", "fields", List.of(), "events",
+                List.of(), "documents", List.of(Map.of("title", "status codes", "uuid", table))));
+        replies.put("record_source_notes by uuid", jsonOf(noted).length());
+        assertThat(list(noted, "documents_kept")).as("a document already in Stroom registered by uuid")
+                .isNotEmpty();
+        assertThat(list(noted, "documents_kept").getFirst().get("already_in_stroom"))
+                .as("named in the notes as already in Stroom").isNotIn(null, false, "");
+        // The part the event's section landed in.
+        final Map<String, Object> holder = kept.stream()
+                .filter(part -> documentation((String) part.get("uuid")).contains("4625"))
+                .findFirst()
+                .orElseThrow();
+        final CallToolResult whole = client.call("read_document", args("uuid", holder.get("uuid")));
+        final String wholeText = McpTestClient.text(whole);
+        replies.put("read_document", wholeText.length());
+        assertThat(wholeText).as("read whole, a long part isn't returned whole, but with its outline")
+                .contains("too large to show in full", "Its outline:");
+        final Map<String, Object> passage = json("read_document", args("uuid", holder.get("uuid"), "find",
+                "Event 4625"));
+        replies.put("read_document find", jsonOf(passage).length());
+        assertThat(((Number) passage.get("matches")).intValue()).as("find='Event 4625' finds it")
+                .isGreaterThanOrEqualTo(1);
+        assertThat(list(passage, "passages")).as("and returns the passage about it")
+                .anyMatch(found -> String.valueOf(found.get("text")).contains("0xC000006A"));
+        final Map.Entry<String, Integer> worst = replies.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow();
+        assertThat(worst.getValue()).as("the largest reply is %s's", worst.getKey()).isLessThanOrEqualTo(
+                REPLY_BUDGET);
+    }
+
+    @Test
+    void guessed() {
+        final String build = "e2e-fwnotes";
+        final String feed = "E2E-FWNOTES";
+        // ### 3. a catalogue guessed from the sample, and a hand-written XSLT writing Unknown
+        createFeed(build, feed);
+        final long raw = upload(feed, FIREWALL);
+        surveyed(build, feed, List.of(raw));
+        saveTextConverter(build, feed, CSV_SPLITTER);
+        // The guessed event types refused, naming the action elements the schema has; nothing recorded until
+        // corrected.
+        final String refused = jsonOf(proposed(build, List.of(raw), GUESSED));
+        assertThat(refused).as("the guessed event types are sent back to correct, naming Network")
+                .contains("Nothing recorded", "'Allow' is not an EventDetail action element", "Network",
+                        "Deny-Traffic");
+        final List<Map<String, Object>> fixed = new ArrayList<>();
+        fixed.add(withKeys(GUESSED.get(0), "event_detail", "Network/Permit"));
+        fixed.add(withKeys(GUESSED.get(1), "event_detail", "Network/Deny"));
+        fixed.addAll(GUESSED.subList(2, GUESSED.size()));
+        proposed(build, List.of(raw), fixed);
+        confirmedCatalogue(build);
+
+        final String hand = saveXslt(build, feed + "-Events", UNKNOWN_XSLT.replace("VERSION", VERSION));
+        final String pipeline = (String) createPipeline(build, feed + "-Events",
+                templateUuid("translation", "Event Data (Text)")).get("uuid");
+        Map<String, Object> stepped = stepSample(pipeline, List.of(raw));
+        final Map<String, Object> first = list(stepped, "groups").stream().findFirst().orElse(Map.of());
+        assertThat(stepped.get("verdict")).as("the hand-written XSLT's Unknown events block").isEqualTo("blocking");
+        assertThat(String.valueOf(first.get("reason"))).as("nobody agreed to them").contains("nobody agreed");
+        assertThat(String.valueOf(list(first, "examples").getFirst().get("message")))
+                .startsWith("5 of 5 records come out as EventDetail/Unknown");
+
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "source_name", "Firewall", "system_name", "FW", "environment", "Eval", "build", build,
+                "schema_version", VERSION));
+        dump("draft", draft.get("mapping"));
+        agreed("build_translation_xslt", args("mapping", draft.get("mapping"), "stream_ids", List.of(raw),
+                "build", build, "name", feed + "-Events", "uuid", hand, "schema_version", VERSION));
+        stepped = stepSample(pipeline, List.of(raw));
+        assertThat(stepped.get("verdict")).as("saved from the mapping, it steps clean: %s",
+                said(list(stepped, "groups"))).isEqualTo("clean");
+        final String allowed = translationOutput(pipeline, raw, 0);
+        final String denied = translationOutput(pipeline, raw, 1);
+        assertThat(allowed).as("the allowed connection is Network/Permit").contains("<Permit>")
+                .doesNotContain("<Unknown");
+        assertThat(denied).as("the blocked one Network/Deny").contains("<Deny>").doesNotContain("<Unknown");
+    }
+
+    // ### Event types from the documentation, in the catalogue: one with no sampled record said to be not in the
+    // sample (kept, not dropped); each Event's Description the documentation's text for its type (the records have
+    // no message of their own).
+    @Test
+    void documentedEventTypesAreCataloguedAndTheirDescriptionsComeFromTheDocumentation() {
+        final String build = "e2e-srcdocs-types";
+        final String feed = "E2E-SRCDOCS-TYPES";
+        createFeed(build, feed);
+        final long raw = upload(feed, SAMPLE);
+        surveyed(build, feed, List.of(raw));
+        agreed("record_source_notes", args("build", build, "source", "Acme directory", "summary",
+                "The directory audit log.", "fields", FIELDS, "documents", List.of(Map.of("title",
+                        "audit log reference", "text", REFERENCE + "| 4767 | An account was unlocked |\n"))));
+        saveTextConverter(build, feed, CSV_SPLITTER);
+        final Map<String, Object> checked = proposed(build, List.of(raw), List.of(
+                documented("Authenticate-Logon", "Authenticate", "4624", "An account logged on", "Logon"),
+                documented("Authenticate-FailedLogon", "Authenticate", "4625", "An account failed to log on",
+                        "Logon"),
+                documented("Authenticate-Logoff", "Authenticate", "4634", "An account logged off", "Logoff"),
+                withKeys(documented("Unlock-Account", "Update", "4767", "An account was unlocked", null),
+                        "affected", "usr", "affected_as", "After/User")));
+        assertThat(countsOf(checked)).containsEntry("Authenticate-Logon", 1L).containsEntry("Unlock-Account", 0L);
+        assertThat(jsonOf(checked)).as("the documented event type with no sampled record")
+                .contains("Unlock-Account", "not in the sample");
+        confirmedCatalogue(build);
+        assertThat(eventTypesOf(build)).containsKey("Unlock-Account");
+
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "source_name", "Acme directory", "system_name", "Acme directory", "environment", "Eval",
+                "build", build, "schema_version", VERSION));
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", draft.get("mapping"),
+                "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "schema_version", VERSION));
+        assertThat(saved.get("ok")).as("saved: %s", saved.get("problems")).isEqualTo(true);
+        final String pipeline = (String) createPipeline(build, feed + "-Events",
+                templateUuid("translation", "Event Data (Text)")).get("uuid");
+        assertThat(stepSample(pipeline, List.of(raw)).get("verdict")).isEqualTo("clean");
+        assertThat(translationOutput(pipeline, raw, 0)).contains("<TypeId>Authenticate-Logon</TypeId>",
+                "<Description>An account logged on</Description>");
+        assertThat(translationOutput(pipeline, raw, 1)).contains(
+                "<Description>An account failed to log on</Description>");
+    }
+
+    // An event type as the documentation describes it, recognised by its event id.
+    private static Map<String, Object> documented(final String typeId,
+                                                  final String eventDetail,
+                                                  final String evt,
+                                                  final String description,
+                                                  final String action) {
+        return withKeys(eventType(typeId, eventDetail, "high", when("evt", "equals", evt)), "description",
+                description, "basis", "documentation", "action", action, "actor", "usr");
+    }
+
+    // A vendor manual far larger than a model's context: a section per event id.
+    private static String manual(final int events) {
+        final List<String> parts = new ArrayList<>();
+        parts.add("# Acme directory event reference\n\nEvery event the directory writes, by id.\n");
+        for (int n = 1000; n < 1000 + events; n++) {
+            parts.add("## Event " + n + "\n\nWritten when operation " + n + " completes. "
+                      + "Background detail. ".repeat(30) + "\n");
+        }
+        parts.add(parts.size() / 2, "## Event 4625\n\nAn account failed to log on. Status 0xC000006A means the "
+                                    + "password was wrong; 0xC0000234 means the account is locked out.\n");
+        return String.join("\n", parts);
+    }
+
+    private static Map<String, Object> copy(final Map<String, Object> mapping) {
+        return JsonUtil.readValue(jsonOf(mapping), Map.class);
+    }
+}

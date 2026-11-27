@@ -29,6 +29,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONNull;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
@@ -39,6 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactory {
 
@@ -113,6 +115,39 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
     @Override
     public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
         messageSupport.setUiHandlers(uiHandlers);
+    }
+
+    /// Sets what receives the render reports the visualisation sends with `stroom.report`.
+    ///
+    /// @param reportHandler Receives each report as JSON.
+    public void setReportHandler(final Consumer<String> reportHandler) {
+        messageSupport.setReportHandler(reportHandler);
+    }
+
+    /// Sets what receives the controls the visualisation sends with `stroom.controls`, for its toolbar.
+    ///
+    /// @param controlsHandler Receives each set of controls ([VisControls#NONE] for none).
+    public void setControlsHandler(final Consumer<VisControls> controlsHandler) {
+        messageSupport.setControlsHandler(controlsHandler);
+    }
+
+    /// Sends the visualisation a command from its toolbar, e.g. [VisControls#RESET_ZOOM]. A visualisation without
+    /// a `command` function ignores it.
+    ///
+    /// @param name  The command.
+    /// @param value What it is given, e.g. a file's name, or null.
+    public void command(final String name, final String value) {
+        final JSONArray params = new JSONArray();
+        params.set(0, new JSONString(name));
+        params.set(1, value == null
+                ? JSONNull.getInstance()
+                : new JSONString(value));
+
+        final JSONObject message = new JSONObject();
+        message.put("functionName", new JSONString("visualisationManager.command"));
+        message.put("params", params);
+
+        messageSupport.postMessage(message);
     }
 
     @Override

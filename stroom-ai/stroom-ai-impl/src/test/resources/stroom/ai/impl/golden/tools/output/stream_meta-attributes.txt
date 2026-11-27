@@ -1,0 +1,17 @@
+Arguments: {"feeds":["WINDOWS-EVENTS"],"attributes":["Raw Size"],"from":"2026-10-01","to":"2026-10-03"}
+
+=== Output ===
+Found 3 stream(s). Wrote 3 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 2 from the database, 1 from the stream store (1 stream(s) read). The first rows:
+
+| Id | Feed | Type | Pipeline | Status | Create Time | Parent Id | Raw Size |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-01T10:00:00.000Z |  | 100 |
+| 2 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-01T10:00:00.000Z |  | 200 |
+| 3 | WINDOWS-EVENTS | Raw Events |  | Unlocked | 2026-10-02T11:00:00.000Z |  | 50 |
+
+=== Workspace file /outputs/stream_meta.csv ===
+Id,Feed,Type,Pipeline,Status,Create Time,Parent Id,Raw Size
+1,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-01T10:00:00.000Z,,100
+2,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-01T10:00:00.000Z,,200
+3,WINDOWS-EVENTS,Raw Events,,Unlocked,2026-10-02T11:00:00.000Z,,50
+

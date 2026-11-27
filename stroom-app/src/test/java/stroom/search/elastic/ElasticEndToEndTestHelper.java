@@ -27,6 +27,8 @@ import stroom.credentials.shared.Secret;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.dictionary.api.DictionaryStore;
@@ -35,6 +37,7 @@ import stroom.docref.DocRef;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
@@ -102,6 +105,9 @@ public class ElasticEndToEndTestHelper {
     public static final String NETWORK_FEED = CommonTranslationTestHelper.FEED_NAME;
     /// The number of events in the sample network monitoring data.
     public static final int NETWORK_EVENT_COUNT = 26;
+    /// The `batchSize` of the indexing pipelines the helper creates, unless told otherwise. It is small, so a
+    /// stream is indexed in several bulk requests.
+    public static final int INDEXING_BATCH_SIZE = 10;
     /// The feed of the typed test events.
     public static final String TYPED_FEED = "ELASTIC_TYPED_EVENTS";
 
@@ -113,6 +119,7 @@ public class ElasticEndToEndTestHelper {
     static final Path NETWORK_XSLT = RESOURCES_DIR.resolve("network-events-to-json.xsl");
     static final Path NETWORK_INDEX_BODY = RESOURCES_DIR.resolve("network-index.json");
     static final Path TYPED_XSLT = RESOURCES_DIR.resolve("typed-events-to-json.xsl");
+    static final Path BULK_XSLT = RESOURCES_DIR.resolve("bulk-events-to-json.xsl");
     static final Path TYPED_TEMPLATE_BODY = RESOURCES_DIR.resolve("typed-index-template.json");
     static final Path TYPED_EVENTS = RESOURCES_DIR.resolve("typed-events.xml");
     static final Path CONDITIONS_EVENTS = RESOURCES_DIR.resolve("conditions-events.xml");
@@ -376,6 +383,27 @@ public class ElasticEndToEndTestHelper {
                                          final String indexName,
                                          final String feedName,
                                          final boolean purgeOnReprocess) {
+        return createIndexingPipeline(name, xsltFile, clusterRef, indexName, feedName, purgeOnReprocess,
+                INDEXING_BATCH_SIZE);
+    }
+
+    /// As [#createIndexingPipeline(String, Path, DocRef, String, String, boolean)], choosing the batch size.
+    ///
+    /// @param name The name of the pipeline, which must be unique.
+    /// @param xsltFile The XSLT translating each event to JSON XML.
+    /// @param clusterRef The cluster to index to.
+    /// @param indexName The `indexName` property of the indexing filter, which may contain variables.
+    /// @param feedName The feed whose `Events` streams are indexed.
+    /// @param purgeOnReprocess The `purgeOnReprocess` property of the indexing filter.
+    /// @param batchSize The `batchSize` property of the indexing filter, or `null` to leave the filter's default.
+    /// @return The pipeline's reference.
+    public DocRef createIndexingPipeline(final String name,
+                                         final Path xsltFile,
+                                         final DocRef clusterRef,
+                                         final String indexName,
+                                         final String feedName,
+                                         final boolean purgeOnReprocess,
+                                         final Integer batchSize) {
         final DocRef pipelineRef = storeCreationTool.duplicatePipeline(
                 new DocRef(PipelineDoc.TYPE, INDEXING_TEMPLATE_PIPELINE_UUID),
                 name,
@@ -399,9 +427,10 @@ public class ElasticEndToEndTestHelper {
         // Make everything indexed visible to searches as soon as processing completes
         builder.addProperty(PipelineDataUtil.createProperty(
                 ELASTIC_INDEXING_FILTER, "refreshAfterEachBatch", true));
-        // A small batch size, so a stream is indexed in several bulk requests
-        builder.addProperty(new PipelineProperty(
-                ELASTIC_INDEXING_FILTER, "batchSize", new PipelinePropertyValue(10)));
+        if (batchSize != null) {
+            builder.addProperty(new PipelineProperty(
+                    ELASTIC_INDEXING_FILTER, "batchSize", new PipelinePropertyValue(batchSize)));
+        }
         builder.addProperty(PipelineDataUtil.createProperty(
                 ELASTIC_INDEXING_FILTER, "purgeOnReprocess", purgeOnReprocess));
 
@@ -444,11 +473,33 @@ public class ElasticEndToEndTestHelper {
     /// @param streamType The stream type, e.g. `Error`.
     /// @return The number of streams.
     public long countStreams(final String feedName, final String streamType) {
+        return findStreams(feedName, streamType).size();
+    }
+
+    /// Read the content of the only stream of a type on a feed, e.g. the `Error` stream a pipeline wrote.
+    ///
+    /// @param feedName The feed.
+    /// @param streamType The stream type, e.g. `Error`.
+    /// @return The stream's content.
+    public String readOnlyStream(final String feedName, final String streamType) {
+        final List<Meta> streams = findStreams(feedName, streamType);
+        if (streams.size() != 1) {
+            throw new IllegalStateException("Expected one " + streamType + " stream on feed " + feedName +
+                                            " but found " + streams.size());
+        }
+        try (final Source source = store.openSource(streams.getFirst().getId())) {
+            return SourceUtil.readString(source);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private List<Meta> findStreams(final String feedName, final String streamType) {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addDocRefTerm(MetaFields.FEED, Condition.IS_DOC_REF, storeCreationTool.getOrCreateFeedDoc(feedName))
                 .addTextTerm(MetaFields.TYPE, Condition.EQUALS, streamType)
                 .build();
-        return metaService.find(new FindMetaCriteria(expression)).getValues().size();
+        return metaService.find(new FindMetaCriteria(expression)).getValues();
     }
 
     /// Process every task that the processor filters create, e.g. to index the streams.

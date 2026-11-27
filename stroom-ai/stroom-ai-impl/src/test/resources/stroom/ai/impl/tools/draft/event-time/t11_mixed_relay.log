@@ -1,0 +1,40 @@
+<30>Nov  6 09:00:19 host7 sshd[4972]: Accepted publickey for carol from 10.2.0.93
+<30>Nov  6 09:00:46 host7 sshd[4072]: Accepted publickey for dave from 10.2.0.210
+<134>2026-11-06T09:01:12.623+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:01:10 src=10.0.0.136 act=not blocked
+<134>2026-11-06T09:01:29.270+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:01:27 src=10.0.1.22 act=not blocked
+<134>2026-11-06T09:01:52.550+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:01:49 src=10.0.2.52 act=not blocked
+<30>Nov  6 09:02:18 host7 sshd[2481]: Accepted publickey for bob from 10.2.0.45
+<30>Nov  6 09:02:20 host7 sshd[1039]: Accepted publickey for bob from 10.2.0.227
+<134>2026-11-06T09:02:29.146+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:02:26 src=10.0.0.197 act=not blocked
+<30>Nov  6 09:02:53 host7 sshd[3683]: Accepted publickey for bob from 10.2.0.227
+<134>2026-11-06T09:03:23.088+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:03:20 src=10.0.1.159 act=not blocked
+<134>2026-11-06T09:03:41.276+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:03:39 src=10.0.2.223 act=not blocked
+<134>2026-11-06T09:04:04.566+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:04:03 src=10.0.0.175 act=not blocked
+<30>Nov  6 09:04:14 host7 sshd[1342]: Accepted publickey for alice from 10.2.0.111
+<30>Nov  6 09:04:38 host7 sshd[8639]: Accepted publickey for dave from 10.2.0.152
+<30>Nov  6 09:04:44 host7 sshd[1811]: Accepted publickey for bob from 10.2.0.210
+<134>2026-11-06T09:05:00.252+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:04:58 src=10.0.2.146 act=not blocked
+<30>Nov  6 09:05:12 host7 sshd[5672]: Accepted publickey for alice from 10.2.0.173
+<134>2026-11-06T09:05:38.237+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:05:35 src=10.0.0.191 act=blocked
+<134>2026-11-06T09:06:02.223+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:05:59 src=10.0.3.195 act=not blocked
+<134>2026-11-06T09:06:12.808+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:06:12 src=10.0.3.193 act=blocked
+<30>Nov  6 09:06:34 host7 sshd[2235]: Accepted publickey for alice from 10.2.0.77
+<30>Nov  6 09:07:02 host7 sshd[8631]: Accepted publickey for bob from 10.2.0.150
+<30>Nov  6 09:07:09 host7 sshd[1574]: Accepted publickey for dave from 10.2.0.11
+<30>Nov  6 09:07:30 host7 sshd[1738]: Accepted publickey for carol from 10.2.0.158
+<30>Nov  6 09:07:44 host7 sshd[7588]: Accepted publickey for bob from 10.2.0.130
+<30>Nov  6 09:08:03 host7 sshd[6948]: Accepted publickey for bob from 10.2.0.38
+<134>2026-11-06T09:08:11.851+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:08:10 src=10.0.3.41 act=blocked
+<134>2026-11-06T09:08:35.911+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:08:33 src=10.0.3.199 act=blocked
+<30>Nov  6 09:08:48 host7 sshd[7083]: Accepted publickey for alice from 10.2.0.133
+<134>2026-11-06T09:09:00.753+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:09:00 src=10.0.3.213 act=blocked
+<134>2026-11-06T09:09:11.443+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:09:09 src=10.0.3.205 act=blocked
+<134>2026-11-06T09:09:34.380+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:09:31 src=10.0.2.35 act=not blocked
+<30>Nov  6 09:09:48 host7 sshd[2786]: Accepted publickey for alice from 10.2.0.14
+<134>2026-11-06T09:09:55.262+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:09:53 src=10.0.3.127 act=blocked
+<30>Nov  6 09:09:57 host7 sshd[7894]: Accepted publickey for alice from 10.2.0.128
+<30>Nov  6 09:10:20 host7 sshd[9834]: Accepted publickey for dave from 10.2.0.90
+<30>Nov  6 09:10:45 host7 sshd[5808]: Accepted publickey for bob from 10.2.0.196
+<134>2026-11-06T09:11:06.294+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:11:05 src=10.0.0.220 act=not blocked
+<134>2026-11-06T09:11:15.203+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:11:12 src=10.0.2.105 act=blocked
+<30>Nov  6 09:11:34 host7 sshd[5232]: Accepted publickey for bob from 10.2.0.200

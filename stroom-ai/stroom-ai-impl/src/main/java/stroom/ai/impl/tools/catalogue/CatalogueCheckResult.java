@@ -1,0 +1,715 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.catalogue;
+
+import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+/// What the catalogue's check found ([CatalogueCheck]), as the contract's check JSON writes it: compact for the
+/// tool's result ([#toJson()]), or in full for the listing the tool saves to the workspace ([#toFullJson()]).
+///
+/// @param counts       The records each event type recognises, and each of its ways, by TypeId in the catalogue's
+///                     order.
+/// @param overlaps     Records two event types recognise (refused), one a pair of event types: the first such record.
+/// @param uncatalogued The records no event type recognises, by shape.
+/// @param unparsed     The records whose held values, read by a condition, don't parse.
+/// @param several      Event types whose records may be several event types.
+/// @param problems     What is refused: the catalogue's own problems and those its records show.
+/// @param notChecked   `not_checked`: conditions the check can't evaluate here (an xpath, a dictionary, a
+///                     record-scope test, a field an extraction gives), and placements whose values it can't read (an
+///                     xpath's, a lookup's), said and not refused.
+/// @param order        The TypeIds in the catalogue's order (more specific first).
+/// @param unplaced     The elements the schema requires of an event type's action element that nothing the
+///                     catalogue gives writes ([PlacementCheck]): they refuse confirmation, not proposals.
+/// @param typing       How many of each event type's fields are typed and kept as Data, by TypeId (those in the
+///                     sample only).
+/// @param worthALook   `worth_a_look`: what the check finds worth the user's look in an event type and never refuses,
+///                     e.g. a TypeId whose verb is an action element other than the one its records are written as.
+public record CatalogueCheckResult(Map<String, Count> counts,
+                                   List<Overlap> overlaps,
+                                   Uncatalogued uncatalogued,
+                                   Unparsed unparsed,
+                                   List<Several> several,
+                                   List<Problem> problems,
+                                   List<Problem> notChecked,
+                                   List<String> order,
+                                   List<Problem> unplaced,
+                                   Map<String, Typing> typing,
+                                   List<Problem> worthALook) {
+
+    /// The most overlaps the compact form lists.
+    public static final int OVERLAPS_SHOWN = 10;
+    /// The most shapes of uncatalogued records the compact form lists: the commonest, then the rarest.
+    public static final int SHAPES_SHOWN = 10;
+    /// Of [#SHAPES_SHOWN], how many are the rarest.
+    public static final int RARE_SHAPES_SHOWN = 3;
+    /// The most examples a shape has in the compact form.
+    public static final int EXAMPLES_SHOWN = 2;
+    /// The longest a record's text is in the compact form.
+    public static final int EXCERPT = 300;
+    /// The longest a record's text is in the full listing.
+    public static final int FULL_EXCERPT = 2_000;
+    /// The most reasons the compact form gives why held values don't parse.
+    public static final int WHY_SHOWN = 5;
+    /// The most values of a field the compact form lists for a type that may be several.
+    public static final int VALUES_SHOWN = 10;
+    /// The compact form's key for the schema's elements every event type that could type more has open
+    /// (`schema`), said once in place of in each one's `could_type.schema`.
+    public static final String COULD_TYPE_ALL = "could_type_all";
+
+    /// Copies the parts.
+    public CatalogueCheckResult {
+        counts = Map.copyOf(Objects.requireNonNullElse(counts, Map.of()));
+        overlaps = List.copyOf(Objects.requireNonNullElse(overlaps, List.of()));
+        several = List.copyOf(Objects.requireNonNullElse(several, List.of()));
+        problems = List.copyOf(Objects.requireNonNullElse(problems, List.of()));
+        notChecked = List.copyOf(Objects.requireNonNullElse(notChecked, List.of()));
+        order = List.copyOf(Objects.requireNonNullElse(order, List.of()));
+        unplaced = List.copyOf(Objects.requireNonNullElse(unplaced, List.of()));
+        typing = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(typing, Map.of())));
+        worthALook = List.copyOf(Objects.requireNonNullElse(worthALook, List.of()));
+    }
+
+    /// A check with nothing found worth a look beyond its typing.
+    ///
+    /// @param counts       The records each event type recognises.
+    /// @param overlaps     Records two event types recognise.
+    /// @param uncatalogued The records no event type recognises.
+    /// @param unparsed     The records whose held values don't parse.
+    /// @param several      Event types whose records may be several.
+    /// @param problems     What is refused.
+    /// @param notChecked   Conditions not checked.
+    /// @param order        The TypeIds in the catalogue's order.
+    /// @param unplaced     The elements the schema requires that nothing writes.
+    /// @param typing       How many of each event type's fields are typed and kept as Data.
+    public CatalogueCheckResult(final Map<String, Count> counts,
+                                final List<Overlap> overlaps,
+                                final Uncatalogued uncatalogued,
+                                final Unparsed unparsed,
+                                final List<Several> several,
+                                final List<Problem> problems,
+                                final List<Problem> notChecked,
+                                final List<String> order,
+                                final List<Problem> unplaced,
+                                final Map<String, Typing> typing) {
+        this(counts, overlaps, uncatalogued, unparsed, several, problems, notChecked, order, unplaced, typing,
+                List.of());
+    }
+
+    /// A check with no placements checked (nothing unplaced, no typing).
+    ///
+    /// @param counts       The records each event type recognises.
+    /// @param overlaps     Records two event types recognise.
+    /// @param uncatalogued The records no event type recognises.
+    /// @param unparsed     The records whose held values don't parse.
+    /// @param several      Event types whose records may be several.
+    /// @param problems     What is refused.
+    /// @param notChecked   Conditions not checked.
+    /// @param order        The TypeIds in the catalogue's order.
+    public CatalogueCheckResult(final Map<String, Count> counts,
+                                final List<Overlap> overlaps,
+                                final Uncatalogued uncatalogued,
+                                final Unparsed unparsed,
+                                final List<Several> several,
+                                final List<Problem> problems,
+                                final List<Problem> notChecked,
+                                final List<String> order) {
+        this(counts, overlaps, uncatalogued, unparsed, several, problems, notChecked, order, List.of(), Map.of(),
+                List.of());
+    }
+
+    /// @return True if the catalogue can't be confirmed as it is: a problem, an overlap, or a type that may be
+    /// several whose warning blocks it. What is not checked doesn't refuse it, nor a high share of fields kept as
+    /// Data; an element the schema requires that nothing is placed at refuses only its event type's set
+    /// ([#unplacedOf]).
+    public boolean refused() {
+        return !problems.isEmpty() || !overlaps.isEmpty() || several.stream().anyMatch(Several::blocking);
+    }
+
+    /// @param typeIds Event types (a set put to the user), compared ignoring case.
+    /// @return The elements the schema requires of their action elements that nothing is placed at: none when the
+    /// set can be put to the user.
+    public List<Problem> unplacedOf(final Collection<String> typeIds) {
+        return unplaced.stream()
+                .filter(problem -> typeIds.stream().anyMatch(typeId -> typeId != null
+                                                                       && typeId.equalsIgnoreCase(problem.typeId())))
+                .toList();
+    }
+
+    /// @param typeId An event type's TypeId, compared ignoring case.
+    /// @return What the check finds worth a look in it, in words; none when nothing is.
+    public List<String> worthALookOf(final String typeId) {
+        return worthALook.stream()
+                .filter(one -> typeId != null && typeId.equalsIgnoreCase(one.typeId()))
+                .map(Problem::problem)
+                .toList();
+    }
+
+    /// @return The check as the tool's result gives it: counts and problems, the lists cut short, and the schema's
+    /// elements every event type that could type more has open said once ([#COULD_TYPE_ALL]), not in each one's
+    /// `could_type`.
+    public Map<String, Object> toJson() {
+        return json(false);
+    }
+
+    /// @return The check in full, for the listing saved to the workspace.
+    public Map<String, Object> toFullJson() {
+        return json(true);
+    }
+
+    private Map<String, Object> json(final boolean full) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        final Map<String, Object> countsOut = new LinkedHashMap<>();
+        for (final String typeId : order) {
+            final Count count = counts.get(typeId);
+            if (count != null) {
+                countsOut.put(typeId, count.toJson());
+            }
+        }
+        counts.forEach((typeId, count) -> countsOut.putIfAbsent(typeId, count.toJson()));
+        out.put("counts", countsOut);
+        out.put("overlaps", (full
+                ? overlaps
+                : overlaps.subList(0, Math.min(OVERLAPS_SHOWN, overlaps.size())))
+                .stream().map(overlap -> overlap.toJson(full)).toList());
+        out.put("uncatalogued", uncatalogued.toJson(full));
+        out.put("unparsed", unparsed.toJson(full));
+        out.put("several", several.stream().map(one -> one.toJson(full)).toList());
+        out.put("problems", problems.stream().map(Problem::toJson).toList());
+        if (!notChecked.isEmpty()) {
+            out.put("not_checked", notChecked.stream().map(Problem::toJson).toList());
+        }
+        if (!unplaced.isEmpty()) {
+            out.put("unplaced", unplaced.stream().map(Problem::toJson).toList());
+        }
+        if (!worthALook.isEmpty()) {
+            out.put("worth_a_look", worthALook.stream().map(Problem::toJson).toList());
+        }
+        final Map<String, Typing> shown = new LinkedHashMap<>();
+        typing.forEach((typeId, one) -> {
+            if (full || one.note() != null || !one.fill().isEmpty()) {
+                shown.put(typeId, one);
+            }
+        });
+        final List<String> shared = full
+                ? List.of()
+                : sharedHomes(shown.values());
+        if (!shared.isEmpty()) {
+            final Map<String, Object> all = new LinkedHashMap<>();
+            all.put("schema", String.join("; ", shared));
+            all.put("said", "The schema's elements every event type in typing could still type, said once here in "
+                            + "place of in each one's could_type.schema: homes for each one's fields too.");
+            out.put(COULD_TYPE_ALL, all);
+        }
+        final Set<String> saidOnce = Set.copyOf(shared);
+        final Map<String, Object> typed = new LinkedHashMap<>();
+        shown.forEach((typeId, one) -> typed.put(typeId, one.toJson(saidOnce)));
+        if (!typed.isEmpty()) {
+            out.put("typing", typed);
+        }
+        out.put("order", order);
+        return out;
+    }
+
+    // The schema's homes every event type that could type more has open, in the first one's order, when two or
+    // more could (seen in chats 184 to 186: EventSource's elements and the Outcome, some 370 characters, repeated
+    // in each of 7 event types' could_type, and the typing cut after the first two in the chat's stub).
+    private static List<String> sharedHomes(final Collection<Typing> shown) {
+        final List<CouldType> could = shown.stream()
+                .map(Typing::couldType)
+                .filter(Objects::nonNull)
+                .toList();
+        if (could.size() < 2) {
+            return List.of();
+        }
+        return could.getFirst().homes().stream()
+                .filter(home -> could.stream().allMatch(one -> one.homes().contains(home)))
+                .distinct()
+                .toList();
+    }
+
+    static String excerpt(final String text, final boolean full) {
+        final int most = full
+                ? FULL_EXCERPT
+                : EXCERPT;
+        return text == null || text.length() <= most
+                ? text
+                : text.substring(0, most) + "…";
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The records an event type recognises.
+    ///
+    /// @param records        How many, by any of its ways: those it surely recognises (every condition of a way
+    ///                       holds), less those the build's mapping's own `drop_when` drops first.
+    /// @param byWay          How many each way recognises, in its order (ways may overlap), counted so.
+    /// @param mayBe          How many more it may recognise: a condition of its can't be told on them here, and none
+    ///                       fails (counted apart, never as recognised or not).
+    /// @param mayBeBecause   Why, in words (`a condition on usr can't be checked here`), or null for none.
+    /// @param droppedFirst   How many records it recognises the build's mapping's own `drop_when` drops first, before
+    ///                       any event rule (they are not in [#records]).
+    /// @param droppedFirstBy The drop rules that drop them, in words, or null for none.
+    public record Count(int records,
+                        List<Integer> byWay,
+                        int mayBe,
+                        String mayBeBecause,
+                        int droppedFirst,
+                        String droppedFirstBy) {
+
+        /// Copies the list.
+        public Count {
+            byWay = List.copyOf(byWay);
+        }
+
+        /// The records an event type recognises, every one told.
+        ///
+        /// @param records How many, by any of its ways.
+        /// @param byWay   How many each way recognises, in its order.
+        public Count(final int records, final List<Integer> byWay) {
+            this(records, byWay, 0, null, 0, null);
+        }
+
+        /// @return True if no record is recognised, nor may be: the event type is not in the sample.
+        public boolean none() {
+            return records == 0 && mayBe == 0;
+        }
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("records", records);
+            out.put("by_way", byWay);
+            if (mayBe > 0) {
+                out.put("may_be", mayBe);
+                out.put("may_be_because", mayBeBecause);
+            }
+            if (droppedFirst > 0) {
+                out.put("dropped_first", droppedFirst);
+                out.put("dropped_first_by", droppedFirstBy);
+            }
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A record two (or more) event types recognise: refused, with the fields whose values tell their other records
+    /// apart, so one can be tightened.
+    ///
+    /// @param record        The first such record's index in the scope's records (from 0).
+    /// @param text          Its text.
+    /// @param typeIds       The two event types, in the catalogue's order.
+    /// @param tellingFields The fields whose values tell the two types' other records apart, best first.
+    /// @param records       How many records both recognise.
+    public record Overlap(int record, String text, List<String> typeIds, List<TellingField> tellingFields,
+                          int records) {
+
+        /// Copies the lists.
+        public Overlap {
+            typeIds = List.copyOf(typeIds);
+            tellingFields = List.copyOf(tellingFields);
+        }
+
+        Map<String, Object> toJson(final boolean full) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("record", record);
+            out.put("text", excerpt(text, full));
+            out.put("type_ids", typeIds);
+            out.put("telling_fields", tellingFields.stream().map(TellingField::toJson).toList());
+            if (full) {
+                out.put("records", records);
+            }
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A field whose values tell two event types' records apart.
+    ///
+    /// @param field  The field, as the records spell it.
+    /// @param values A few of its values in each type's other records, by TypeId (none where they don't have it).
+    public record TellingField(String field, Map<String, List<String>> values) {
+
+        /// Copies the values, in order.
+        public TellingField {
+            values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
+        }
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("field", field);
+            out.putAll(values);
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The records no event type recognises, nor may: the catch-all translates them, but those the build's mapping's
+    /// own drop rules drop.
+    ///
+    /// @param records             How many: those whose held values don't parse among them, as processing writes
+    ///                            them to the catch-all too.
+    /// @param shapes              Their shapes, commonest first.
+    /// @param dropped             How many of them the build's mapping's own drop rules (`drop_when`, events rules
+    ///                            with `drop: true`) drop: the rest become Unknown ([#unknown]).
+    /// @param mayBeDropped        How many more of them those drop rules may drop: a condition of theirs can't be told
+    ///                            on them here.
+    /// @param mayBeDroppedBecause Why, in words, or null for none.
+    /// @param unparsed            How many of them have held values (JSON or XML a field holds) that don't parse.
+    /// @param mayBe               The records no event type surely recognises that some may (a condition of its can't
+    ///                            be told on them here), by event type: not among [#records].
+    public record Uncatalogued(int records,
+                               List<Shape> shapes,
+                               int dropped,
+                               int mayBeDropped,
+                               String mayBeDroppedBecause,
+                               int unparsed,
+                               List<MayBe> mayBe) {
+
+        /// None.
+        public static final Uncatalogued NONE = new Uncatalogued(0, List.of());
+
+        /// Copies the lists.
+        public Uncatalogued {
+            shapes = List.copyOf(shapes);
+            mayBe = List.copyOf(Objects.requireNonNullElse(mayBe, List.of()));
+        }
+
+        /// Records no event type recognises, every one told, none of them dropped by the build's mapping.
+        ///
+        /// @param records How many.
+        /// @param shapes  Their shapes, commonest first.
+        public Uncatalogued(final int records, final List<Shape> shapes) {
+            this(records, shapes, 0);
+        }
+
+        /// Records no event type recognises, every one told.
+        ///
+        /// @param records How many.
+        /// @param shapes  Their shapes, commonest first.
+        /// @param dropped How many of them the build's mapping's own drop rules drop.
+        public Uncatalogued(final int records, final List<Shape> shapes, final int dropped) {
+            this(records, shapes, dropped, 0, null, 0, List.of());
+        }
+
+        /// @return How many of them the catch-all surely writes (as Unknown, or as the event the user said): those
+        /// the build's mapping doesn't drop, nor may.
+        public int unknown() {
+            return records - dropped - mayBeDropped;
+        }
+
+        Map<String, Object> toJson(final boolean full) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("records", records);
+            if (dropped > 0) {
+                out.put("dropped_by_mapping", dropped);
+            }
+            if (mayBeDropped > 0) {
+                out.put("may_be_dropped_by_mapping", mayBeDropped);
+                out.put("may_be_dropped_because", mayBeDroppedBecause);
+            }
+            if (unparsed > 0) {
+                out.put("held_values_unparsed", unparsed);
+            }
+            if (!mayBe.isEmpty()) {
+                out.put("may_be", mayBe.stream().map(MayBe::toJson).toList());
+            }
+            out.put("shapes", shown(full).stream().map(shape -> shape.toJson(full)).toList());
+            return out;
+        }
+
+        // The shapes shown: every one in full; else the commonest, then the rarest (seen once or twice, always
+        // among them).
+        private List<Shape> shown(final boolean full) {
+            if (full || shapes.size() <= SHAPES_SHOWN) {
+                return shapes;
+            }
+            final List<Shape> out = new ArrayList<>(shapes.subList(0, SHAPES_SHOWN - RARE_SHAPES_SHOWN));
+            out.addAll(shapes.subList(shapes.size() - RARE_SHAPES_SHOWN, shapes.size()));
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Records no event type surely recognises that one may: a condition of its can't be told on them here (an
+    /// xpath, a dictionary, a record-scope test, a field an extraction gives).
+    ///
+    /// @param typeId  The event type.
+    /// @param records How many.
+    /// @param because Why, in words: `a condition on usr can't be checked here`.
+    public record MayBe(String typeId, int records, String because) {
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("type_id", typeId);
+            out.put("records", records);
+            out.put("because", because);
+            return out;
+        }
+
+        /// @return It in words: `3 may be Authenticate-Logon (a condition on usr can't be checked here)`.
+        public String said() {
+            return records + " may be " + typeId + " (" + because + ")";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Records of one shape.
+    ///
+    /// @param signature Their shape's signature (as the survey's shapes sign records).
+    /// @param records   How many.
+    /// @param examples  Their texts, the records that differ most first.
+    public record Shape(String signature, int records, List<String> examples) {
+
+        /// Copies the list.
+        public Shape {
+            examples = List.copyOf(examples);
+        }
+
+        Map<String, Object> toJson(final boolean full) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("signature", signature);
+            out.put("records", records);
+            out.put("examples", (full
+                    ? examples
+                    : examples.subList(0, Math.min(EXAMPLES_SHOWN, examples.size())))
+                    .stream().map(text -> excerpt(text, full)).toList());
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The records whose held values, read by a condition, don't parse: no condition inside them holds (but a
+    /// `not`), as in processing.
+    ///
+    /// @param records How many.
+    /// @param why     Why, each reason once.
+    public record Unparsed(int records, List<String> why) {
+
+        /// None.
+        public static final Unparsed NONE = new Unparsed(0, List.of());
+
+        /// Copies the list.
+        public Unparsed {
+            why = List.copyOf(why);
+        }
+
+        Map<String, Object> toJson(final boolean full) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("records", records);
+            out.put("why", full
+                    ? why
+                    : why.subList(0, Math.min(WHY_SHOWN, why.size())));
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An event type whose records may be several event types: they split by a field of their own, or come in
+    /// clearly different shapes.
+    ///
+    /// @param typeId   The event type.
+    /// @param byField  The field they split by, or null.
+    /// @param shapes   Their clearly different shapes, or none.
+    /// @param blocking True when it can't be confirmed until it is split or said to be one (`one_type_because`): the
+    ///                 draft's seed.
+    public record Several(String typeId, ByField byField, List<ShapeCount> shapes, boolean blocking) {
+
+        /// Copies the list.
+        public Several {
+            shapes = List.copyOf(shapes);
+        }
+
+        Map<String, Object> toJson(final boolean full) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("type_id", typeId);
+            out.put("by_field", byField == null
+                    ? null
+                    : byField.toJson(full));
+            out.put("shapes", shapes.stream().map(ShapeCount::toJson).toList());
+            out.put("blocking", blocking);
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A field an event type's records split by, and how many records have each of its values.
+    ///
+    /// @param field  The field.
+    /// @param values Its values and their records, commonest first.
+    public record ByField(String field, Map<String, Integer> values) {
+
+        /// Copies the values, in order.
+        public ByField {
+            values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
+        }
+
+        Map<String, Object> toJson(final boolean full) {
+            final Map<String, Object> shown = new LinkedHashMap<>();
+            values.entrySet().stream()
+                    .limit(full
+                            ? Long.MAX_VALUE
+                            : VALUES_SHOWN)
+                    .forEach(entry -> shown.put(entry.getKey(), entry.getValue()));
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("field", field);
+            out.put("values", shown);
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// One of an event type's shapes, and how many of its records have it.
+    ///
+    /// @param signature The shape's signature.
+    /// @param records   How many.
+    public record ShapeCount(String signature, int records) {
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("signature", signature);
+            out.put("records", records);
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How an event type's records are written: how many of their fields are typed (its placements, who acted, its
+    /// outcome) and how many kept as Data (the rest its records hold, but those common to every event).
+    ///
+    /// @param typed The fields typed.
+    /// @param data  The fields kept as Data.
+    /// @param fill  Each placed field's fill rate in the type's records, e.g. `7 of 9`.
+    /// @param note  Why it is worth a look (most of its fields kept as Data), or null: never a refusal.
+    /// @param couldType What the agent could type, given with the note (null without it): told to the agent in the
+    ///                  check's result, never to the user.
+    public record Typing(int typed, int data, Map<String, String> fill, String note, CouldType couldType) {
+
+        /// Copies the fill rates, in order.
+        public Typing {
+            fill = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(fill, Map.of())));
+        }
+
+        /// A typing with nothing said of what could be typed.
+        ///
+        /// @param typed The fields typed.
+        /// @param data  The fields kept as Data.
+        /// @param fill  Each placed field's fill rate.
+        /// @param note  Why it is worth a look, or null.
+        public Typing(final int typed, final int data, final Map<String, String> fill, final String note) {
+            this(typed, data, fill, note, null);
+        }
+
+        // As JSON, the schema's homes said once for every event type ([#COULD_TYPE_ALL]) left out.
+        Map<String, Object> toJson(final Set<String> saidOnce) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("typed", typed);
+            out.put("data", data);
+            if (!fill.isEmpty()) {
+                out.put("fill", fill);
+            }
+            if (note != null) {
+                out.put("worth_a_look", note);
+            }
+            if (couldType != null) {
+                out.put("could_type", couldType.toJson(saidOnce));
+            }
+            return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What an event type that keeps most of its fields as Data could type (added 2026-11-22, eval case 56: the
+    /// agent placed only what the schema requires, and nothing told it what more it could type): the fields it
+    /// keeps as Data, and where the schema has homes below its action element. Generic: no field is matched to an
+    /// element by its name; the agent places what it knows of the source.
+    ///
+    /// @param data  The fields kept as Data, most filled first (capped), each with its fill rate and an example
+    ///              value, e.g. `event.Subject (3/3, e.g. 'Report 1')`.
+    /// @param homes  The schema's elements below the action element: those under the objects the event type writes,
+    ///               then its action element's other children (capped), e.g. `Email: Id, Subject, From/EmailAddress`.
+    /// @param arrays The fields kept as Data whose values are arrays of objects, with their items' keys (capped;
+    ///               added 2026-11-22, chat 184: a team's members stayed Data), e.g. `event.Members: items with UPN,
+    ///               DisplayName — a for_each group on an element the schema repeats types each`.
+    public record CouldType(List<String> data, List<String> homes, List<String> arrays) {
+
+        /// Copies the lists.
+        public CouldType {
+            data = List.copyOf(Objects.requireNonNullElse(data, List.of()));
+            homes = List.copyOf(Objects.requireNonNullElse(homes, List.of()));
+            arrays = List.copyOf(Objects.requireNonNullElse(arrays, List.of()));
+        }
+
+        // As JSON, the homes said once for every event type left out (and the schema with them, when that is all).
+        Map<String, Object> toJson(final Set<String> saidOnce) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("data", data);
+            final List<String> own = homes.stream()
+                    .filter(home -> !saidOnce.contains(home))
+                    .toList();
+            if (!own.isEmpty()) {
+                out.put("schema", String.join("; ", own));
+            }
+            if (!arrays.isEmpty()) {
+                out.put("arrays", arrays);
+            }
+            return out;
+        }
+    }
+}

@@ -1,0 +1,22 @@
+Arguments: {"folder":"firewalls-uuid","show":["documents","streams","processors","tasks"]}
+
+=== Output ===
+Folder 'Firewalls' (/Security/Firewalls, uuid firewalls-uuid, [Firewalls](?action=open-doc&docType=Folder&docUuid=firewalls-uuid))
+
+Documents: 3 — 1 Feed, 1 Pipeline, 1 XSLT
+- [FIREWALL-EVENTS](?action=open-doc&docType=Feed&docUuid=feed-uuid) (Feed, uuid feed-uuid)
+- [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid) (Pipeline, uuid pipe-uuid)
+- [Firewall XSLT](?action=open-doc&docType=XSLT&docUuid=xslt-uuid) (XSLT, uuid xslt-uuid)
+Documents in folders you can't view aren't listed.
+
+Streams (Unlocked, of feeds in the folder or produced by its pipelines): 42 in 1 feed(s) (FIREWALL-EVENTS), of 2 type(s) (Raw Events), created 2026-10-01T00:00:00.000Z to 2026-10-02T00:00:00.000Z.
+The most recent 2:
+- [stream 7](?action=open-stream&id=7) FIREWALL-EVENTS, Events, created 2026-10-01T01:00:00.000Z, produced by pipeline 'Firewall pipeline'
+- [stream 6](?action=open-stream&id=6) FIREWALL-EVENTS, Raw Events, created 2026-10-01T00:00:00.000Z
+
+Processor filters: 2
+- Filter 1 (uuid filter-1-uuid) of Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): selects all streams; enabled, priority 20, Complete, 12 stream(s), 3400 event(s)
+- Filter 4 (uuid filter-4-uuid) of Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid): selects streams where Feed is 'FIREWALL-EVENTS' and Type is 'Raw Events', created on or after 2026-10-01T00:00:00.000Z, created on or before 2026-10-02T00:00:00.000Z; disabled, priority 10
+
+Processing tasks: counts by status
+- Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid), feed FIREWALL-EVENTS: 30 Complete, 4 Queued

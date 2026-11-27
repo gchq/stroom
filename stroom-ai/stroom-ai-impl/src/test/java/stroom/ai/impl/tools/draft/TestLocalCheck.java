@@ -1,0 +1,909 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.draft;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.Placeholders;
+import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.sample.XmlTree;
+
+import org.assertj.core.groups.Tuple;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// A translation mapping checked against its sample before anything is created or stepped.
+class TestLocalCheck extends DraftFixtures {
+
+    private static final SplitterSpec CSV = specOf("{\"kind\": \"delimited\", \"delimiter\": \",\", "
+                                                               + "\"header\": true}");
+
+    @SuppressWarnings("unchecked")
+    private static List<String> problems(final Map<String, Object> check) {
+        return (List<String>) check.get("problems");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> warnings(final Map<String, Object> check) {
+        return (List<String>) check.get("warnings");
+    }
+
+    private static List<Object> records(final TranslationMapping mapping, final Object sample,
+                                        final SplitterSpec splitter) {
+        return LocalCheck.sampleRecords(mapping, sample, splitter).records();
+    }
+
+    @Test
+    void startsWithContainsAndNotTellARecordsRule() {
+        final TranslationMapping m = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"},
+                            {"path": "EventSource/System/Name", "value": "App"},
+                            {"path": "EventSource/System/Environment", "value": "Prod"},
+                            {"path": "EventSource/Generator", "value": "App"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "request", "when": [{"field": "message", "starts_with": "Request:"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Request"}]},
+                            {"name": "fault", "when": [{"field": "message", "contains": "Fault"},
+                                                       {"field": "level", "equals": "INFO", "not": true}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Fault"}]},
+                            {"name": "rest", "fields": [{"path": "EventDetail/TypeId", "value": "Rest"}]}]}"""));
+        final String sample = String.join("\n",
+                "{\"message\": \"Request: get\", \"level\": \"INFO\"}",
+                "{\"message\": \"a Fault here\", \"level\": \"ERROR\"}",
+                "{\"message\": \"a Fault here\", \"level\": \"INFO\"}",
+                "{\"message\": \"a Fault, no level\"}",
+                "{\"message\": \"request: lower case\"}");
+
+        final List<Object> records = records(m, sample, null);
+
+        assertThat(records.stream().map(r -> LocalCheck.ruleOf(m, r, null)).toList())
+                .containsExactly("request", "fault", "rest", "fault", "rest");
+    }
+
+    // Chat 194 (an endpoint log): 'app' added as Data to every rule, held only by the focus events' records. The
+    // build said none of the logon rule's records hold it, step_sample that 59 records hold it that no rule reads:
+    // both true, of different records, and taken for a contradiction. The warning now names whose records hold it.
+    @Test
+    void dataNoRecordOfTheRuleHoldsSaysWhichRulesRecordsDo() {
+        final TranslationMapping m = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"},
+                            {"path": "EventSource/System/Name", "value": "deskwatch"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "deskwatch"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "logon_user", "when": [{"field": "evt", "equals": "logon"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon-User"},
+                                        {"path": "EventDetail/Authenticate/Data", "data_name": "app", "field": "app"},
+                                        {"path": "EventDetail/Authenticate/Data", "data_name": "pid",
+                                         "field": "pid"}]},
+                            {"name": "focus_window", "when": [{"field": "evt", "equals": "focus.in"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Focus-Window"},
+                                        {"path": "EventDetail/View/Data", "data_name": "app", "field": "app"}]},
+                            {"name": "unfocus_window", "when": [{"field": "evt", "equals": "focus.out"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Unfocus-Window"}]}]}"""));
+        final String sample = String.join("\n",
+                "{\"time\": \"2025-11-01T10:21:00Z\", \"host\": \"ws-epillai\", \"evt\": \"logon\"}",
+                "{\"time\": \"2025-11-01T10:22:00Z\", \"host\": \"ws-epillai\", \"evt\": \"focus.in\", "
+                + "\"app\": \"Code.exe\"}",
+                "{\"time\": \"2025-11-01T10:29:00Z\", \"host\": \"ws-epillai\", \"evt\": \"focus.out\", "
+                + "\"app\": \"Code.exe\"}",
+                "{\"time\": \"2025-11-01T10:30:00Z\", \"host\": \"ws-epillai\", \"evt\": \"focus.in\", "
+                + "\"app\": \"chrome.exe\"}");
+
+        final List<String> warnings = LocalCheck.dataNotHeld(m, records(m, sample, null));
+
+        assertThat(warnings).containsExactly("[logon_user] Data 'app', 'pid' read fields none of the 1 sample "
+                                             + "records this rule takes holds ('app' is in the records of "
+                                             + "focus_window (2), unfocus_window (1)): remove them, unless "
+                                             + "other records will have them.");
+        // A field no sample record holds is said by the sample check's own warning: no more here.
+        final String logonOnly = sample.lines().findFirst().orElseThrow();
+        assertThat(LocalCheck.dataNotHeld(m, records(m, logonOnly, null))).containsExactly(
+                "[logon_user] Data 'app', 'pid' read fields none of the 1 sample records this rule takes holds: "
+                + "remove them, unless other records will have them.");
+    }
+
+    @Test
+    void everyFieldNothingReadsIsListedWithHowManyThereAre() {
+        // Seen: a list cut at 12 ("...") on a 184-column CSV cost about 20 calls working out the rest.
+        final StringBuilder record = new StringBuilder("{\"ts\": \"2026-10-01T10:00:00Z\"");
+        for (int n = 1; n <= 20; n++) {
+            record.append(", \"f").append(n).append("\": \"v\"");
+        }
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records(mapping, record + "}", null));
+
+        final String unread = warnings(check).stream()
+                .filter(w -> w.startsWith("fields in the sample that nothing reads"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(unread).startsWith("fields in the sample that nothing reads (20 of 21): ['f1', 'f2',")
+                .contains("'f12', 'f13'", "'f20']").doesNotContain("...");
+    }
+
+    @Test
+    void aFieldTheMappingLeavesOutOnPurposeIsNotSaidToBeReadByNothing() {
+        // Seen in eval case 105 on Haiku: src_ip listed in ignored_fields, as the user asked, and still warned of as
+        // read by nothing, so the agent took the warning as one it couldn't clear.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "ignored_fields": ["src_ip"], "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records(mapping, """
+                {"ts": "2026-10-01T10:00:00Z", "src_ip": "198.51.100.7", "host": "gw"}""", null));
+
+        assertThat(warnings(check)).filteredOn(w -> w.startsWith("fields in the sample that nothing reads"))
+                .containsExactly("fields in the sample that nothing reads (1 of 3): ['host']: map each to the "
+                                 + "element that means it (a Data entry if nothing else fits), or leave it out on "
+                                 + "purpose.");
+    }
+
+    @Test
+    void aMapNoneOfWhoseKeysTheSampleHoldsIsWarnedOf() {
+        // Seen in testing: iptables' PROTO=TCP mapped by protocol number, so every dropped packet was Other.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [],
+                 "events": [{"name": "drop", "fields": [{"path": "EventDetail/TypeId", "value": "drop"},
+                   {"path": "EventDetail/Network/Deny/Source/TransportProtocol", "field": "proto",
+                    "map": {"6": "TCP", "17": "UDP", "1": "ICMP"}, "default": "Other"}]}]}"""));
+        final List<Object> byName = records(mapping, """
+                {"proto": "TCP"}
+                {"proto": "UDP"}""", null);
+        final List<Object> byNumber = records(mapping, """
+                {"proto": "6"}
+                {"proto": "TCP"}""", null);
+
+        assertThat(LocalCheck.mapKeysNotHeld(mapping, byName)).singleElement().asString()
+                .startsWith("[rule 'drop'] 'EventDetail/Network/Deny/Source/TransportProtocol' maps field 'proto' by "
+                            + "the keys 6, 17, 1, but none of the values the 2 sample records give it is one of them "
+                            + "(they are TCP, UDP): every record gets the default 'Other'.");
+        assertThat(LocalCheck.mapKeysNotHeld(mapping, byNumber)).isEmpty();
+        assertThat(LocalCheck.mapKeysNotHeld(mapping, records(mapping, "{\"other\": \"x\"}", null))).isEmpty();
+    }
+
+    @Test
+    void rulesNoSampleRecordReachesAreNamed() {
+        // Seen in testing: a sample of mostly one kind of event checked clean, and the rules it never reached
+        // failed only in processing.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [],
+                 "events": [{"name": "login", "when": [{"field": "action", "equals": "login"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "login"}]},
+                            {"name": "logout", "when": [{"field": "action", "equals": "logout"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "logout"}]},
+                            {"name": "other", "fields": [{"path": "EventDetail/TypeId", "value": "other"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"action": "login"}
+                {"action": "login"}""", null);
+
+        // The rule for the rest is left out: none reaching it is no gap.
+        assertThat(LocalCheck.rulesUnreached(mapping, records)).containsExactly("logout");
+        assertThat(LocalCheck.rulesUnreached(mapping, List.of())).isEmpty();
+    }
+
+    @Test
+    void timesInAnotherLayoutAreNamedWithWhatToDo() {
+        // Seen: a stream's times in two layouts, the second's records each written with an empty time.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts", "time_format": "yyyy-MM-dd HH:mm:ss"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"ts": "2026-10-01 10:00:00"}
+                {"ts": "01/Oct/2026:10:00:01 +1000"}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records))).anySatisfy(warning -> assertThat(warning)
+                .startsWith("EventTime/TimeCreated: time_format 'yyyy-MM-dd HH:mm:ss' does not match")
+                .contains("Values in other layouts: dd/MMM/yyyy:HH:mm:ss Z (e.g. '01/Oct/2026:10:00:01 +1000')")
+                .contains("time_fallback: 'ReceivedTime'"));
+    }
+
+    @Test
+    void aTypedEntryReadingItemsWithFieldsOfTheirOwnIsWarnedOf() {
+        // Chat 183: an array of {Name, Value} written to Configuration/Name, each item's key and value run together.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"},
+                  {"path": "EventDetail/Update/After/Configuration/Name", "field": "event.Parameters", "repeat": true},
+                  {"path": "EventDetail/Update/After/Configuration", "for_each": {"array": "event.Parameters"},
+                   "fields": [{"path": "Name", "field": "Name"}]},
+                  {"path": "EventDetail/Update/Data", "data_name": "params", "field": "event.Parameters"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"event": {"Parameters": [{"Name": "Name", "Value": "FW to personal"}, {"Name": "Enabled", \
+                "Value": "True"}]}}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records)))
+                .filteredOn(warning -> warning.contains("fields of their own"))
+                .singleElement().asString()
+                .startsWith("EventDetail/Update/After/Configuration/Name: field 'event.Parameters' holds items with "
+                            + "fields of their own (Name, Value)")
+                .contains("for_each", "xpath");
+    }
+
+    @Test
+    void aGroupWritingItemsWithFieldsOfTheirOwnWholeIsWarnedOfWithAKeySuggested() {
+        // Chat 184: each {Name, Value} item read whole with item: true, written to Configuration/Name as
+        // "NameFW to personal".
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"},
+                  {"path": "EventDetail/Update/After/Configuration", "for_each": {"array": "event.Parameters"},
+                   "fields": [{"path": "Name", "item": true}]},
+                  {"path": "EventDetail/Update/Data", "data_name": "params", "field": "event.Parameters"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"event": {"Parameters": [{"Name": "Name", "Value": "FW to personal"}, {"Name": "Enabled", \
+                "Value": "True"}]}}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records)))
+                .filteredOn(warning -> warning.contains("fields of their own"))
+                .singleElement().asString()
+                .startsWith("EventDetail/Update/After/Configuration/Name: the items of 'event.Parameters' have "
+                            + "fields of their own (Name, Value)")
+                .contains("item: true", "{\"path\": \"Name\", \"field\": \"Name\"}");
+    }
+
+    @Test
+    void aGroupWritingPlainItemsWholeIsNotWarnedOf() {
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"},
+                  {"path": "EventDetail/Update/After/Configuration", "for_each": {"array": "event.Names"},
+                   "fields": [{"path": "Name", "item": true}]}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"event": {"Names": ["FW to personal", "Archive"]}}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records)))
+                .noneMatch(warning -> warning.contains("fields of their own"));
+    }
+
+    @Test
+    void aFieldEmptyInEveryRecordIsSaidToBeEmptyNotMissing() {
+        // Seen in an eval: "field 'AppAccessContext.IssuedAtTime' is in none of the 72 sample records; did you mean
+        // ['AppAccessContext.IssuedAtTime', ...]", of a field null in every record.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventSource/User/Id", "field": "user"},
+                 {"path": "EventTime/TimeCreated", "field": "issued", "time_format": "yyyy-MM-dd HH:mm:ss"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"user": "a", "issued": null}
+                {"user": "b", "issued": null}""", null);
+
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records);
+
+        assertThat(problems(check)).noneMatch(problem -> problem.contains("issued"));
+        assertThat(warnings(check)).contains("field 'issued' (used for EventTime/TimeCreated) is empty in all 2 "
+                                             + "sample records: its element is left out of every event of the "
+                                             + "sample");
+        assertThat(String.valueOf(check)).doesNotContain("did you mean ['issued'");
+    }
+
+    @Test
+    void theMappingIsCheckedAgainstTheSampleBeforeStepping() {
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts", "time_format": "yyyy-MM-dd HH:mm:ss"},
+                 {"path": "EventSource/User/Id", "field": "usr"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"ts": "2026-10-01T10:00:00Z", "user": {"name": "a"}}
+                {"ts": "2026-10-01T10:00:01Z", "user": {"name": "b"}}""", null);
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records);
+        assertThat(check.get("records")).isEqualTo(2);
+        assertThat(check.get("fields_seen")).isEqualTo(List.of("ts", "user.name"));
+        assertThat(problems(check)).containsExactly("EventTime/TimeCreated: time_format 'yyyy-MM-dd HH:mm:ss' does "
+                                                    + "not match the sample's values, e.g. ['2026-10-01T10:00:00Z', "
+                                                    + "'2026-10-01T10:00:01Z']; the values look like "
+                                                    + "\"yyyy-MM-dd'T'HH:mm:ssX\"");
+        assertThat(warnings(check)).containsExactly(
+                "field 'usr' (used for EventSource/User/Id) is in none of the 2 sample records. Fields seen: "
+                + "['ts', 'user.name']",
+                "fields in the sample that nothing reads (1 of 2): ['user.name']: map each to the element that "
+                + "means it (a Data entry if nothing else fits), or leave it out on purpose.");
+        // XML fragments: paths with attributes and predicates, by local name whatever the namespace.
+        final Map<String, Object> fragmentsCase = check("12_xml_fragments_events reference");
+        final TranslationMapping xmlMapping = mapping(fragmentsCase.get("mapping"));
+        final List<Object> fragments = records(xmlMapping, fragmentsCase.get("texts"), null);
+        assertThat(fragments).hasSize(3);
+        final XmlTree.Element first = (XmlTree.Element) fragments.getFirst();
+        assertThat(LocalCheck.xmlValue(first, "System/TimeCreated/@SystemTime")).isEqualTo("2026-10-01T10:00:00.000Z");
+        assertThat(LocalCheck.xmlValue(first, "EventData/Data[@Name='IpAddress']")).isEqualTo("10.0.0.1");
+        assertThat(problems(LocalCheck.checkMapping(xmlMapping, fragments))).isEmpty();
+        // Data Splitter input needs the spec, else the check says it cannot look.
+        final Map<String, Object> csvCase = check("14_csv_two_files_variants reference");
+        final TranslationMapping csvMapping = mapping(csvCase.get("mapping"));
+        @SuppressWarnings("unchecked")
+        final List<String> texts = (List<String>) csvCase.get("texts");
+        assertThat(LocalCheck.sampleRecords(csvMapping, texts.getFirst(), null).note()).startsWith("no splitter spec");
+        // any_of covers both files' names.
+        assertThat(warnings(LocalCheck.checkMapping(csvMapping, records(csvMapping, texts,
+                spec(csvCase.get("splitter")))))).isEmpty();
+    }
+
+    @Test
+    void theArrayForEachReadsIsNotAnUnreadField() {
+        // Seen (eval 69): the alerts array for_each reads item by item was said to be read by nothing.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "array", "for_each": "alerts", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "time", "time_format": "yyyy-MM-dd'T'HH:mm:ssX"},
+                 {"path": "EventSource/Device/HostName", "field": "gateway", "scope": "record"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                [{"gateway": "gw1", "batch": 1, "alerts": [{"time": "2026-11-19T09:00:00Z"}]}]""", null);
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records))).containsExactly(
+                "fields in the sample that nothing reads (1 of 4): ['batch']: map each to the element that means it "
+                + "(a Data entry if nothing else fits), or leave it out on purpose.");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void anXmlSamplesCheckListsItsFieldsAndSaysWhatItCouldNotCheck() {
+        // Seen: 1000 XML records checked clean with fields_seen [], every rule testing a field extracted from an
+        // xpath, so no record was checked against its rule and no field was said to be unread.
+        final TranslationMapping m = mapping(json("""
+                {"input": "xml_fragments", "record": "Event",
+                 "xml_namespace": "http://schemas.microsoft.com/win/2004/08/events/event",
+                 "extract": [{"xpath": ".//*:EventData/*:Data", "regex": "Event: \\\\[([^\\\\]]*)\\\\]",
+                              "names": ["category"]}],
+                 "common": [{"path": "EventTime/TimeCreated", "field": "System/TimeCreated/@SystemTime"},
+                            {"path": "EventSource/Device/HostName", "field": "System/Computer"}],
+                 "events": [{"name": "user", "when": [{"field": "category", "equals": "User"}],
+                             "fields": [{"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                            {"name": "other", "fields": [{"path": "EventDetail/Unknown/Data", "data_name": "c",
+                             "field": "category"}], "allow_unknown": "for the test"}]}"""));
+        final String audit = ((Map<String, String>) samples("test audit")).get("audit.xml");
+        final Map<String, Object> check = LocalCheck.checkMapping(m, records(m, audit, null));
+        assertThat((List<String>) check.get("fields_seen")).contains("System/Computer", "EventData/Data",
+                "System/EventID");
+        // Read through the xpath, EventData/Data is not unread; EventID and the Provider's Name are.
+        final String unread = warnings(check).stream()
+                .filter(w -> w.startsWith("fields in the sample that nothing reads"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(unread).contains("'System/Provider/@Name'", "'System/EventID'").doesNotContain("EventData/Data");
+        assertThat(check.get("not_checked")).isEqualTo(List.of("the rule 5 of the 5 sample records fall to can't be "
+                                                               + "told here (a condition on an xpath, or on a field "
+                                                               + "extracted from one): Unknown and TypeId were not "
+                                                               + "checked for them; step_sample shows what they "
+                                                               + "become"));
+    }
+
+    @Test
+    void aNearMissOfASampleFieldIsAProblemAndAFieldNothingLikeIsAWarning() {
+        // Haiku mapped srcip, dstport and msg (FortiOS names) over a CSV with src_ip, dst_port and message.
+        final String csv = "timestamp,src_ip,dst_port,message\n2026-10-01T09:00:12+10:00,192.0.2.10,443,allowed\n";
+        final TranslationMapping m = mapping(json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "timestamp", "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"},
+                 {"path": "EventSource/Client/IPAddress", "field": "srcip"},
+                 {"path": "EventSource/Device/HostName", "field": "appliance"}],
+                 "events": [{"name": "any", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final Map<String, Object> check = LocalCheck.checkMapping(m, records(m, csv, CSV));
+        assertThat(problems(check)).singleElement().satisfies(problem -> {
+            assertThat(problem).startsWith("field 'srcip' (used for EventSource/Client/IPAddress)");
+            assertThat(problem).contains("did you mean ['src_ip']");
+        });
+        // May be in other data.
+        assertThat(warnings(check)).anyMatch(w -> w.startsWith("field 'appliance'"));
+    }
+
+    private static final String FIREWALL = """
+            timestamp,device,event_type,action,username,message
+            2026-10-01T09:00:12+10:00,FW-EDGE-01,TRAFFIC,ALLOW,,Outbound HTTPS allowed
+            2026-10-01T09:11:15+10:00,FW-EDGE-01,ADMIN,LOGIN_SUCCESS,admin,Administrator logged in via web console
+            2026-10-01T09:16:08+10:00,FW-EDGE-01,ADMIN,LOGOUT,admin,Administrator logged out
+            2026-10-01T09:17:24+10:00,FW-EDGE-01,SYSTEM,VPN_TUNNEL_DOWN,,Site-to-site VPN tunnel branch-01 went down
+            """;
+
+    private static TranslationMapping firewallMapping(final String allowUnknown) {
+        final Map<String, Object> admin = map("name", "admin", "when", json("[{\"field\": \"event_type\", "
+                                                                            + "\"equals\": \"ADMIN\"}]"),
+                "fields", json(UNKNOWN));
+        if (allowUnknown != null) {
+            admin.put("allow_unknown", allowUnknown);
+        }
+        final Map<String, Object> mapping = json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "timestamp", "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"},
+                 {"path": "EventSource/Device/HostName", "field": "device"},
+                 {"path": "EventDetail/TypeId", "field": "action"}]}""");
+        mapping.put("events", List.of(
+                json("""
+                        {"name": "traffic", "when": [{"field": "event_type", "equals": "TRAFFIC"}],
+                         "fields": [{"path": "EventDetail/Network/Permit/Source/Device/HostName", "field": "device"}]}
+                        """),
+                admin,
+                map("name", "other", "fields", json(UNKNOWN))));
+        return mapping(mapping);
+    }
+
+    private static final String UNKNOWN = "[{\"path\": \"EventDetail/Unknown/Data\", \"data_name\": \"action\", "
+                                          + "\"field\": \"action\"}]";
+
+    @Test
+    void theRecordsRulesKeepAsUnknownAreNamedByWhatTheyHold() {
+        // Haiku kept a firewall's ADMIN records (logins) and SYSTEM records as Unknown, through allow_unknown: true.
+        final TranslationMapping m = firewallMapping(null);
+        final List<Object> records = records(m, FIREWALL, CSV);
+        assertThat(records.stream().map(r -> LocalCheck.ruleOf(m, r, null)).toList())
+                .containsExactly("traffic", "admin", "admin", "other");
+        final List<String> problems = problems(LocalCheck.checkMapping(m, records));
+        final String admin = problems.stream().filter(p -> p.startsWith("[admin]")).findFirst().orElseThrow();
+        assertThat(admin).contains("keeps EventDetail/Unknown for 2 of the 4 sample records",
+                "action: LOGIN_SUCCESS, LOGOUT", "username: admin",
+                "e.g. message: \"Administrator logged in via web console\"");
+        final String other = problems.stream().filter(p -> p.startsWith("[other]")).findFirst().orElseThrow();
+        assertThat(other).contains("the rule for records no other rule matches", "VPN_TUNNEL_DOWN", "allow_unknown");
+        // And the rules to add.
+        assertThat(admin).contains("Authenticate for action LOGIN_SUCCESS; Authenticate for action LOGOUT");
+        // A reason doesn't keep logons Unknown (seen in VS Code: the agent gave up on the schema and asked the user
+        // to agree): refused, with the rules that describe them.
+        final Map<String, Object> kept = LocalCheck.checkMapping(firewallMapping(
+                "admin console activity has no action element"), records);
+        final String refused = problems(kept).stream().filter(p -> p.startsWith("[admin]")).findFirst()
+                .orElseThrow();
+        assertThat(refused).contains("can't be kept as Unknown: 2 of its 2 sample records", "\"admin_logon\"");
+        assertThat(kept).doesNotContainKey("kept_unknown");
+    }
+
+    @Test
+    void aTypeIdSharedByDifferentKindsOfEventInTheSampleIsWarned() {
+        // The SecretServer TypeId was its category ('Secret') for views, creates and deletes alike; a firewall's
+        // action (already one value per kind) is fine though its rules test the event type as well.
+        final List<Object> records = new ArrayList<>(List.of(
+                new LinkedHashMap<>(map("category", "Secret", "action", "View", "item", "a")),
+                new LinkedHashMap<>(map("category", "Secret", "action", "Delete", "item", "b"))));
+        final List<String> warned = LocalCheck.sharedTypeIds(typed("category"), records);
+        assertThat(warned).singleElement().asString().contains("'Secret' for rules delete, view");
+        assertThat(LocalCheck.sharedTypeIds(typed("action"), records)).isEmpty();
+    }
+
+    private static TranslationMapping typed(final String typeField) {
+        return mapping(json("""
+                {"input": "data_splitter",
+                 "common": [{"path": "EventSource/System/Name", "value": "A"},
+                            {"path": "EventDetail/TypeId", "field": "%s"}],
+                 "events": [
+                  {"name": "view", "when": [{"field": "category", "equals": "Secret"},
+                                            {"field": "action", "equals": "View"}],
+                   "fields": [{"path": "EventDetail/View/Document/Name", "field": "item"}]},
+                  {"name": "delete", "when": [{"field": "category", "equals": "Secret"},
+                                              {"field": "action", "equals": "Delete"}],
+                   "fields": [{"path": "EventDetail/Delete/Document/Name", "field": "item"}]}]}""".formatted(
+                typeField)));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theSampleCheckLooksInItemsAndRecordsByScope() {
+        // Eval case 16, its batches' items one event each.
+        final Map<String, Object> batches = check("16_json_batches_items reference");
+        final Map<String, Object> plain = new LinkedHashMap<>((Map<String, Object>) batches.get("mapping"));
+        plain.put("unmatched", "skip");
+        final List<Map<String, Object>> common = new ArrayList<>();
+        JsonValues.maps(plain.get("common")).forEach(e -> {
+            final Map<String, Object> entry = new LinkedHashMap<>(e);
+            entry.remove("time_format");
+            common.add(entry);
+        });
+        common.add(map("path", "EventSource/User/Name", "field", "nickname"));
+        plain.put("common", common);
+        final TranslationMapping m = mapping(plain);
+        final List<Object> records = records(m, ((List<String>) batches.get("texts")).getFirst(), null);
+        final Map<String, Object> check = LocalCheck.checkMapping(m, records);
+        assertThat(check.get("records")).isEqualTo(3);
+        assertThat(warnings(check).stream().filter(w -> !w.startsWith("fields in the sample that nothing reads")))
+                .singleElement().asString()
+                .startsWith("field 'nickname' (used for EventSource/User/Name) is in none of the 5 sample items");
+        assertThat((List<String>) check.get("fields_seen")).contains("roles", "host");
+    }
+
+    @Test
+    void xmlHeldInAFieldIsReadByLocalName() {
+        // A SOAP payload held in a JSON string.
+        final String payload = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
+                               + "<a:Login xmlns:a=\"urn:acme\"><a:User>alice</a:User><a:Account id=\"ACC-1\"/>"
+                               + "</a:Login></soap:Body></soap:Envelope>";
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "xml_fields": ["payload"],
+                 "common": [{"path": "EventSource/User/Id", "field": "payload//User"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "login", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                          "value": "Logon"}]}]}"""));
+        final List<Object> records = records(mapping, "{\"time\": \"2026-10-11T08:00:01Z\", \"payload\": "
+                                                      + ToolJson.dumps(payload) + "}\n", null);
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> first = (Map<String, Object>) records.getFirst();
+        assertThat(first).containsEntry("payload//User", "alice").containsEntry("payload//Account/@id", "ACC-1")
+                .containsEntry("payload/Envelope/Body/Login/User", "alice");
+    }
+
+    @Test
+    void xmlAnExtractReadsOutOfATextIsReadByLocalName() {
+        // A syslog message holding XML after words of its own: read out by an extract, then named in xml_fields.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "xml_fields": ["msg.xml"],
+                 "extract": [{"field": "msg", "regex": "^.*?(<[A-Za-z_?].*>)\\\\s*$", "flags": "s",
+                              "names": ["msg.xml"]}],
+                 "common": [{"path": "EventSource/User/Id", "field": "msg.xml//User"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "login", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                          "value": "Logon"}]}]}"""));
+        final List<Object> records = records(mapping, "{\"msg\": \"EventLog: <Event><User>alice</User></Event>\"}\n",
+                null);
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> first = (Map<String, Object>) records.getFirst();
+        assertThat(first).containsEntry("msg.xml//User", "alice").containsEntry("msg.xml/Event/User", "alice");
+    }
+
+    @Test
+    void sampleValuesAreCheckedAgainstTheSchemasPatterns() {
+        // Seen in eval case 40: CloudTrail's sourceIPAddress is sometimes an AWS service's name, which Stroom's
+        // schema check refuses in an IPAddress; the step failed where the mapping check could have said so.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "nil_values": ["-"],
+                 "common": [{"path": "EventSource/Client/IPAddress", "field": "ip"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"}]}]}"""));
+        final List<Object> records = new ArrayList<>(List.of(map("ip", "10.0.0.1"),
+                map("ip", "cloudformation.amazonaws.com"), map("ip", "-")));
+        assertThat(LocalCheck.checkSchemaValues(mapping, records, SCHEMA)).singleElement().asString()
+                .contains("['cloudformation.amazonaws.com'] in 1 of the 2 sample records");
+        assertThat(LocalCheck.checkSchemaValues(mapping, List.of(map("ip", "10.0.0.1")), SCHEMA))
+                .isEmpty();
+    }
+
+    @Test
+    void extractedValuesAreCheckedAgainstTheSchemasPatterns() {
+        // Seen: SecretServer's fields, read from its message's key/value pairs, were never checked (only the
+        // record's own fields were), so a value the schema refuses would have failed only at stepping.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "extract": [{"field": "msg", "regex": "Source IP: (\\\\S+)", "names": ["source_ip"]}],
+                 "common": [{"path": "EventSource/Client/IPAddress", "field": "source_ip"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"}]}]}"""));
+        final List<Object> records = List.of(map("msg", "Login - Source IP: 10.0.0.1"),
+                map("msg", "Login - Source IP: Unknown"));
+
+        assertThat(LocalCheck.checkSchemaValues(mapping, records, SCHEMA)).singleElement().asString()
+                .contains("field 'source_ip' has ['Unknown'] in 1 of the 2 sample records");
+    }
+
+    @Test
+    void valuesThatFitOnceCasedAreGivenTheTransformThatFitsThem() {
+        // Seen in eval case 34: upper-case IPv6 addresses (the schema's pattern is lower case) were left out, as the
+        // problem said to map only the values that fit, when transform: lower makes them fit.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/Device/IPAddress", "field": "ip"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"}]}]}"""));
+        final List<Object> records = List.of(map("ip", "2001:DB8::21"), map("ip", "10.4.0.21"));
+
+        assertThat(LocalCheck.checkSchemaValues(mapping, records, SCHEMA)).singleElement().asString()
+                .contains("['2001:DB8::21'] in 1 of the 2 sample records")
+                .endsWith("They fit once lower-cased: give the entry transform: lower")
+                .doesNotContain("Map only the values that fit");
+    }
+
+    @Test
+    void domainQualifiedUserIdsAreWarnedOf() {
+        // Seen in eval cases 35, 36 and 43: every Id kept its domain (domain.com\priya.patel, ACME\alice), the
+        // account name alone wanted.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/User/Id", "field": "by_user"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"},
+                                                     {"path": "EventDetail/Authenticate/User/Id",
+                                                      "field": "upn"}]}]}"""));
+        final List<Object> records = List.of(map("by_user", "domain.com\\priya.patel", "upn", "joe@acme.example"),
+                map("by_user", "alice", "upn", "bob"));
+
+        assertThat(LocalCheck.domainQualifiedUserIds(mapping, records, SCHEMA)).containsExactly(
+                "EventSource/User/Id takes field 'by_user', whose values are domain-qualified "
+                + "(['domain.com\\\\priya.patel']): an Id is usually the account name alone. If so, give the entry "
+                + "transform: strip_domain",
+                "EventDetail/Authenticate/User/Id takes field 'upn', whose values are domain-qualified "
+                + "(['joe@acme.example']): an Id is usually the account name alone. If so, give the entry transform: "
+                + "strip_domain");
+        // With the transform given, or values with no domain, nothing is said.
+        assertThat(LocalCheck.domainQualifiedUserIds(mapping, List.of(map("by_user", "alice", "upn", "bob")),
+                SCHEMA))
+                .isEmpty();
+    }
+
+    @Test
+    void domainQualifiedUserIdsAreFoundInExtractedFields() {
+        // Seen: SecretServer's By User, read from its message's key/value pairs, was never checked (only the
+        // record's own fields were), and the domain was kept in every Id.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "extract": [{"field": "msg", "regex": "By User: (\\\\S+)", "names": ["by_user"]}],
+                 "common": [{"path": "EventSource/User/Id", "field": "by_user"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [{"path": "EventDetail/Authenticate/Action",
+                                                      "value": "Logon"},
+                                                     {"path": "EventDetail/Authenticate/User/Id",
+                                                      "field": "by_user"}]}]}"""));
+        final List<Object> records = List.of(map("msg", "Event: Login - By User: domain.com\\sam.lee"),
+                map("msg", "Event: Login - By User: alice"));
+
+        assertThat(LocalCheck.domainQualifiedIds(mapping, records, SCHEMA)).containsExactly(new LocalCheck.QualifiedIds(
+                "by_user", List.of("EventSource/User/Id", "EventDetail/Authenticate/User/Id"),
+                List.of("domain.com\\sam.lee")));
+    }
+
+    @Test
+    void aRepeatedIdsArrayValuesAreCheckedOneByOne() {
+        // Seen (chat 183): recipients held in a JSON array, written with repeat, were read as the array's text, so
+        // a record with two recipients was never found and one with a single one gave '["sam@acme.example"]'.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [
+                              {"path": "EventDetail/Send/Destination/User/Id", "field": "recipients",
+                               "repeat": true}]}]}"""));
+        final List<Object> records = List.of(map("recipients", List.of("sam@acme.example", "jo@acme.example")),
+                map("recipients", List.of("alice")));
+
+        assertThat(LocalCheck.domainQualifiedIds(mapping, records, SCHEMA)).containsExactly(new LocalCheck.QualifiedIds(
+                "recipients", List.of("EventDetail/Send/Destination/User/Id"),
+                List.of("sam@acme.example", "jo@acme.example")));
+    }
+
+    @Test
+    void theIdsCheckedAreTheSchemasUsersButNotAnEmailsAddressees() {
+        // Asked for by the user: every element of the schema's user type (RunAs, Send/Destination/User), not only
+        // those named User; an email's From, To, Cc and Bcc hold email addresses, the domain part of them.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventSource/RunAs/Id", "field": "run_as"},
+                            {"path": "EventDetail/TypeId", "value": "x"}],
+                 "events": [{"name": "x", "fields": [
+                              {"path": "EventDetail/Send/Destination/User/Id", "field": "to_user"},
+                              {"path": "EventDetail/Create/Email/To/Id", "field": "to"}]}]}"""));
+        final List<Object> records = List.of(map("run_as", "ACME\\svc", "to_user", "ACME\\bob",
+                "to", "bob@acme.example"));
+
+        assertThat(LocalCheck.domainQualifiedIds(mapping, records, SCHEMA))
+                .extracting(LocalCheck.QualifiedIds::field)
+                .containsExactly("run_as", "to_user");
+    }
+
+    @Test
+    void everySampleTextIsReadNotTheFirst200() {
+        // Seen in production: a VPN rule's keys first appeared at the 557th of 3,933 records; reading only the
+        // first 200, the check said they matched nothing.
+        final StringBuilder sample = new StringBuilder();
+        for (int n = 0; n < 600; n++) {
+            final String body = n == 557
+                    ? "type=\"event\" action=\"negotiate\" remip=\"10.0.0.1\" vpntunnel=\"hq\""
+                    : "type=\"traffic\" action=\"deny\" n=\"" + n + "\"";
+            sample.append(ToolJson.dumps(map("host", "fw1", "body", body))).append('\n');
+        }
+        final TranslationMapping m = mapping(json("""
+                {"input": "json",
+                 "extract": [{"field": "body", "regex": "(?:^|\\\\s)vpntunnel=\\"([^\\"]*)\\"",
+                              "names": ["vpntunnel"]}],
+                 "common": [{"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "all", "fields": [{"path": "EventDetail/TypeId", "field": "vpntunnel"}]}]}"""));
+        final List<Object> records = records(m, sample.toString(), null);
+        assertThat(records).hasSize(600);
+        assertThat(LocalCheck.extractedValues(m, records.get(557))).containsEntry("vpntunnel", "hq");
+        assertThat(LocalCheck.extractedValues(m, records.getFirst())).containsEntry("vpntunnel", "");
+    }
+
+    @Test
+    void anXmlFragmentsSampleIsReadARecordAFragment() {
+        final String message = "Sep 27 2026 23:48:10 – User: domain.com\\Bloggs, Joe – [[AppServer]] "
+                               + "Event: [User] Action: [Login] By User: domain.com\\joe.bloggs (Item Id: 219)";
+        final StringBuilder sample = new StringBuilder();
+        for (final String action : List.of("Login", "Logout", "Update")) {
+            sample.append("<Event><System><Computer>app01</Computer></System><EventData><Data>")
+                    .append(message.replace("Login", action)).append("</Data></EventData></Event>\n");
+        }
+        final TranslationMapping m = mapping(json("""
+                {"input": "xml_fragments", "record": "Event",
+                 "common": [{"path": "EventSource/User/Id", "field": "EventData/Data"}],
+                 "events": [{"name": "logon", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(m, sample.toString(), null);
+        assertThat(records).hasSize(3);
+        assertThat(LocalCheck.xmlFlat((XmlTree.Element) records.getFirst()))
+                .containsEntry("System/Computer", "app01")
+                .containsEntry("EventData/Data", message);
+    }
+
+    @Test
+    void theUnknownRecordsAreRefusedWithTheRulesTheirValuesShow() {
+        // The agent's give-up, each kind Unknown with a reason. Traffic and admin are refused with
+        // the rules to use, and so is system now: every record it catches has a rule from its own values (a
+        // service starting, a configuration saved), so there is nothing to put to the user.
+        final Map<String, Object> draft = TestDraftMapping.draft(Map.of("fw.csv", TestDraftMapping.FIREWALL_CSV),
+                "Firewall", "FW", "Prod");
+        final Map<String, Object> gaveUp = new LinkedHashMap<>(mappingOf(draft));
+        final List<Map<String, Object>> events = new ArrayList<>();
+        for (final String kind : List.of("traffic", "admin", "system")) {
+            events.add(map("name", kind, "when", List.of(map("field", "event_type", "equals",
+                            kind.toUpperCase(Locale.ROOT))), "allow_unknown", "the schema is complex",
+                    "fields", json(UNKNOWN)));
+        }
+        gaveUp.put("events", events);
+        final List<Object> records = new ArrayList<>(DraftMapping.records(Map.of("fw.csv",
+                TestDraftMapping.FIREWALL_CSV), null).records());
+        final LocalCheck.Coverage coverage = LocalCheck.unknownCoverage(mapping(gaveUp), records);
+        final List<String> problems = coverage.problems();
+        assertThat(problems.stream().map(p -> p.split("]")[0]).sorted().toList())
+                .containsExactly("[admin", "[system", "[traffic");
+        assertThat(problems.getFirst()).contains("can't be kept as Unknown: 2 of its 2 sample records");
+        final List<Object> offered = json(problems.getFirst().substring(problems.getFirst().indexOf("[{")));
+        final Map<String, Object> withOffered = new LinkedHashMap<>(mappingOf(draft));
+        withOffered.put("events", offered);
+        assertThat(XsltGenerator.generate(mapping(withOffered), SCHEMA_352, "3.5.2").ok())
+                .isTrue();
+        final String system = problems.stream().filter(p -> p.startsWith("[system]")).findFirst().orElseThrow();
+        assertThat(coverage.kept()).isEmpty();
+        assertThat(system).contains("Update for action CONFIG_SAVED; Process for action START");
+    }
+
+    @Test
+    void theUserCanKeepUnknownAfterSeeingWhatTheValuesSuggest() {
+        // Refused first, with the rules the values show; kept only when the user, shown them, still wants Unknown,
+        // and then put to them in the form with those suggestions.
+        final Map<String, Object> draft = TestDraftMapping.draft(Map.of("fw.csv", TestDraftMapping.FIREWALL_CSV),
+                "Firewall", "FW", "Prod");
+        final List<Object> records = new ArrayList<>(DraftMapping.records(Map.of("fw.csv",
+                TestDraftMapping.FIREWALL_CSV), null).records());
+        LocalCheck.Coverage coverage = LocalCheck.unknownCoverage(traffic(draft, false), records);
+        assertThat(coverage.problems().getFirst()).startsWith("[traffic] can't be kept as Unknown")
+                .contains("keep_unknown: true");
+        coverage = LocalCheck.unknownCoverage(traffic(draft, true), records);
+        assertThat(coverage.problems()).isEmpty();
+        assertThat(coverage.kept().getFirst()).containsEntry("rule", "traffic").containsEntry("against_suggestion",
+                true);
+        assertThat((String) coverage.kept().getFirst().get("suggested")).startsWith("Network/Permit for action ALLOW");
+    }
+
+    private static TranslationMapping traffic(final Map<String, Object> draft, final boolean keep) {
+        final Map<String, Object> rule = map("name", "traffic", "when", List.of(map("field", "event_type", "equals",
+                "TRAFFIC")), "allow_unknown", "the user said so", "fields", json(UNKNOWN));
+        if (keep) {
+            rule.put("keep_unknown", true);
+        }
+        final Map<String, Object> mapping = new LinkedHashMap<>(mappingOf(draft));
+        mapping.put("events", List.of(rule));
+        return mapping(mapping);
+    }
+
+    @Test
+    void traitsSayWhatTheRecordsHold() {
+        final List<Object> records = List.of(map("action", "LOGIN", "time", "2026-10-01 10:00:00", "message",
+                "a user logged in from afar"), map("action", "LOGOUT", "n", 5));
+        assertThat(LocalCheck.traits(records))
+                .isEqualTo("action: LOGIN, LOGOUT; e.g. message: \"a user logged in from afar\"");
+    }
+
+    @Test
+    void aValueOnlyMisfittingItsFieldIsAskedOnlyWhereTheSchemaWouldRefuseIt() {
+        // Seen in testing: 'orgname' in a field of numbers going into a string element was asked as a stand-in.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "data_splitter", "common": [
+                 {"path": "EventSource/Device/HostName", "field": "instance"},
+                 {"path": "EventSource/Device/IPAddress", "field": "ip"},
+                 {"path": "EventSource/Device/Port", "field": "port"},
+                 {"path": "EventDetail/Unknown/Data", "data_name": "count", "field": "count"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<String> instance = List.of("101", "102", "orgname", "orgname", "103");
+        final List<String> ip = List.of("10.0.0.1", "10.0.0.2", "-", "-", "10.0.0.3");
+        final List<String> port = List.of("80", "443", "n.a", "n.a", "8080");
+        final List<String> count = List.of("5", "7", "x", "x", "9");
+        final List<Object> records = new ArrayList<>();
+        for (int n = 0; n < instance.size(); n++) {
+            records.add(new LinkedHashMap<>(map("instance", instance.get(n), "ip", ip.get(n), "port", port.get(n),
+                    "count", count.get(n))));
+        }
+
+        // A string element and a Data element's Value take any text; an address and a port refuse a misfit, and a
+        // usual stand-in is asked anywhere.
+        assertThat(LocalCheck.placeholders(mapping, records, SCHEMA))
+                .extracting(Placeholders.Found::value, Placeholders.Found::fields)
+                .containsExactlyInAnyOrder(
+                        Tuple.tuple("-", List.of("ip")),
+                        Tuple.tuple("n.a", List.of("port")));
+        // Without the schema, no destination is known to take text: every misfit is asked.
+        assertThat(LocalCheck.placeholders(mapping, records, null))
+                .extracting(Placeholders.Found::value)
+                .containsExactlyInAnyOrder("-", "n.a", "orgname", "x");
+    }
+
+    @Test
+    void anXml11SampleIsReadAsXml11() {
+        // Found testing awkward values (2026-11-18): an XML 1.1 sample holding a form feed, as Stroom stores what it
+        // writes (&#xc;), was read with its declaration taken off, so as XML 1.0, in which &#xc; is not allowed: the
+        // sample check said "the sample is not XML a parser could read" and checked nothing.
+        final TranslationMapping xml = TranslationMapping.fromJson(JsonValues.map(ToolJson.loads("""
+                {"input": "xml", "root": "records", "record": "record",
+                 "common": [{"path": "EventSource/User/Id", "field": "user"}], "events": [{"name": "a"}]}""")));
+        final String sample = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<records>"
+                              + "<record><user>a</user><msg>page one&#xc;page two</msg></record>"
+                              + "<record><user>b</user><msg>x&#x85;y</msg></record></records>\n";
+        final LocalCheck.SampleRecords read = LocalCheck.sampleRecords(xml, sample, null);
+        assertThat(read.note()).isNull();
+        assertThat(read.records()).hasSize(2);
+        assertThat(LocalCheck.xmlValue((XmlTree.Element) read.records().getFirst(), "msg"))
+                .isEqualTo("page one\fpage two");
+        // Fragments of XML 1.1, as Stroom writes them, likewise.
+        final TranslationMapping fragments = TranslationMapping.fromJson(JsonValues.map(ToolJson.loads("""
+                {"input": "xml_fragments", "record": "record",
+                 "common": [{"path": "EventSource/User/Id", "field": "user"}], "events": [{"name": "a"}]}""")));
+        final LocalCheck.SampleRecords pieces = LocalCheck.sampleRecords(fragments, "<?xml version=\"1.1\"?>"
+                + "<record><user>a</user><msg>a&#x1b;[31m</msg></record><record><user>b</user></record>", null);
+        assertThat(pieces.note()).isNull();
+        assertThat(pieces.records()).hasSize(2);
+    }
+
+    @Test
+    void jsonLinesWhoseLinesHoldArraysOfObjectsAreReadAsLines() {
+        // Seen in the catalogue's lanes (2026-11-19): JSON lines whose first line holds an array of objects were read
+        // as one object wrapping the records, and the second line then failed to parse ("Extra data").
+        final TranslationMapping json = TranslationMapping.fromJson(JsonValues.map(ToolJson.loads("""
+                {"input": "json",
+                 "common": [{"path": "EventSource/User/Id", "field": "user"}], "events": [{"name": "a"}]}""")));
+        final String sample = """
+                {"user": "a", "targets": [{"id": 1}, {"id": 2}]}
+                {"user": "b", "targets": [{"id": 3}]}
+                {"user": "c"}
+                """;
+
+        final LocalCheck.SampleRecords read = LocalCheck.sampleRecords(json, sample, null);
+
+        assertThat(read.note()).isNull();
+        assertThat(read.records().stream().map(record -> (Object) ((Map<?, ?>) record).get("user")).toList())
+                .containsExactly("a", "b", "c");
+        // One object wrapping the records, on one line or several, is still the parser's one record.
+        final String wrapped = """
+                {"Records": [
+                  {"user": "a"},
+                  {"user": "b"}
+                ]}
+                """;
+        assertThat(LocalCheck.sampleRecords(json, wrapped, null).records()).hasSize(1);
+        assertThat(LocalCheck.sampleRecords(json, "{\"Records\": [{\"user\": \"a\"}, {\"user\": \"b\"}]}",
+                null).records()).hasSize(1);
+    }
+}

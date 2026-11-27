@@ -1,0 +1,2769 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.e2e;
+
+import stroom.ai.impl.EvalChat;
+import stroom.ai.impl.FakeModelServer;
+import stroom.ai.impl.UserActionRecord;
+import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.indexing.FeedIndexes;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.sample.SourceTypeMeta;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiToolAccess;
+import stroom.ai.shared.AiUserActionResult;
+import stroom.data.shared.StreamTypeNames;
+import stroom.dataconnection.impl.DataConnectionStore;
+import stroom.dataconnection.shared.CsvSettings;
+import stroom.dataconnection.shared.DataColumn;
+import stroom.dataconnection.shared.DataColumnType;
+import stroom.dataconnection.shared.DataConnectionDoc;
+import stroom.dataconnection.shared.DataConnectionType;
+import stroom.docref.DocRef;
+import stroom.documentation.impl.DocumentationStore;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.shared.FeedDoc;
+import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexFieldService;
+import stroom.index.impl.IndexStore;
+import stroom.index.impl.Indexer;
+import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
+import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.mcp.impl.McpTerminal;
+import stroom.mcp.impl.McpTestClient;
+import stroom.mcp.impl.tools.BuildRecords;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.Field;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
+import stroom.search.elastic.ElasticIndexStore;
+import stroom.search.elastic.ElasticTestNode;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.extraction.FieldValue;
+import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.UserRef;
+
+import com.google.inject.Injector;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
+import jakarta.inject.Inject;
+import org.w3c.dom.Element;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// What the evaluation set's runs share: the cases to run, the check of a build's Events, and the cases' reference
+/// solutions run through the REAL tools ([#runReference]), which also make the pre-state of a case that starts from
+/// another case's build ([#setUp]).
+///
+/// A reference solution goes through the tools the way an agent would, with no model: the feed and sample (or the
+/// files on the user's disk, sent by their upload command, [McpTerminal]), the Data Splitter,
+/// build_translation_xslt, the pipeline from the case's template, stepping, processing, each event validated and
+/// scored against what the case expects ([EvalScore]), the documentation's Field mapping, then a Lucene index, its
+/// pipeline, processing and the verification searches.
+///
+/// An aggregated feed's case (its reference's `source_types`) is one build of one source type group: the feed surveyed
+/// (with its source type field named, unless a registry beside the feed says it), the registry written by
+/// `record_source_types` (the case's rows, if any, and the group's source types and name, as the user picks them in
+/// the form), the group's XSLT and its own pipeline (`group=`), which passes over every other source type's records;
+/// its Events, registry and passed-over count are scored ([EvalScore#scoreSourceTypes]), and its index is its own. A
+/// case whose data is in the feed already (`streams`, [EvalCases#streams]) has it stored there, a stream of parts each
+/// with its receipt headers.
+///
+/// A case that starts from another (`setup: {from_case: 56}`, [EvalCases#setup]) has that case's reference solution
+/// run first, on a feed promoted outside the build as a site's feeds are, and the build promoted with its layout
+/// accepted: the case's own build then starts on the feed, its registry and the promoted group. Its reference names
+/// the group it builds: a new group gets a pipeline and an index of its own; the promoted group, joined, is changed in
+/// a new version of its pipeline (a promoted pipeline is never changed in place, decided by the user 2026-11-17), as
+/// is its indexing pipeline, and its index gains the build's fields. A case with `promote: true` is promoted at the
+/// end, and its registry scored beside the feed.
+@SuppressWarnings("unchecked")
+abstract class AbstractEvalTest extends AbstractE2eTest {
+
+    /// Where a feed made outside the case's build goes when promoted, with the documents a setup build promotes.
+    static final String FEEDS = "Eval Feeds";
+
+    // Where a setup build (or a case that promotes) puts its documents.
+    private static final Map<String, Object> DESTINATIONS = Map.of("Pipeline", FEEDS, "XSLT", FEEDS, "Index", FEEDS,
+            "Documentation", FEEDS);
+    // The documentation's skeleton.
+    private static final String DOC_SKELETON = """
+            ## Purpose and data
+
+            Evaluation case.
+
+            ## Processing
+
+            Child of the template.
+
+            ## Output
+
+            See Field mapping.
+            """;
+    // Events read and checked a stream; a larger stream's are read in blocks of BLOCK, spread over it.
+    private static final int READ_EVENTS = 300;
+    private static final int BLOCK = 50;
+    // The most documents a bulk request sends.
+    private static final int BULK_BATCH = 5_000;
+    private static final Pattern SAMPLED_VALUES = Pattern.compile("Sample values are what the [1-9]\\d* documents");
+    private static final Pattern ERROR_LINE = Pattern.compile("\\b(ERROR|FATAL)\\b");
+
+    // Whether a reference build confirms its reference catalogue first ([#confirmCatalogue]): on unless
+    // -DtestEvalCatalogues=false; and at most how many times it confirms a set of event types.
+    private static final boolean CATALOGUES = Boolean.parseBoolean(System.getProperty("testEvalCatalogues", "true"));
+    private static final int CATALOGUE_SETS = 40;
+    // The keys of a mapping that say how its records are read, which catalogue_event_types takes as its reading.
+    private static final List<String> READING_KEYS = List.of("input", "root", "record", "xml_namespace",
+            "json_layout", "json_fields", "xml_fields", "pairs", "extract", "nil_values", "for_each");
+
+    // An elastic_index's events_xml: its records' Events XML stored, as the any-source records' sources wrote them.
+    private static final String ANY_SOURCE_XML = "any_source";
+    // The streams a question's proxy uploads are in.
+    private static final int QUESTION_STREAMS = 10;
+    // The fields that say which event a question's record is.
+    private static final String STREAM_ID = "StreamId";
+    private static final String EVENT_ID = "EventId";
+    // The start of draft_translation_mapping's question of which key of an old/new list holds the value before the
+    // change (ChangeSides.QUESTION), answered by the case's reference (`change_sides`).
+    private static final String CHANGE_SIDES_QUESTION = "Which key of an old/new list holds a property's value "
+                                                        + "before the change?";
+    // Where run_stroomql says it wrote its results.
+    private static final Pattern STROOMQL_RESULTS = Pattern.compile("The results are in (\\S+\\.md)\\.");
+    // run_stroomql's note when its rows reached the most a query may return (RunStroomQlTool.limitNote).
+    private static final Pattern STROOMQL_CAPPED = Pattern.compile("It returned \\d+ rows, the most allowed");
+    // A skill case's placeholders in a scripted call's arguments: a folder's skills doc, and a value from a result.
+    private static final Pattern SKILLS_PLACEHOLDER = Pattern.compile("<SKILLS (\\S+)>");
+    private static final Pattern RESULT_PLACEHOLDER = Pattern.compile("<result:(.+)>");
+
+    // The forms the user answered in the case's own build: each its message and the answer's content.
+    private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
+    // What a hand-written case's setup made beyond its pipeline, by its placeholder ([#setUpHandWritten]):
+    // `<pre xslt>`, `<shared raw>` and `<shared pipeline>`.
+    private final Map<String, Object> handWrittenValues = new LinkedHashMap<>();
+    // The case's reference answers of which key of each old/new list holds the value before the change (2026-11-23):
+    // the options picked, e.g. "OldValue holds the value before, NewValue the value after".
+    private List<String> changeSides = List.of();
+
+    @Inject
+    private Injector injector;
+    @Inject
+    private IndexFieldService indexFieldService;
+    @Inject
+    private MetaService metaService;
+    @Inject
+    private ElasticIndexStore elasticIndexStore;
+    @Inject
+    private IndexStore indexStore;
+    @Inject
+    private Indexer indexer;
+    @Inject
+    private SecurityContext securityContext;
+    @Inject
+    private DataConnectionStore dataConnectionStore;
+    @Inject
+    private DocumentationStore documentationStore;
+    @Inject
+    private DocumentPermissionService documentPermissionService;
+    @Inject
+    private ExplorerNodeService explorerNodeService;
+    @Inject
+    private SkillCatalogue skillCatalogue;
+    @Inject
+    private ProcessorFilterService processorFilterService;
+
+    // A filter made disabled (a reference pipeline's) is enabled, as the user would in Stroom.
+    @Override
+    boolean enablesDisabledFilters() {
+        return true;
+    }
+
+    /// All the cases, or those `-DtestEvalCases` (or the `STROOM_EVAL_CASES` environment variable) names: their
+    /// numbers, comma-separated, e.g. `12,35`.
+    ///
+    /// @return The cases' ids.
+    static List<String> cases() {
+        final String property = System.getProperty("testEvalCases");
+        final String only = property != null
+                ? property
+                : System.getenv("STROOM_EVAL_CASES");
+        if (only == null || only.isBlank()) {
+            return EvalCases.IDS;
+        }
+        final List<String> numbers = List.of(only.strip().split("\\s*,\\s*"));
+        return EvalCases.IDS.stream().filter(id -> numbers.contains(id.split("_", 2)[0])).toList();
+    }
+
+    /// The pre-state of a case that starts from another ([EvalCases#setup]): the feed made in a build of its own, that
+    /// case's data uploaded to it, and the feed promoted to [#FEEDS]; that case's reference solution run on it in
+    /// build `eval-<tag>-setup` (its group built, processed and indexed), and the build promoted with its layout
+    /// accepted. Deterministic: no model takes part. Fails if that case's reference doesn't pass.
+    ///
+    /// @param evalCase The case.
+    /// @param tag      The case's tag, for the setup build's name.
+    /// @param feed     The feed's name, which the case's own build then uses.
+    /// @return What the setup left, or null for a case that starts from an empty Stroom.
+    Setup setUp(final Map<String, Object> evalCase, final String tag, final String feed) {
+        final Map<String, Object> from = EvalCases.setup(evalCase);
+        if (from == null) {
+            return null;
+        }
+        final String build = "eval-" + tag + "-setup";
+        final Map<String, Object> reference = (Map<String, Object>) from.get("reference");
+        agreed("create_feed", args("build", build + "-feed", "name", feed, "encoding",
+                reference.getOrDefault("feed_encoding", "UTF-8")));
+        // A feed's data arrives before its promotion: a promoted feed takes no uploads from the tools.
+        final List<Long> raws = uploadData(from, feed, EvalCases.samples(from));
+        promote(build + "-feed", Map.of("Feed", FEEDS));
+        final EvalScore score = new EvalScore((String) from.get("id"));
+        final Built built = build(from, score, build, feed, null, raws);
+        if (!promotes(from)) {
+            promote(build, DESTINATIONS);
+        }
+        // The case's later data, for its own build alone: stored in the promoted feed once the setup is built, as
+        // a stream received after it.
+        final List<Long> later = new ArrayList<>();
+        for (final String sample : EvalCases.later(evalCase)) {
+            later.add(storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), sample))));
+        }
+        if (!score.passed()) {
+            throw new AssertionError("The setup, case " + from.get("id") + "'s reference, failed: " + score.summary());
+        }
+        if (built.indexed() == null) {
+            throw new AssertionError("The setup, case " + from.get("id") + ", made no index");
+        }
+        // The forms of the case's own build only.
+        formsAnswered.clear();
+        return new Setup(feed, build, built, new EvalScore.Before(built.group(), built.pipeline(),
+                built.indexed().index(), snapshot(built)), List.copyOf(later));
+    }
+
+    /// A case run with its reference solution, on its setup's feed and promoted documents where it has one.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build's name.
+    /// @param feed     The feed's name: the setup's, for a case with one.
+    /// @param setup    What the case's setup left ([#setUp]), or null for none.
+    void runReference(final Map<String, Object> evalCase,
+                      final EvalScore score,
+                      final String build,
+                      final String feed,
+                      final Setup setup) {
+        final Object sides = ((Map<String, Object>) evalCase.getOrDefault("reference", Map.of())).get(
+                "change_sides");
+        changeSides = sides instanceof final List<?> given
+                ? given.stream().map(String::valueOf).toList()
+                : List.of();
+        build(evalCase, score, build, feed, setup, null);
+    }
+
+    /// A question's data, in Stroom before the user asks: any of an Elasticsearch index ([#questionIndex]), a Lucene
+    /// index of the case's records (`lucene_index`: `name`, `events`, `fields`, [EvalCases#table]), and data
+    /// connections of the case's CSV records (`data_connections`: each its `name`, `csv` and `columns`), more
+    /// Elastic Indexes ([#moreElasticIndex]: `more_elastic_indexes`) and Lucene indexes with no shards
+    /// (`empty_lucene_indexes`, their names), each document beside the standard templates; and the site's standing
+    /// instructions for them (`agents`: Markdown, e.g. a `## Fields` section naming the person field), a
+    /// Documentation doc named AGENTS in the same folder, as a site would keep one beside its indexes, removed once
+    /// the case is done.
+    ///
+    /// @param evalCase The case.
+    /// @return What to remove once the case is done.
+    QuestionData questionData(final Map<String, Object> evalCase) {
+        final QuestionIndex elastic = evalCase.get("elastic_index") != null
+                ? questionIndex(evalCase)
+                : null;
+        final List<DocRef> docs = new ArrayList<>();
+        if (evalCase.get("agents") instanceof final String agents && !agents.isBlank()) {
+            docs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(templateFolder(), "AGENTS", agents)));
+        }
+        final List<DocRef> sources = new ArrayList<>();
+        if (elastic != null) {
+            sources.add(elastic.doc());
+            sources.add(elastic.cluster());
+            if (elastic.feed() != null) {
+                sources.add(elastic.feed());
+            }
+        }
+        for (final Map<String, Object> spec : EvalCases.luceneIndexes(evalCase)) {
+            sources.add(questionLuceneIndex(EvalCases.table(spec), spec.get("folder") instanceof final String in
+                    ? folder(explorerPath(in))
+                    : templateFolder()));
+        }
+        for (final Map<String, Object> spec : (List<Map<String, Object>>) evalCase.getOrDefault("data_connections",
+                List.of())) {
+            sources.add(questionDataConnection(EvalCases.table(spec)));
+        }
+        final List<Runnable> removals = new ArrayList<>(docs.stream()
+                .<Runnable>map(doc -> () -> delete(doc))
+                .toList());
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("more_elastic_indexes"))) {
+            final QuestionIndex more = moreElasticIndex(evalCase, spec, sources.size());
+            sources.add(more.doc());
+            sources.add(more.cluster());
+            removals.add(() -> more.node().deleteIndices(more.indexName()));
+        }
+        for (final String name : EvalCases.strings(evalCase.get("empty_lucene_indexes"))) {
+            sources.add(create(LuceneIndexDoc.TYPE, name, templateFolder()).getDocRef());
+        }
+        return new QuestionData(elastic, sources, removals);
+    }
+
+    // Another Elastic Index of a question (`more_elastic_indexes`, each as an `elastic_index` is, its records in
+    // `events` or `generate`), in an Elasticsearch index of its own; one with only `fields` holds no documents at
+    // all, as a site's retired index may.
+    private QuestionIndex moreElasticIndex(final Map<String, Object> evalCase,
+                                           final Map<String, Object> spec,
+                                           final int place) {
+        final ElasticTestNode node = ElasticTestNode.getOrSkip();
+        final EvalCases.QuestionTable given = EvalCases.table(spec);
+        final EvalCases.QuestionTable table;
+        if (given != null) {
+            table = given;
+        } else {
+            final Map<String, String> types = new LinkedHashMap<>();
+            EvalCases.map(spec.get("fields")).forEach((field, type) -> types.put(field, String.valueOf(type)));
+            table = new EvalCases.QuestionTable(String.valueOf(spec.get("name")), types, List.of());
+        }
+        final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
+                .split("_", 2)[0] + "-more-" + place);
+        seedElastic(node, indexName, table, questionStreams(indexName, 1).getFirst());
+        final DocRef cluster = liveElasticCluster(node, "Eval cluster " + indexName);
+        final ExplorerNode created = create(ElasticIndexDoc.TYPE, String.valueOf(spec.get("name")),
+                templateFolder());
+        asUser(admin, () -> elasticIndexStore.writeDocument(elasticIndexStore.readDocument(created.getDocRef())
+                .copy()
+                .clusterRef(cluster)
+                .indexName(indexName)
+                .timeField(table.timeField())
+                .build()));
+        return new QuestionIndex(node, indexName, created.getDocRef(), cluster, null);
+    }
+
+    /// A question's Elasticsearch data, indexed before the user asks (`elastic_index`): the case's records
+    /// (`events` and `fields`, [EvalCases#table]), else the proxy uploads ([EvalProxyUploads]), in an Elasticsearch
+    /// index of their own, in streams in Stroom, behind an Elastic Index doc of the case's name beside the standard
+    /// templates. An `insider_events` case with `streams: true` has its records' Events XML in that stream
+    /// ([EvalQuestionRecords#insiderEventXml]); one with `events_xml: any_source` the Events XML its sources wrote of
+    /// each record of the any-source data ([EvalQuestionRecords#anySourceEventXml]). Skips the case without an
+    /// Elasticsearch node
+    /// ([ElasticTestNode#getOrSkip]).
+    ///
+    /// @param evalCase The case.
+    /// @return The Elastic Index doc, and the index to remove once the case is done.
+    QuestionIndex questionIndex(final Map<String, Object> evalCase) {
+        final ElasticTestNode node = ElasticTestNode.getOrSkip();
+        DocRef feedDoc = null;
+        final Map<String, Object> spec = (Map<String, Object>) evalCase.get("elastic_index");
+        final EvalCases.QuestionTable table = EvalCases.table(spec);
+        final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
+                .split("_", 2)[0]);
+        final Map<String, Object> generate = (Map<String, Object>) spec.get("generate");
+        // An insider-risk case whose events' XML is read (e.g. peers' Organisation): stored as one Events stream,
+        // its events in the records' order, as the index's EventIds number them.
+        final List<Long> streams;
+        if (EvalQuestionRecords.storesInsiderStreams(generate)) {
+            streams = List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT),
+                    EvalQuestionRecords.insiderEventXml(generate)));
+        } else if (ANY_SOURCE_XML.equals(spec.get("events_xml")) && table != null) {
+            // The any-source records' Events XML, one stream, an event a record in order (the index's EventIds), in
+            // a feed with its Feed doc, so a user who isn't an administrator can be let read it.
+            final String feed = "EVAL-" + indexName.toUpperCase(Locale.ROOT);
+            feedDoc = create(FeedDoc.TYPE, feed, templateFolder()).getDocRef();
+            streams = List.of(storeEvents(feed, table.records().stream()
+                    .map(EvalQuestionRecords::anySourceEventXml)
+                    .toList()));
+        } else {
+            streams = questionStreams(indexName, table == null
+                    ? QUESTION_STREAMS
+                    : 1);
+        }
+        final String timeField;
+        if (table == null) {
+            EvalProxyUploads.seed(node, indexName, streams);
+            timeField = "@timestamp";
+        } else {
+            seedElastic(node, indexName, table, streams.getFirst());
+            timeField = table.timeField();
+        }
+        final DocRef cluster = liveElasticCluster(node, "Eval cluster " + indexName);
+        final ExplorerNode created = create(ElasticIndexDoc.TYPE, String.valueOf(spec.get("name")),
+                templateFolder());
+        asUser(admin, () -> elasticIndexStore.writeDocument(elasticIndexStore.readDocument(created.getDocRef())
+                .copy()
+                .clusterRef(cluster)
+                .indexName(indexName)
+                .timeField(timeField)
+                .build()));
+        return new QuestionIndex(node, indexName, created.getDocRef(), cluster, feedDoc);
+    }
+
+    /// A question's reference answer: each tool call of its `reference` (a tool's name, its arguments; e.g.
+    /// `esql_query` with `pipeline`, given the question's Elastic Index if no `index` is), made in order on the
+    /// question's data ([#questionData]), and scored as an agent's calls are ([EvalScore#scoreQuestion]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    void runQuestionReference(final Map<String, Object> evalCase, final EvalScore score) {
+        final QuestionData data = questionData(evalCase);
+        try {
+            final List<EvalScore.ToolUse> calls = new ArrayList<>();
+            for (final Map.Entry<String, Object> call : ((Map<String, Object>) evalCase.get("reference"))
+                    .entrySet()) {
+                final Map<String, Object> arguments = new LinkedHashMap<>((Map<String, Object>) call.getValue());
+                if ("esql_query".equals(call.getKey()) && data.elastic() != null) {
+                    arguments.putIfAbsent("index", data.elastic().doc().getUuid());
+                }
+                final EvalScore.ToolUse used = toolUse(call.getKey(), arguments, client.call(call.getKey(),
+                        arguments));
+                dump(call.getKey(), used.result());
+                calls.add(used);
+            }
+            score.scoreQuestion(evalCase, calls);
+            scoreQuestionTimeline(evalCase, score, calls);
+        } finally {
+            data.remove();
+        }
+    }
+
+    /// Scores what a question's activity timeline wrote in the MCP session's workspace (`expected.timeline`,
+    /// [EvalScore#scoreTimeline]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param calls    The tool calls made, in order.
+    void scoreQuestionTimeline(final Map<String, Object> evalCase,
+                               final EvalScore score,
+                               final List<EvalScore.ToolUse> calls) {
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(calls, this::mcpFile, null, null));
+    }
+
+    /// A file of the MCP session's workspace, read a page at a time as an agent would (`read_file`), without its
+    /// line numbers.
+    ///
+    /// @param path The file's path, e.g. `/outputs/timelines/jsmith/events.csv`.
+    /// @return Its text, or null if it can't be read.
+    String mcpFile(final String path) {
+        final StringBuilder sb = new StringBuilder();
+        int start = 1;
+        while (true) {
+            final CallToolResult result = client.call("read_file", Map.of("path", path, "startLine", start,
+                    "lineCount", 500));
+            if (Boolean.TRUE.equals(result.isError())) {
+                return start == 1
+                        ? null
+                        : sb.toString();
+            }
+            int last = -1;
+            for (final String line : McpTestClient.text(result).split("\n")) {
+                final int tab = line.indexOf('\t');
+                if (tab > 0 && line.substring(0, tab).strip().matches("\\d+")) {
+                    last = Integer.parseInt(line.substring(0, tab).strip());
+                    sb.append(line.substring(tab + 1)).append('\n');
+                }
+            }
+            if (last < start) {
+                return start == 1 && sb.isEmpty()
+                        ? null
+                        : sb.toString();
+            }
+            start = last + 1;
+        }
+    }
+
+    /// A file of a chat's workspace, as its user.
+    ///
+    /// @param setup The chat case's setup.
+    /// @param path  The file's path, e.g. `/outputs/timelines/jsmith/events.csv`.
+    /// @return Its text, or null if there is no such file.
+    String chatFile(final SkillSetup setup, final String path) {
+        final SessionWorkspace workspace = new SessionWorkspace(injector.getInstance(ChatWorkspace.class),
+                setup.chat().getId());
+        final WorkspacePath file = WorkspacePath.parse(path);
+        return asUser(setup.user(), () -> workspace.find(file).isEmpty()
+                ? null
+                : String.join("\n", workspace.readLines(file, 0, (int) Math.min(Integer.MAX_VALUE,
+                        workspace.lineCount(file)))) + "\n");
+    }
+
+    // A table call of a chat, as a question's is read: the path it read and its table's columns and rows.
+    private static EvalScore.ToolUse tableUse(final Map<String, Object> arguments, final String text) {
+        final Map<String, Object> json = new LinkedHashMap<>(markdownTable(text));
+        json.put("path", arguments.get("path"));
+        return new EvalScore.ToolUse("table", false, json, text);
+    }
+
+    /// A tool call of a question's answer, as [EvalScore#scoreQuestion] reads it: its JSON; for run_stroomql, which
+    /// answers with the path of the table it wrote, the query run, that path (`out`), whether its rows were cut at
+    /// the most a query may return (`capped`) and that table's `columns` and `rows`; for table, which answers in a
+    /// Markdown table, the `path` it read and that table's `columns` and `rows`.
+    ///
+    /// @param tool      The tool.
+    /// @param arguments Its arguments.
+    /// @param result    Its result.
+    /// @return The call.
+    EvalScore.ToolUse toolUse(final String tool, final Map<String, Object> arguments, final CallToolResult result) {
+        final String text = McpTestClient.text(result);
+        final boolean refused = Boolean.TRUE.equals(result.isError()) || text.startsWith("Error:");
+        if (refused) {
+            return new EvalScore.ToolUse(tool, true, Map.of(), text);
+        }
+        if ("run_stroomql".equals(tool)) {
+            final Map<String, Object> json = new LinkedHashMap<>(stroomQlTable(text));
+            json.put("query", arguments.get("query"));
+            json.put("capped", STROOMQL_CAPPED.matcher(text).find());
+            final Matcher matcher = STROOMQL_RESULTS.matcher(text);
+            if (matcher.find()) {
+                json.put("out", matcher.group(1));
+            }
+            return new EvalScore.ToolUse(tool, false, json, text);
+        }
+        if ("table".equals(tool)) {
+            final Map<String, Object> json = new LinkedHashMap<>(markdownTable(text));
+            json.put("path", arguments.get("path"));
+            return new EvalScore.ToolUse(tool, false, json, text);
+        }
+        return new EvalScore.ToolUse(tool, false, result.structuredContent() instanceof final Map<?, ?> map
+                ? (Map<String, Object>) map
+                : Map.of(), text);
+    }
+
+    /// A skill case's pre-state ([EvalCases#isSkill]): its data, as a question's ([#questionData]); its folders
+    /// (`folders`, each an Explorer path such as `/Hunts`); its skills docs (`skills_docs`, each a `folder` and its
+    /// `skills`, the Markdown of each, saved as a SKILLS doc with a history entry a skill, as `propose_skill` would
+    /// have left it); the user who chats (`user`: the administrator, unless it names another, e.g. `{name: analyst,
+    /// edit_skills: false}`: a user with every tool and View Data, View on the case's data (with the feed of its
+    /// Events XML), Use on its models, and View only on the skills docs and their folders); a chat of theirs on a
+    /// scripted model ([FakeModelServer]); and the case's earlier turns (`chat`, each an `ask`, the `calls` the
+    /// scripted model makes, its `answer`, and with `apply: true` the user applying the turn's proposal and saving
+    /// it), asked in that chat, so the turn the case scores has them as its history, as a user's chat would.
+    ///
+    /// @param evalCase The case.
+    /// @return What the setup left; [SkillSetup#close] it once the case is done.
+    SkillSetup setUpSkill(final Map<String, Object> evalCase) {
+        final QuestionData data = questionData(evalCase);
+        for (final String path : EvalCases.strings(evalCase.get("folders"))) {
+            folder(explorerPath(path));
+        }
+        // The skills docs and their folders.
+        final List<DocRef> skillsDocs = new ArrayList<>();
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("skills_docs"))) {
+            String text = "";
+            int version = 1;
+            for (final String skill : EvalCases.strings(spec.get("skills"))) {
+                final String name = SkillDoc.parse(skill).skills().getFirst().name();
+                text = SkillDoc.parse(text).withSkill(skill, new SkillDoc.HistoryEntry(version++, "2026-11-20",
+                        "admin", SkillDoc.HOW_AGENT, name, "Created", null));
+            }
+            final ExplorerNode folder = folder(explorerPath((String) spec.get("folder")));
+            skillsDocs.add(folder.getDocRef());
+            skillsDocs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(folder, SkillDoc.DOC_NAME, text)));
+        }
+        // An instructions case's AGENTS docs, and the index plans kept with pipelines feeding its indexes.
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("agents_docs"))) {
+            final ExplorerNode folder = folder(explorerPath((String) spec.get("folder")));
+            skillsDocs.add(folder.getDocRef());
+            skillsDocs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(folder, AgentInstructions.DOC_NAME,
+                    (String) spec.get("text"))));
+        }
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("index_plans"))) {
+            skillsDocs.addAll(indexPlan(spec, data));
+        }
+        final UserRef user = skillUser(evalCase, data, skillsDocs);
+        skillCatalogue.clearCache();
+        final FakeModelServer scripted = startModelServer().answeringSideRequests(sideAnswers(evalCase));
+        final EvalChat chats = injector.getInstance(EvalChat.class);
+        final SkillSetup setup = new SkillSetup(data, user, chats, scripted, chats.model(admin, user,
+                "Eval scripted model", scripted.baseUrl()), chats.create(user), new LinkedHashMap<>());
+        for (final Map<String, Object> turn : EvalCases.maps(evalCase.get("chat"))) {
+            final List<AiChatMessage> messages = scriptedTurn(setup, (String) turn.get("ask"), turn);
+            if (Boolean.TRUE.equals(turn.get("apply"))) {
+                final List<EvalChat.Proposal> proposals = EvalChat.proposals(messages);
+                if (proposals.isEmpty()) {
+                    throw new AssertionError("The setup's turn '" + turn.get("ask") + "' proposed nothing: "
+                                             + EvalChat.calls(messages));
+                }
+                applyAndSave(setup, proposals.getLast());
+            }
+        }
+        // A timeline case's tables as the earlier turns left them, the baseline the turn scored is compared with.
+        final Object entity = EvalCases.map(EvalCases.map(evalCase.get("expected")).get("timeline")).get("entity");
+        if (entity != null) {
+            for (final String file : List.of(EvalTimelineScore.EVENTS, EvalTimelineScore.LEVELS,
+                    EvalTimelineScore.PERIODS)) {
+                final String path = EvalTimelineScore.FOLDER + entity + "/" + file;
+                NullSafe.consume(chatFile(setup, path), text -> setup.baseline().put(path, text));
+            }
+        }
+        return setup;
+    }
+
+    /// The scripted model's answers to a chat case's side calls (a tool asking the chat's model outside the chat,
+    /// e.g. a timeline's characterisation): the reference's `side_answers`, the first whose `contains` texts the
+    /// request's body all holds: its `answer`, or with `classify` (rules, each `matches`, a regular expression, and
+    /// the activity's `name`) each item of the request's `Items:` list put in the activity of the first rule its
+    /// text or titles match ([#classified]); any other request has the scripted model's own short answer. Each
+    /// request's last message is logged, to write the answers from.
+    ///
+    /// @param evalCase The case.
+    /// @return Each side request's answer, or null for the short answer.
+    static Function<Map<String, Object>, String> sideAnswers(final Map<String, Object> evalCase) {
+        final List<Map<String, Object>> answers = EvalCases.maps(EvalCases.map(evalCase.get("reference"))
+                .get("side_answers"));
+        return request -> {
+            final String body = JsonUtil.writeValueAsString(request, false);
+            final List<?> messages = request.get("messages") instanceof final List<?> list
+                    ? list
+                    : List.of();
+            final Object last = messages.isEmpty()
+                    ? body
+                    : messages.getLast();
+            dump("side request", last);
+            final String asked = last instanceof final Map<?, ?> message
+                    ? String.valueOf(message.get("content"))
+                    : String.valueOf(last);
+            return answers.stream()
+                    .filter(answer -> EvalCases.strings(answer.get("contains")).stream().allMatch(body::contains))
+                    .map(answer -> answer.get("classify") != null
+                            ? classified(asked, EvalCases.maps(answer.get("classify")))
+                            : String.valueOf(answer.get("answer")).strip())
+                    .findFirst()
+                    .orElse(null);
+        };
+    }
+
+    /// A scripted classification of a characterisation's items (decided by rules, so the reference needn't know
+    /// the items' ids): each item of the request's `Items:` list in the activity of the first rule whose `matches`
+    /// its text or titles match (the activity listed by that `name`, else a new one so named), else unclear.
+    ///
+    /// @param asked The request's question: its `Activities:` and `Items:` lists.
+    /// @param rules The rules, in order.
+    /// @return The answer, as the model gives it.
+    static String classified(final String asked, final List<Map<String, Object>> rules) {
+        final int items = asked.indexOf("Items:");
+        if (items < 0) {
+            return "[]";
+        }
+        final List<Map<String, Object>> activities = asked.startsWith("Activities:")
+                ? EvalCases.maps(JsonUtil.readValue(asked.substring("Activities:".length(), items).strip(),
+                List.class))
+                : List.of();
+        final List<Map<String, Object>> answer = new ArrayList<>();
+        for (final Map<String, Object> item : EvalCases.maps(JsonUtil.readValue(asked.substring(items
+                                                                                                 + "Items:".length())
+                .strip(), List.class))) {
+            final String text = item.get("text") + " " + EvalCases.map(item.get("session")).get("titles");
+            final Map<String, Object> rule = rules.stream()
+                    .filter(one -> Pattern.compile(String.valueOf(one.get("matches")), Pattern.CASE_INSENSITIVE)
+                            .matcher(text).find())
+                    .findFirst()
+                    .orElse(null);
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("item", item.get("item"));
+            if (rule == null) {
+                one.put("activity", "unclear");
+            } else {
+                final String name = String.valueOf(rule.get("name"));
+                one.put("activity", activities.stream()
+                        .filter(activity -> activity.values().stream().anyMatch(value -> name.equalsIgnoreCase(
+                                String.valueOf(value))))
+                        .map(activity -> String.valueOf(activity.get("id")))
+                        .findFirst()
+                        .orElse("new"));
+                one.put("name", name);
+            }
+            one.put("confidence", "high");
+            one.put("reason", rule == null
+                    ? "No rule matches it."
+                    : "It matches " + rule.get("matches") + ".");
+            answer.add(one);
+        }
+        return JsonUtil.writeValueAsString(answer, false);
+    }
+
+    /// An index plan kept with the indexing XSLT of a pipeline feeding an index of the case (`index_plans`, each
+    /// the `index`'s name, the `pipeline`'s and the plan's `fields`, each a `name`, `type` and `source`), as the build
+    /// tools keep it, beside the index: so the tools find where each of its fields comes from.
+    ///
+    /// @param spec The plan.
+    /// @param data The case's data, the index among it.
+    /// @return The pipeline and its XSLT.
+    private List<DocRef> indexPlan(final Map<String, Object> spec, final QuestionData data) {
+        final String indexName = (String) spec.get("index");
+        final DocRef index = data.docs().stream()
+                .filter(doc -> indexName.equals(doc.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No index " + indexName + " for its plan"));
+        final ExplorerNode folder = securityContext.asProcessingUserResult(() -> explorerNodeService.getParent(index)
+                .orElseThrow(() -> new AssertionError("No folder for " + index)));
+        final String pipelineName = (String) spec.get("pipeline");
+        final Map<String, Object> plan = new LinkedHashMap<>();
+        plan.put("backend", "lucene");
+        plan.put("index_name", indexName);
+        plan.put("time_field", "EventTime");
+        plan.put("fields", EvalCases.maps(spec.get("fields")));
+        final ExplorerNode xslt = create(XsltDoc.TYPE, pipelineName, folder);
+        editXslt(xslt.getUuid(), doc -> doc.copy()
+                .description(KeptMapping.withMapping(doc.getDescription(), "index", plan))
+                .build());
+        final String pipeline = childPipeline(folder, pipelineName, templateUuid("indexing", "Indexing"), List.of(
+                property("xsltFilter", "xslt", xslt.getDocRef()),
+                property("indexingFilter", "index", index)));
+        // The plan must read, and the pipeline be found feeding the index, or the case tests nothing.
+        final DataSourceDocumentation documentation = injector.getInstance(DataSourceDocumentation.class);
+        final List<DataSourceDocumentation.Planned> found = asUser(admin, () -> documentation.plannedFrom(
+                documentation.feedingPipelines(index), String.valueOf(EvalCases.maps(spec.get("fields")).getFirst()
+                        .get("source"))));
+        if (found.isEmpty()) {
+            throw new AssertionError("The index plan of " + pipelineName + " isn't found feeding " + indexName);
+        }
+        return List.of(new DocRef(PipelineDoc.TYPE, pipeline), xslt.getDocRef());
+    }
+
+    /// A skill case run with its reference solution: its setup ([#setUpSkill]), then the request asked in the chat,
+    /// the scripted model making the reference's `calls` (an argument's `<SKILLS /Hunts>` is that folder's skills
+    /// doc's UUID, `<result:regex>` the regular expression's first group in the latest result that matches it) and
+    /// giving its `answer`, every form answered with the reference's `forms`; scored as an agent's run is
+    /// ([#scoreSkill]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    void runSkillReference(final Map<String, Object> evalCase, final EvalScore score) {
+        try (final SkillSetup setup = setUpSkill(evalCase)) {
+            final Map<String, Object> reference = EvalCases.map(evalCase.get("reference"));
+            final List<AiChatMessage> messages = scriptedTurn(setup, (String) evalCase.get("request"), reference);
+            scoreSkill(evalCase, score, setup, messages);
+        }
+    }
+
+    /// Scores a skill case's run from the chat's messages since the request ([EvalScore#scoreSkill]): its calls,
+    /// the model's replies, and each proposal with the skills doc's text before it and the proposed skill as
+    /// `check_skill` checks it.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param setup    The case's setup.
+    /// @param messages The messages since the request (every turn of it).
+    void scoreSkill(final Map<String, Object> evalCase,
+                    final EvalScore score,
+                    final SkillSetup setup,
+                    final List<AiChatMessage> messages) {
+        final List<EvalScore.SkillCall> calls = new ArrayList<>();
+        for (final EvalChat.Call call : EvalChat.calls(messages)) {
+            dump(call.tool() + " " + call.argumentsJson(), call.text());
+            calls.add(new EvalScore.SkillCall(call.tool(), call.arguments(), call.error(), call.text()));
+        }
+        final List<EvalScore.SkillProposal> proposals = new ArrayList<>();
+        if (EvalCases.isInstructions(evalCase)) {
+            for (final EvalChat.Proposal proposal : EvalChat.proposals(messages, "propose_instructions")) {
+                proposals.add(instructionsProposal(proposal));
+            }
+        } else {
+            for (final EvalChat.Proposal proposal : EvalChat.proposals(messages)) {
+                proposals.add(skillProposal(proposal));
+            }
+        }
+        score.scoreSkill(evalCase, new EvalScore.SkillRun(calls, String.join("\n\n", EvalChat.replies(messages)),
+                proposals, EvalChat.errors(messages)));
+        // A table call's Markdown table read as a question's is, so its rows are scored as an answer.
+        final List<EvalScore.ToolUse> uses = calls.stream()
+                .map(call -> "table".equals(call.tool()) && !call.error()
+                        ? tableUse(call.arguments(), call.text())
+                        : new EvalScore.ToolUse(call.tool(), call.error(), Map.of(), call.text()))
+                .toList();
+        final List<EvalTimelineScore.Form> forms = EvalChat.forms(messages).stream()
+                .map(form -> new EvalTimelineScore.Form(form.tool(), form.message(), form.schema(), form.status(),
+                        form.content()))
+                .toList();
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(uses, path -> chatFile(setup, path),
+                setup.baseline()::get, forms));
+    }
+
+    /// The user applies a proposal and saves the doc, as they would with its button and then Stroom's Save.
+    ///
+    /// @param setup    The case's setup.
+    /// @param proposal The proposal.
+    void applyAndSave(final SkillSetup setup, final EvalChat.Proposal proposal) {
+        final AiUserActionResult applied = setup.chats().apply(setup.user(), setup.chat().getId(), proposal);
+        if (!applied.isDone()) {
+            throw new AssertionError("The proposal wasn't applied: " + applied.getMessage());
+        }
+        if (UserActions.APPLY_DOCUMENTATION_CHANGE.equals(proposal.action().action())) {
+            // Applied to the doc's editor, unsaved: the user saves it.
+            final DocRef doc = proposal.action().doc();
+            asUser(setup.user(), () -> documentationStore.writeDocument(documentationStore.readDocument(doc)
+                    .copy()
+                    .data(proposal.action().request())
+                    .build()));
+        }
+        skillCatalogue.clearCache();
+    }
+
+    /// A model server for a skill case's chat, scripted by default.
+    ///
+    /// @return It, started.
+    static FakeModelServer startModelServer() {
+        try {
+            return FakeModelServer.start();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /// @param path An Explorer path as a case gives it, e.g. `/Hunts`.
+    /// @return It from the root, as [#folder] takes it, e.g. `System/Hunts`.
+    static String explorerPath(final String path) {
+        final String stripped = path.strip().replaceFirst("^/+", "");
+        return stripped.startsWith("System/") || "System".equals(stripped)
+                ? stripped
+                : "System/" + stripped;
+    }
+
+    // A turn of the chat on the scripted model: the question asked, the turn's calls made in order with their
+    // placeholders worked out from the chat so far, then its answer; every form answered with the turn's forms.
+    private List<AiChatMessage> scriptedTurn(final SkillSetup setup,
+                                             final String question,
+                                             final Map<String, Object> turn) {
+        final Deque<Map<String, Object>> calls = new ArrayDeque<>(EvalCases.maps(turn.get("calls")));
+        final String answer = Objects.requireNonNullElse((String) turn.get("answer"), "Done.");
+        // A call whose placeholder can't be worked out ends the turn, said in its answer and failed after it.
+        final List<String> failed = new ArrayList<>();
+        setup.scripted().answeringAgentTurns(request -> {
+            final Map<String, Object> call = calls.poll();
+            if (call == null) {
+                return FakeModelServer.Reply.answered(answer);
+            }
+            try {
+                final List<EvalChat.Call> made = EvalChat.calls(setup.chats().messages(setup.user(),
+                        setup.chat().getId()));
+                return FakeModelServer.Reply.called((String) call.get("tool"), JsonUtil.writeValueAsString(
+                        resolved(call.get("arguments"), made), false));
+            } catch (final RuntimeException | AssertionError e) {
+                failed.add(call.get("tool") + ": " + e.getMessage());
+                calls.clear();
+                return FakeModelServer.Reply.answered("The scripted call failed: " + e.getMessage());
+            }
+        });
+        final Map<String, String> forms = new LinkedHashMap<>();
+        EvalCases.map(turn.get("forms")).forEach((field, value) -> forms.put(field, formValue(value)));
+        final List<String> declined = EvalCases.strings(turn.get("forms_declined"));
+        final List<AiChatMessage> messages = setup.chats().ask(setup.user(), setup.chat(), setup.scriptedModel(),
+                question, form -> declines(form, declined)
+                        ? null
+                        : scriptedForm(form, forms), Duration.ofMinutes(5));
+        if (!failed.isEmpty()) {
+            throw new AssertionError("The scripted turn '" + question + "' failed: " + failed);
+        }
+        if (!calls.isEmpty()) {
+            throw new AssertionError("The scripted turn '" + question + "' ended with calls unmade: " + calls);
+        }
+        return messages;
+    }
+
+    // A form answered from a scripted turn's answers: the fields it has, each with its answer or what it proposes.
+    private static Map<String, String> scriptedForm(final EvalChat.Form form, final Map<String, String> answers) {
+        final Map<String, String> content = new LinkedHashMap<>();
+        if (form.schema() != null && form.schema().get("properties") instanceof final Map<?, ?> fields) {
+            for (final Map.Entry<?, ?> field : fields.entrySet()) {
+                final String name = String.valueOf(field.getKey());
+                if (answers.containsKey(name)) {
+                    content.put(name, answers.get(name));
+                } else if (field.getValue() instanceof final Map<?, ?> definition
+                           && definition.get("default") != null) {
+                    content.put(name, formValue(definition.get("default")));
+                }
+            }
+        }
+        return content;
+    }
+
+    // A form's value as the chat takes it: a choice of several values as a JSON list of them, else its text.
+    private static String formValue(final Object value) {
+        return value instanceof final List<?> list
+                ? JsonUtil.writeValueAsString(list, false)
+                : String.valueOf(value);
+    }
+
+    // Whether the user declines a form: one with any of the fields a turn's forms_declined names.
+    private static boolean declines(final EvalChat.Form form, final List<String> declined) {
+        return form.schema() != null && form.schema().get("properties") instanceof final Map<?, ?> fields
+               && declined.stream().anyMatch(fields::containsKey);
+    }
+
+    // An argument with its placeholders worked out: <SKILLS /Hunts>, a folder's skills doc's UUID;
+    // <result:regex>, the expression's first group in the latest result that matches it.
+    private Object resolved(final Object value, final List<EvalChat.Call> made) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            map.forEach((key, item) -> out.put(String.valueOf(key), resolved(item, made)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            return list.stream().map(item -> resolved(item, made)).toList();
+        }
+        if (!(value instanceof final String text)) {
+            return value;
+        }
+        final Matcher skills = SKILLS_PLACEHOLDER.matcher(text);
+        if (skills.matches()) {
+            return skillsDocUuid(skills.group(1));
+        }
+        final Matcher result = RESULT_PLACEHOLDER.matcher(text);
+        if (result.matches()) {
+            final Pattern pattern = Pattern.compile(result.group(1));
+            for (final EvalChat.Call call : made.reversed()) {
+                final Matcher found = pattern.matcher(NullSafe.string(call.text()));
+                if (found.find()) {
+                    return found.group(1);
+                }
+            }
+            throw new AssertionError("No result so far matches /" + result.group(1) + "/");
+        }
+        return text;
+    }
+
+    // The UUID of the SKILLS doc in a folder.
+    private String skillsDocUuid(final String folder) {
+        return documentsIn(explorerPath(folder), DocumentationDoc.TYPE, SkillDoc.DOC_NAME).stream()
+                .findFirst()
+                .map(ExplorerNode::getUuid)
+                .orElseThrow(() -> new AssertionError("No " + SkillDoc.DOC_NAME + " doc in " + folder));
+    }
+
+    // The user a skill case chats as: the administrator, or the user it names, with every tool, Use on its data, and
+    // View (never Edit) on its skills docs and their folders.
+    private UserRef skillUser(final Map<String, Object> evalCase,
+                              final QuestionData data,
+                              final List<DocRef> skillsDocs) {
+        final Map<String, Object> spec = EvalCases.map(evalCase.get("user"));
+        if (spec.get("name") == null) {
+            return admin;
+        }
+        // View Data, so the events' Events XML can be read where they have View on its feed.
+        final UserRef user = user(String.valueOf(spec.get("name")), Set.of(AppPermission.VIEW_DATA_PERMISSION));
+        toolPolicy("Eval " + spec.get("name"), AiToolAccess.READ_WRITE, user);
+        asUser(admin, () -> {
+            // View (which holds Use): an analyst sees the indexes they search.
+            for (final DocRef doc : data.docs()) {
+                documentPermissionService.setPermission(doc, user, DocumentPermission.VIEW);
+            }
+            for (final DocRef doc : skillsDocs) {
+                documentPermissionService.setPermission(doc, user, DocumentPermission.VIEW);
+            }
+        });
+        return user;
+    }
+
+    // A skills doc's proposal as it is scored: where it goes, the doc's text before and after, and the proposed
+    // skill as check_skill finds it (each skill of the new text that differs from the text before).
+    private EvalScore.SkillProposal skillProposal(final EvalChat.Proposal proposal) {
+        final UserActionRecord action = proposal.action();
+        final boolean create = UserActions.CREATE_INSTRUCTIONS.equals(action.action());
+        final String folder;
+        final String before;
+        if (create) {
+            folder = action.doc() == null
+                    ? null
+                    : folderOf(action.doc().getUuid()) + "/" + nameOf(action.doc().getUuid());
+            before = "";
+        } else {
+            folder = folderOf(action.doc().getUuid());
+            before = action.codeChange() != null && action.codeChange().baseCode() != null
+                    ? action.codeChange().baseCode()
+                    : documentation(action.doc().getUuid());
+        }
+        final String after = NullSafe.string(action.request());
+        final SkillDoc old = SkillDoc.parse(before);
+        final List<String> checked = new ArrayList<>();
+        for (final SkillDoc.Skill skill : SkillDoc.parse(after).skills()) {
+            final boolean same = old.skill(skill.name()).map(SkillDoc.Skill::text).filter(skill.text()::equals)
+                    .isPresent();
+            if (!same) {
+                checked.add(McpTestClient.text(client.call("check_skill", args("markdown", skill.text()))));
+            }
+        }
+        return new EvalScore.SkillProposal(action.action(), folder, before, after, String.join("\n\n", checked));
+    }
+
+    // An AGENTS doc's proposal as it is scored: where it goes, the doc's text before and after, and what
+    // check_instructions finds in the text after, where it would live.
+    private EvalScore.SkillProposal instructionsProposal(final EvalChat.Proposal proposal) {
+        final UserActionRecord action = proposal.action();
+        final boolean create = UserActions.CREATE_INSTRUCTIONS.equals(action.action());
+        final String folder = create
+                ? folderOf(action.doc().getUuid()) + "/" + nameOf(action.doc().getUuid())
+                : folderOf(action.doc().getUuid());
+        final String before = create
+                ? ""
+                : action.codeChange() != null && action.codeChange().baseCode() != null
+                        ? action.codeChange().baseCode()
+                        : documentation(action.doc().getUuid());
+        final String after = NullSafe.string(action.request());
+        final String checked = McpTestClient.text(client.call("check_instructions", args("folder", folder,
+                "markdown", after)));
+        return new EvalScore.SkillProposal(action.action(), folder, before, after, checked);
+    }
+
+    // A document's name, as the explorer has it.
+    private String nameOf(final String uuid) {
+        return securityContext.asProcessingUserResult(() -> explorerNodeService.getNodeByUuid(uuid)
+                .map(ExplorerNode::getName)
+                .orElseThrow(() -> new AssertionError("No explorer node for " + uuid)));
+    }
+
+    /// A hand-written case's pre-state (`setup: {hand_written: ...}`, [EvalCases#handWritten]): the case's feed and
+    /// its translation as an environment made them by hand, never through the tools ([#handWritten]): in `folder`,
+    /// the `feed`, its `sample` stored, the `xslt` (a test resource next to the e2e tests) in a `pipeline` of that
+    /// name, a child of the translation `template` with any further `properties` (each its `element`, `name` and
+    /// `value`), and the processor filter reading its `processor_filter`'s `stream_type`. Optionally: `description`,
+    /// the user's own text in the XSLT's description; `pre_process`, a test resource XSLT put before the translation
+    /// (`<pre xslt>` in the reference); `shared_with`, another pipeline (`folder`, `feed`, `pipeline`, `sample`)
+    /// naming the same XSLT for its own feed (`<shared raw>`, `<shared pipeline>`).
+    ///
+    /// @param evalCase The case.
+    /// @return What the setup made.
+    HandWritten setUpHandWritten(final Map<String, Object> evalCase) {
+        final Map<String, Object> spec = EvalCases.handWritten(evalCase);
+        final List<PipelineProperty> properties = new ArrayList<>();
+        for (final Map<String, Object> property : EvalCases.maps(spec.get("properties"))) {
+            final Object value = property.get("value");
+            properties.add(PipelineProperty.builder()
+                    .element((String) property.get("element"))
+                    .name((String) property.get("name"))
+                    .value(value instanceof final Boolean flag
+                            ? new PipelinePropertyValue(flag)
+                            : new PipelinePropertyValue(String.valueOf(value)))
+                    .build());
+        }
+        final String streamType = String.valueOf(EvalCases.map(spec.get("processor_filter"))
+                .getOrDefault("stream_type", StreamTypeNames.RAW_EVENTS));
+        final HandWritten made = handWritten(explorerPath((String) spec.get("folder")), (String) spec.get("feed"),
+                textResource((String) spec.get("xslt")), (String) spec.get("pipeline"), (String) spec.get("template"),
+                properties, streamType, (String) spec.get("sample"), spec.get("pre_process") == null);
+        handWrittenValues.clear();
+        // The user's own words in the translation's description.
+        if (spec.get("description") instanceof final String description) {
+            editXslt(made.xslt(), doc -> doc.copy().description(description).build());
+        }
+        // A pre-processor before the translation, its records written as the translation reads them.
+        if (spec.get("pre_process") instanceof final String preProcess) {
+            final String pre = create(XsltDoc.TYPE, spec.get("pipeline") + "-Pre", explorerPath((String) spec.get(
+                    "folder"))).getUuid();
+            editXslt(pre, doc -> doc.copy().data(textResource(preProcess)).build());
+            withPreProcessor(made.pipeline(), pre, made.xslt(), properties);
+            assertThat(stepSample(made.pipeline(), List.of(made.raw())).get("verdict"))
+                    .as("the hand-written pipeline works with its pre-processor").isEqualTo("clean");
+            handWrittenValues.put("<pre xslt>", pre);
+        }
+        // Another pipeline, of another feed, naming the same XSLT.
+        final Map<String, Object> shared = EvalCases.map(spec.get("shared_with"));
+        if (!shared.isEmpty()) {
+            final ExplorerNode folder = folder(explorerPath((String) shared.get("folder")));
+            final String feed = (String) shared.get("feed");
+            create(FeedDoc.TYPE, feed, folder);
+            final long raw = storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), (String) shared.get("sample"))));
+            final List<PipelineProperty> sharedProperties = new ArrayList<>(properties);
+            sharedProperties.add(property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, made.xslt())));
+            final String pipeline = childPipeline(folder, (String) shared.get("pipeline"), templateUuid("translation",
+                    (String) spec.get("template")), sharedProperties);
+            feedFilter(feed, streamType, pipeline);
+            handWrittenValues.put("<shared raw>", raw);
+            handWrittenValues.put("<shared pipeline>", pipeline);
+        }
+        setUpOtherFeeds(spec);
+        // A case's AGENTS docs, each in its folder.
+        for (final Map<String, Object> doc : EvalCases.maps(evalCase.get("agents_docs"))) {
+            documentationDoc(folder(explorerPath((String) doc.get("folder"))), AgentInstructions.DOC_NAME,
+                    (String) doc.get("text"));
+        }
+        return made;
+    }
+
+    /// The other feeds of a hand-written case's source (`other_feeds`, decided by the user 2026-11-25: a build of
+    /// several feeds): each its `feed` in its `folder` (the hand-written feed's where none is given), its `sample`
+    /// stored `age_days` ago (0 where none is given: a dormant feed's is older), and with `readers`, a group of that
+    /// name given View on it alone. The hand-written pipeline's filter reads none of them.
+    ///
+    /// @param spec The hand-written setup's spec.
+    private void setUpOtherFeeds(final Map<String, Object> spec) {
+        for (final Map<String, Object> other : EvalCases.maps(spec.get("other_feeds"))) {
+            final String feed = (String) other.get("feed");
+            final ExplorerNode node = folder(explorerPath((String) other.getOrDefault("folder", spec.get("folder"))));
+            final ExplorerNode created = create(FeedDoc.TYPE, feed, node);
+            final long age = Duration.ofDays(((Number) other.getOrDefault("age_days", 0)).longValue()).toMillis();
+            storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), (String) other.get("sample"))),
+                    System.currentTimeMillis() - age);
+            if (other.get("readers") instanceof final String group) {
+                final UserRef readers = user(group, Set.of(AppPermission.USE_MCP_TOOLS));
+                asUser(admin, () -> {
+                    documentPermissionService.setPermission(created.getDocRef(), readers, DocumentPermission.VIEW);
+                    return null;
+                });
+            }
+        }
+    }
+
+    /// A hand-written case run with its reference solution: its setup ([#setUpHandWritten]), then the reference's
+    /// `calls` made in turn as an agent following the build's `next` would, each agreed to (`answer`: the choice
+    /// picked in its form; `confirm: true`: the catalogue confirmed as the user does in its form); an argument's
+    /// `<original>` is the hand-written pipeline's UUID, `<raw>` the feed's raw stream, `<copy>` and `<copy xslt>`
+    /// the copy's pipeline and XSLT once `copy_pipeline` made them. Scored as an agent's build is
+    /// ([#scoreHandWritten]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build's name.
+    void runHandWrittenReference(final Map<String, Object> evalCase, final EvalScore score, final String build) {
+        final HandWritten original = setUpHandWritten(evalCase);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("<original>", original.pipeline());
+        values.put("<raw>", original.raw());
+        values.putAll(handWrittenValues);
+        final List<String> made = new ArrayList<>();
+        Map<String, Object> listing = null;
+        Map<String, Object> compared = null;
+        Map<String, Object> indexed = null;
+        for (final Map<String, Object> call : EvalCases.maps(EvalCases.map(evalCase.get("reference"))
+                .get("calls"))) {
+            final String tool = (String) call.get("tool");
+            final Map<String, Object> arguments = (Map<String, Object>) substituted(call.get("arguments"), values);
+            final Map<String, Object> result;
+            if (call.get("answer") instanceof final String answer) {
+                client.answeringWith(choosing(answer));
+            }
+            try {
+                result = Boolean.TRUE.equals(call.get("confirm"))
+                        ? CatalogueSteps.confirmedCatalogue(client, build)
+                        : agreed(tool, arguments);
+            } finally {
+                client.answeringWith(McpTestClient::agree);
+            }
+            dump(tool, result);
+            made.add(tool);
+            if ("copy_pipeline".equals(tool)) {
+                values.put("<copy>", uuidOf(result));
+                values.put("<copy xslt>", copiedXslt(result));
+            }
+            if (CATALOGUE.equals(tool) && result.get("origin") != null) {
+                listing = result;
+            }
+            if ("compare_feeds".equals(tool) && result.get("differences") != null) {
+                compared = result;
+            }
+            if ("create_index_doc".equals(tool) && result.get("feeds") != null) {
+                indexed = result;
+            }
+        }
+        scoreHandWritten(evalCase, score, build, original, (String) values.get("<copy>"), made, listing);
+        scoreSeveralFeeds(evalCase, score, build, (String) values.get("<copy>"), compared, indexed);
+    }
+
+    /// Scores a hand-written case's build from Stroom and the calls made, whoever made them
+    /// ([EvalScore#scoreHandWritten]): the route (`expected.route`: `calls_in_order`, a subsequence of the calls;
+    /// `forbidden_calls`, none of them); the copy's Events for each of the feed's records, stepped
+    /// (`records_in_sample` of them), scored as a build's are ([EvalScore#scoreEvents]) and, with
+    /// `same_as_setup_except`, each record's Events the original's with those paths taken out; the catalogue
+    /// (`expected.catalogue`, [EvalScore#scoreCatalogue], and its `origin`: the start of the catalogue listing's
+    /// origin, e.g. `4 event types from 'EVAL-97-Events'`); and the promotion (`expected.promoted`: the copy named
+    /// `pipeline`, and with `original_unchanged`, the original's XSLT as the setup wrote it). A case described in
+    /// place (`expected.in_place`) has no copy: its XSLT and the source notes beside its pipeline are scored
+    /// ([EvalScore#scoreInPlace]), and that catalogue as `expected.catalogue` says.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build.
+    /// @param original What the setup made.
+    /// @param copy     The copy's pipeline UUID (the last `copy_pipeline` call's), or null if none was made.
+    /// @param made     The tools called, in order.
+    /// @param listing  The last `catalogue_event_types` answer that gave the catalogue's origin, or null.
+    void scoreHandWritten(final Map<String, Object> evalCase,
+                          final EvalScore score,
+                          final String build,
+                          final HandWritten original,
+                          final String copy,
+                          final List<String> made,
+                          final Map<String, Object> listing) {
+        final Map<String, Object> expected = EvalCases.map(evalCase.get("expected"));
+        final Map<String, Object> spec = EvalCases.handWritten(evalCase);
+        final String originalXslt = textResource((String) spec.get("xslt"));
+        if (expected.get("in_place") instanceof final Map<?, ?> inPlace) {
+            // Described in place: no copy; its XSLT, the notes beside the pipeline and their catalogue scored.
+            score.scoreHandWritten(evalCase, made, null, null, true);
+            final XsltDoc xslt = readXslt(original.xslt());
+            final String pre = (String) handWrittenValues.get("<pre xslt>");
+            final DocRef notes = KeptMapping.readSourceNotes(xslt.getDescription()).orElse(null);
+            final String pipelineFolder = folderOf(original.pipeline());
+            final Map<String, Object> beside = catalogueNear(pipelineFolder);
+            score.scoreInPlace((Map<String, Object>) inPlace, new EvalScore.InPlace(
+                    xslt.getData().equals(originalXslt),
+                    KeptMapping.readMapping(xslt.getDescription()).isPresent(),
+                    xslt.getDescription(),
+                    pre == null || KeptMapping.readMapping(readXslt(pre).getDescription()).isEmpty(),
+                    notes != null && pipelineFolder.equals(folderOf(notes.getUuid())),
+                    beside));
+            if (beside != null) {
+                score.scoreCatalogue(evalCase, beside, null);
+            }
+            // The pipeline described stands as it was: its Events, record by record, scored as a build's are.
+            final List<String> outputs = recordOutputs(expected, original.pipeline(), original.raw());
+            score.scoreEvents(evalCase, outputs, validity(outputs), null);
+            score.indexed(true);
+            return;
+        }
+        score.scoreHandWritten(evalCase, made, listing == null
+                ? null
+                : String.valueOf(listing.get("origin")), copy == null
+                ? null
+                : nameOf(copy), readXslt(original.xslt()).getData().equals(originalXslt));
+        if (copy == null) {
+            return;
+        }
+        final int records = ((Number) expected.getOrDefault("records_in_sample", 1)).intValue();
+        final List<String> except = EvalCases.strings(expected.get("same_as_setup_except"));
+        final List<String> outputs = new ArrayList<>();
+        final List<Boolean> validity = new ArrayList<>();
+        final List<Integer> differing = new ArrayList<>();
+        for (int record = 0; record < records; record++) {
+            final String output = translationOutput(copy, original.raw(), record);
+            outputs.add(output);
+            final Map<String, Object> checked = json("check_events", args("events_xml", output));
+            validity.add(checked.get("schema") instanceof final Map<?, ?> schema
+                         && Boolean.TRUE.equals(schema.get("valid")));
+            if (expected.containsKey("same_as_setup_except")
+                && !eventsWithout(output, except).equals(eventsOf(original.pipeline(), original.raw(),
+                    List.of(record)))) {
+                differing.add(record);
+            }
+        }
+        score.scoreEvents(evalCase, outputs, validity, null);
+        score.indexed(true);
+        if (expected.containsKey("same_as_setup_except")) {
+            score.sameAsSetup(except, differing);
+        }
+        // The build's source notes, or once promoted, those promotion wrote back beside the copy.
+        Map<String, Object> catalogue;
+        try {
+            catalogue = catalogueOf(build);
+        } catch (final AssertionError e) {
+            catalogue = catalogueNear(folderOf(copy));
+        }
+        score.scoreCatalogue(evalCase, catalogue, null);
+    }
+
+    /// A CEF forwarder case's pre-state (`setup: {forwarding: ...}`, [EvalCases#forwarding]), as a site made it by
+    /// hand: in `folder`, the Events `feed` holding the `events` (each an `<Event>`, one Events stream); in
+    /// `template_folder`, a KafkaConfig, the `shared_xslt` (a test resource next to the e2e tests: the XSLT turning
+    /// the flattener's output into Kafka records, its topic set there) and the forwarding template `template` of two
+    /// stages ([#forwardingTemplate]: the open slot `flattenFilter`, the shared stage `kafkaOutputFilter`).
+    ///
+    /// @param evalCase The case.
+    /// @return What the setup made.
+    Forwarding setUpForwarding(final Map<String, Object> evalCase) {
+        final Map<String, Object> spec = EvalCases.forwarding(evalCase);
+        final ExplorerNode folder = folder(explorerPath((String) spec.get("folder")));
+        final String feed = (String) spec.get("feed");
+        create(FeedDoc.TYPE, feed, folder);
+        final long events = storeEvents(feed, EvalCases.strings(spec.get("events")));
+        final ExplorerNode templates = folder(explorerPath((String) spec.get("template_folder")));
+        final DocRef kafka = create(KafkaConfigDoc.TYPE, spec.get("template") + " Kafka", templates).getDocRef();
+        final String code = textResource((String) spec.get("shared_xslt"));
+        final DocRef shared = create(XsltDoc.TYPE, spec.get("template") + " output", templates).getDocRef();
+        editXslt(shared.getUuid(), doc -> doc.copy().data(code).build());
+        final String template = forwardingTemplate(templates, (String) spec.get("template"), kafka, shared);
+        return new Forwarding(events, template, shared.getUuid(), code);
+    }
+
+    /// A CEF forwarder case run with its reference solution: its setup ([#setUpForwarding]), then the reference's
+    /// `calls` made in turn, each agreed to; an argument's `<events>` is the feed's Events stream, `<template>` the
+    /// forwarding template's UUID, `<xslt>` the XSLT the last draft_cef_mapping saved, `<cef pipeline>` the pipeline
+    /// the last create_pipeline made. Scored as an agent's build is ([#scoreForwarding]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build's name.
+    void runForwardingReference(final Map<String, Object> evalCase, final EvalScore score, final String build) {
+        final Forwarding setup = setUpForwarding(evalCase);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("<events>", setup.events());
+        values.put("<template>", setup.template());
+        final List<String> made = new ArrayList<>();
+        for (final Map<String, Object> call : EvalCases.maps(EvalCases.map(evalCase.get("reference"))
+                .get("calls"))) {
+            final String tool = (String) call.get("tool");
+            final Map<String, Object> result = agreed(tool, (Map<String, Object>) substituted(call.get("arguments"),
+                    values));
+            dump(tool, result);
+            made.add(tool);
+            if ("draft_cef_mapping".equals(tool) && result.get("saved") instanceof final Map<?, ?> saved) {
+                values.put("<xslt>", saved.get("uuid"));
+            }
+            if ("create_pipeline".equals(tool)) {
+                values.put("<cef pipeline>", uuidOf(result));
+            }
+        }
+        scoreForwarding(evalCase, score, build, setup, made);
+    }
+
+    /// Scores a CEF forwarder case's build from Stroom and the calls made, whoever made them
+    /// ([EvalScore#scoreForwarder]): the build's pipeline inheriting the template, what it sets of its own, its
+    /// flattener's XSLT and kept plan, the template's shared XSLT as the setup wrote it, the pipeline stepped over
+    /// the feed's Events, and the shared stage's output for each of `expected.forwarder.lines` records.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build.
+    /// @param setup    What the setup made.
+    /// @param made     The tools called, in order.
+    void scoreForwarding(final Map<String, Object> evalCase,
+                         final EvalScore score,
+                         final String build,
+                         final Forwarding setup,
+                         final List<String> made) {
+        final Map<String, Object> wanted = EvalCases.map(EvalCases.map(evalCase.get("expected")).get("forwarder"));
+        final String flattener = (String) wanted.getOrDefault("flattener", "flattenFilter");
+        final String stage = (String) wanted.getOrDefault("stage", "kafkaOutputFilter");
+        final Optional<PipelineDoc> child = pipelinesIn("System/MCP Workspace/" + build).stream()
+                .filter(doc -> doc.getParentPipeline() != null
+                               && setup.template().equals(doc.getParentPipeline().getUuid()))
+                .findFirst();
+        final List<String> own = new ArrayList<>();
+        String code = null;
+        String keptOutput = null;
+        String verdict = null;
+        final List<String> outputs = new ArrayList<>();
+        if (child.isPresent()) {
+            for (final PipelineProperty property : child.get().getPipelineData().getAddedProperties()) {
+                own.add(property.getElement() + "." + property.getName());
+                final DocRef entity = property.getValue() == null
+                        ? null
+                        : property.getValue().getEntity();
+                if (flattener.equals(property.getElement()) && entity != null) {
+                    final XsltDoc xslt = readXslt(entity.getUuid());
+                    code = xslt.getData();
+                    keptOutput = KeptMapping.readMapping(xslt.getDescription())
+                            .map(kept -> String.valueOf(kept.payload().get("output")))
+                            .orElse(null);
+                }
+            }
+            verdict = String.valueOf(json("step_sample", args("pipeline_uuid", child.get().getUuid(),
+                    "stream_ids", List.of(setup.events()))).get("verdict"));
+            final int lines = ((Number) wanted.getOrDefault("lines", 1)).intValue();
+            for (int record = 0; record < lines; record++) {
+                final Map<String, Object> step = json("step_pipeline", args("pipeline_uuid", child.get().getUuid(),
+                        "stream_id", setup.events(), "record", record, "show", List.of(stage)));
+                outputs.add(String.valueOf(map(map(step, "elements"), stage).get("output")));
+            }
+        }
+        score.scoreForwarder(evalCase, made, new EvalScore.Forwarder(child.isPresent(), own, keptOutput, code,
+                readXslt(setup.shared()).getData().equals(setup.sharedCode()), verdict, outputs));
+    }
+
+    /// Scores what a build of several feeds kept in its record and promoted ([EvalScore#scoreSeveralFeeds]).
+    ///
+    /// @param evalCase    The case.
+    /// @param score       Its score.
+    /// @param build       The build.
+    /// @param copy        The copy's pipeline UUID, or null if none was made.
+    /// @param compared compare_feeds' last answer, or null.
+    /// @param indexed  create_index_doc's last answer for a build of several feeds, or null.
+    void scoreSeveralFeeds(final Map<String, Object> evalCase,
+                           final EvalScore score,
+                           final String build,
+                           final String copy,
+                           final Map<String, Object> compared,
+                           final Map<String, Object> indexed) {
+        Map<String, Object> kept;
+        try {
+            kept = asUser(admin, () -> injector.getInstance(BuildRecords.class).feedComparison(build));
+        } catch (final RuntimeException e) {
+            kept = Map.of();
+        }
+        if (kept.isEmpty()) {
+            // Promoted whole, the build's folder (and its record) is gone: what the tools' replies said they kept.
+            kept = keptFromReplies(compared, indexed);
+        }
+        final List<String> feeds = copy == null
+                ? null
+                : asUser(admin, () -> processorFilterService.find(new DocRef(PipelineDoc.TYPE, copy)).getValues()
+                        .stream()
+                        .filter(filter -> !filter.isDeleted())
+                        .flatMap(filter -> feedTerms(filter.getQueryData().getExpression()).stream())
+                        .distinct()
+                        .toList());
+        score.scoreSeveralFeeds(evalCase, kept, compared, feeds);
+    }
+
+    // What compare_feeds and create_index_doc said they kept in the build's record.
+    private static Map<String, Object> keptFromReplies(final Map<String, Object> compared,
+                                                       final Map<String, Object> indexed) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        if (compared != null && compared.get("kept") instanceof final Map<?, ?> kept) {
+            kept.forEach((key, value) -> out.put(String.valueOf(key), value));
+        }
+        if (indexed != null && indexed.get("feeds") instanceof final Map<?, ?> feeds
+            && feeds.get("index_split") != null) {
+            out.put("index", feeds.get("index_split"));
+        }
+        return out;
+    }
+
+    // The feeds a filter's Feed terms name, at any depth.
+    private static List<String> feedTerms(final ExpressionOperator expression) {
+        final List<String> out = new ArrayList<>();
+        for (final ExpressionItem child : NullSafe.list(expression.getChildren())) {
+            if (child instanceof final ExpressionOperator operator) {
+                out.addAll(feedTerms(operator));
+            } else if (child instanceof final ExpressionTerm term && MetaFields.FIELD_FEED.equals(term.getField())) {
+                out.add(term.getDocRef() != null
+                        ? term.getDocRef().getName()
+                        : term.getValue());
+            }
+        }
+        return out;
+    }
+
+    // Each of the sample's records' Events through a pipeline (`expected.records_in_sample` of them).
+    private List<String> recordOutputs(final Map<String, Object> expected, final String pipeline, final long raw) {
+        final int records = ((Number) expected.getOrDefault("records_in_sample", 1)).intValue();
+        final List<String> outputs = new ArrayList<>();
+        for (int record = 0; record < records; record++) {
+            outputs.add(translationOutput(pipeline, raw, record));
+        }
+        return outputs;
+    }
+
+    // Whether each output is valid against its schema, as check_events says.
+    private List<Boolean> validity(final List<String> outputs) {
+        final List<Boolean> validity = new ArrayList<>();
+        for (final String output : outputs) {
+            final Map<String, Object> checked = json("check_events", args("events_xml", output));
+            validity.add(checked.get("schema") instanceof final Map<?, ?> schema
+                         && Boolean.TRUE.equals(schema.get("valid")));
+        }
+        return validity;
+    }
+
+    // An argument with the hand-written case's values put in for their placeholders.
+    private static Object substituted(final Object value, final Map<String, Object> values) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            map.forEach((key, item) -> out.put(String.valueOf(key), substituted(item, values)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            return list.stream().map(item -> substituted(item, values)).toList();
+        }
+        if (value instanceof final String text && values.containsKey(text)) {
+            return values.get(text);
+        }
+        return value;
+    }
+
+    // The copy's XSLT, from copy_pipeline's answer.
+    private static String copiedXslt(final Map<String, Object> copied) {
+        return ((List<Map<String, Object>>) copied.getOrDefault("copied_documents", List.of())).stream()
+                .filter(doc -> "XSLT".equals(doc.get("type")))
+                .map(doc -> (String) doc.get("uuid"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("copy_pipeline copied no XSLT: " + copied));
+    }
+
+    // One record's Events, canonical, each with the paths taken out (and any element they leave empty).
+    private static List<String> eventsWithout(final String output, final List<String> paths) {
+        final List<String> out = new ArrayList<>();
+        for (final Element event : children(parse(output).getDocumentElement(), "Event")) {
+            for (final String path : paths) {
+                at(event, path).ifPresent(found -> {
+                    Element current = found;
+                    while (current != event && current.getParentNode() instanceof final Element parent) {
+                        parent.removeChild(current);
+                        if (hasElements(parent) || !parent.getTextContent().isBlank()) {
+                            break;
+                        }
+                        current = parent;
+                    }
+                });
+            }
+            out.add(canonical(event));
+        }
+        return out;
+    }
+
+    private static boolean hasElements(final Element element) {
+        for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+            if (element.getChildNodes().item(i) instanceof Element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// The setup group's pipeline, XSLT and index, as they are now: each as text, to compare with what the setup
+    /// left.
+    ///
+    /// @param built What the setup's build made.
+    /// @return Each document's content, by name.
+    Map<String, String> snapshot(final Built built) {
+        final Map<String, String> snapshot = new LinkedHashMap<>();
+        snapshot.put("pipeline", jsonOf(List.of(added(built.pipeline(), "elements"), added(built.pipeline(),
+                "links"), added(built.pipeline(), "properties"))));
+        snapshot.put("XSLT", readXslt(built.xslt()).getData());
+        snapshot.put("index", String.join(",", luceneFields(new DocRef(LuceneIndexDoc.TYPE,
+                built.indexed().index()))));
+        return snapshot;
+    }
+
+    /// The registry beside a feed promoted to [#FEEDS].
+    ///
+    /// @param feed The feed.
+    /// @return The registry, as [SourceTypeRegistry#read] reads it, or null if there is none.
+    Map<String, Object> registryBesideFeed(final String feed) {
+        final List<ExplorerNode> found = documentsIn("System/" + FEEDS, "Documentation",
+                feed + SourceTypeRegistry.SUFFIX);
+        return found.isEmpty()
+                ? null
+                : SourceTypeRegistry.read(documentation(found.getFirst().getUuid()));
+    }
+
+    /// The folder a source type group's pipeline is in, as the registry's rows name it: where promotion put it.
+    ///
+    /// @param registry The registry, as [SourceTypeRegistry#read] reads it, or null.
+    /// @param group    The group's name (any case), or null.
+    /// @return The explorer path of the pipeline's folder, or null if no row of the group names a pipeline.
+    String groupPipelineFolder(final Map<String, Object> registry, final String group) {
+        if (registry == null || group == null) {
+            return null;
+        }
+        return ((List<Map<String, Object>>) registry.getOrDefault("rows", List.of())).stream()
+                .filter(row -> group.equalsIgnoreCase(String.valueOf(row.get("group"))))
+                .map(row -> row.get("pipeline") instanceof final Map<?, ?> pipeline
+                        ? (String) pipeline.get("uuid")
+                        : null)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .map(this::folderOf)
+                .orElse(null);
+    }
+
+    /// The name of a case's source type group: the one it expects (`expected.source_types.group.name`), else its
+    /// reference's.
+    ///
+    /// @param evalCase A case.
+    /// @return The group's name, or null for a case with none.
+    static String groupOf(final Map<String, Object> evalCase) {
+        final Map<String, Object> expected = evalCase.get("expected") instanceof final Map<?, ?> given
+                ? (Map<String, Object>) given
+                : Map.of();
+        if (expected.get("source_types") instanceof final Map<?, ?> sourceTypes
+            && sourceTypes.get("group") instanceof final Map<?, ?> group
+            && group.get("name") instanceof final String name) {
+            return name;
+        }
+        return evalCase.get("reference") instanceof final Map<?, ?> reference
+               && reference.get("source_types") instanceof final Map<?, ?> sourceTypes
+               && sourceTypes.get("group") instanceof final String name
+                ? name
+                : null;
+    }
+
+    /// The options a form's fields offer, as the user sees them: each field's choices (`enum`, or titled `oneOf` or
+    /// `anyOf` choices, or its items' for a multi-choice field) and `examples`.
+    ///
+    /// @param schema The form's requested schema.
+    /// @return The options, in the fields' order.
+    static List<String> formOptions(final Map<String, Object> schema) {
+        final List<String> options = new ArrayList<>();
+        if (schema != null && schema.get("properties") instanceof final Map<?, ?> fields) {
+            for (final Object field : fields.values()) {
+                if (field instanceof final Map<?, ?> definition) {
+                    options.addAll(McpTestClient.options(definition));
+                    for (final String key : List.of("enum", "oneOf", "anyOf", "examples")) {
+                        if (definition.get(key) instanceof final List<?> list) {
+                            for (final Object option : list) {
+                                options.add(String.valueOf(option instanceof final Map<?, ?> titled
+                                        ? titled.get("const")
+                                        : option));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return options;
+    }
+
+    /// @param evalCase A case.
+    /// @return Whether its build is promoted at the end (`promote: true`).
+    static boolean promotes(final Map<String, Object> evalCase) {
+        return Boolean.TRUE.equals(evalCase.get("promote"));
+    }
+
+    /// The forms the user answered in the case's own build (since the setup, for a case with one).
+    ///
+    /// @return Each form's `message` and the `content` it was answered with.
+    List<Map<String, Object>> formsAnswered() {
+        return List.copyOf(formsAnswered);
+    }
+
+    /// Every event of a case's sample, up to [#READ_EVENTS] a stream, a larger stream's in blocks spread over it,
+    /// each validated, and scored.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param streams  The build's Events streams.
+    void checkOutput(final Map<String, Object> evalCase, final EvalScore score, final List<Long> streams) {
+        final List<String> records = new ArrayList<>();
+        final List<Boolean> validity = new ArrayList<>();
+        int totals = 0;
+        boolean cut = false;
+        for (final long stream : streams) {
+            final Read first = readEvents(stream, 0, READ_EVENTS);
+            List<String> got = first.records();
+            final int total = first.total() != null
+                    ? first.total()
+                    : got.size();
+            if (total > READ_EVENTS) {
+                final int blocks = READ_EVENTS / BLOCK;
+                got = new ArrayList<>(got.subList(0, Math.min(BLOCK, got.size())));
+                for (int i = 1; i < blocks; i++) {
+                    // Rounded half to even.
+                    final int from = (int) Math.rint(i * (total - BLOCK) / (double) (blocks - 1));
+                    got.addAll(readEvents(stream, from, BLOCK).records());
+                }
+            }
+            totals += total;
+            cut = cut || total > got.size();
+            for (final String record : got) {
+                records.add(record);
+                final Map<String, Object> checked = json("check_events", args("events_xml", record));
+                validity.add(checked.get("schema") instanceof final Map<?, ?> schema
+                             && Boolean.TRUE.equals(schema.get("valid")));
+            }
+        }
+        score.scoreEvents(evalCase, records, validity, cut
+                ? totals
+                : null);
+    }
+
+    /// @param text Some text.
+    /// @return Its first 1,500 characters.
+    static String firstLines(final String text) {
+        final String value = String.valueOf(text);
+        return value.length() > 1_500
+                ? value.substring(0, 1_500) + "…"
+                : value;
+    }
+
+    /// Writes a case's result as JSON.
+    ///
+    /// @param dir    Where.
+    /// @param id     The case.
+    /// @param result Its result.
+    static void write(final Path dir, final String id, final Map<String, Object> result) {
+        try {
+            Files.createDirectories(dir);
+            Files.writeString(dir.resolve(id + ".json"), JsonUtil.writeValueAsString(new LinkedHashMap<>(result),
+                    true));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    // A case's reference build: on a feed made in the build, its data uploaded; or on a feed promoted already that the
+    // build starts on, its data there already (stored, the setup's own build; or the setup's, for a case on top).
+    private Built build(final Map<String, Object> evalCase,
+                        final EvalScore score,
+                        final String build,
+                        final String feed,
+                        final Setup setup,
+                        final List<Long> stored) {
+        final Map<String, Object> reference = (Map<String, Object>) evalCase.get("reference");
+        final List<String> samples = EvalCases.samples(evalCase);
+        // The reference solutions leave a user's Id whole, so the user keeps the Ids as they are when the
+        // translation asks; seen: case 30's alice@example.org split to alice.
+        answering(choosing("Keep as is"));
+        // The server's own Data Splitter (build_data_splitter, inferred or from a spec) when the case gives no
+        // converter of its own: saved in the build, where create_pipeline finds it for the parser.
+        final boolean byServer = reference.get("splitter") != null && reference.get("converter") == null;
+        Object splitter = reference.get("splitter") != null && !byServer
+                ? reference.get("splitter")
+                : null;
+        final List<Long> raws = new ArrayList<>();
+        if (setup != null || stored != null) {
+            json("start_build", args("build", build, "feeds", List.of(feed)));
+            if (setup == null) {
+                raws.addAll(stored);
+            } else {
+                raws.addAll(setup.later().isEmpty()
+                        ? setup.built().raws()
+                        : setup.later());
+            }
+        } else {
+            agreed("create_feed", args("build", build, "name", feed, "encoding",
+                    reference.getOrDefault("feed_encoding", "UTF-8")));
+            raws.addAll(uploadData(evalCase, feed, samples));
+        }
+        if (byServer) {
+            final Object spec = "infer".equals(reference.get("splitter"))
+                    ? null
+                    : reference.get("splitter");
+            final Map<String, Object> splitterMade = json("build_data_splitter", args("stream_ids", raws,
+                    "spec", spec, "save_as", feed, "build", build));
+            if (number(splitterMade.getOrDefault("unmatched_count", 0)) != 0 || splitterMade.get("saved") == null) {
+                throw new AssertionError("the server's Data Splitter: " + splitterMade.get("unmatched_count")
+                                         + " unmatched, saved " + (splitterMade.get("saved") != null) + ": "
+                                         + firstLines(String.valueOf(splitterMade.getOrDefault("hint",
+                        splitterMade.get("notes")))));
+            }
+            splitter = splitterMade.get("spec");
+        }
+        // An aggregated feed's: the registry and the build's one source type group, whose XSLT and pipeline are the
+        // group's.
+        final Map<String, Object> sourceTypes = reference.get("source_types") instanceof final Map<?, ?> given
+                ? (Map<String, Object>) given
+                : null;
+        final String group = sourceTypes != null
+                ? (String) sourceTypes.get("group")
+                : null;
+        // The setup's group, joined: changed in a new version of its pipeline.
+        final boolean joins = setup != null && group != null && group.equalsIgnoreCase(setup.built().group());
+        if (sourceTypes != null) {
+            recordSourceTypes(build, feed, sourceTypes);
+        } else if (setup != null || stored != null) {
+            // A build on a promoted feed processes only what its survey has read: surveyed, as an agent would.
+            json("survey_feed", args("feed", feed, "build", build));
+        } else if (CATALOGUES) {
+            // The build's own samples, surveyed before they are catalogued, as the plan has it; a survey refused for
+            // nothing readable (damaged lines) is kept in the build's record, and cataloguing goes on without it.
+            McpTestClient.text(client.call("survey_feed", args("feed", feed, "build", build, "stream_ids", raws)));
+        }
+        final String converter = (String) reference.get("converter");
+        final boolean dataSplitter = converter != null && "DATA_SPLITTER".equals(reference.getOrDefault(
+                "converter_type", "DATA_SPLITTER"));
+        // The case's own Data Splitter saved in the build before its records are catalogued, as an agent saves it
+        // (catalogue_event_types reads the records with the build's saved Data Splitter: cases 06, 07 and 09 name
+        // fields only theirs gives); another type of converter is saved with the pipeline's.
+        final String splitterUuid = dataSplitter
+                ? saveConverter(build, feed, reference, samples)
+                : null;
+        if (reference.get("long_values") != null) {
+            // The user's choice for string values longer than the JSON parser keeps (cut or whole), recorded for the
+            // build as an agent would once the user said it (user test chat 182: "Cut them"): draft with long_values.
+            // Before the catalogue, which reads the records as processing will cut them (case 112's drop rule on a
+            // key of the held event holds on its long records only once they are kept whole).
+            final Map<String, Object> drafted = json("draft_translation_mapping", args("build", build, "stream_ids",
+                    raws, "splitter", splitter, "long_values", reference.get("long_values")));
+            if (drafted.get("long_values") == null) {
+                throw new AssertionError("long values not recorded: " + firstLines(String.valueOf(
+                        drafted.getOrDefault("error", drafted.get("notes")))));
+            }
+        }
+        if (CATALOGUES) {
+            confirmCatalogue(evalCase, score, build, raws, (Map<String, Object>) reference.get("mapping"));
+        }
+        final Map<String, Object> translation = args("mapping", reference.get("mapping"), "stream_ids", raws,
+                "splitter", splitter, "build", build);
+        if (group != null) {
+            // A later build's group and source types are its scope's (with those an existing group has already).
+            translation.putAll(args("group", group, "source_types", setup == null
+                    ? sourceTypes.get("source_types")
+                    : null, "feeds", List.of(feed)));
+        } else {
+            translation.put("name", feed + "-Events");
+        }
+        final Map<String, Object> generated = agreed("build_translation_xslt", translation);
+        if (!Boolean.TRUE.equals(generated.get("ok"))) {
+            throw new AssertionError("mapping problems: " + generated.get("problems"));
+        }
+        if (generated.get("sample_check") instanceof final Map<?, ?> check && check.get("warnings") != null
+            && !((List<?>) check.get("warnings")).isEmpty()) {
+            score.note("sample check: " + check.get("warnings"));
+        }
+        final String template = templateUuid("translation", (String) evalCase.get("template"));
+        final List<Map<String, Object>> references = new ArrayList<>();
+        if (reference.get("reference_data") instanceof final Map<?, ?> referenceData) {
+            references.add(Map.of("feed", referenceData(build, feed, (Map<String, Object>) referenceData, score)));
+        }
+        final List<Map<String, Object>> properties = new ArrayList<>();
+        final String replaceParser = (String) reference.get("replace_parser");
+        if (converter != null) {
+            final String converterUuid = splitterUuid != null
+                    ? splitterUuid
+                    : saveConverter(build, feed, reference, samples);
+            final String parser = replaceParser != null
+                    ? elementId(replaceParser)
+                    : "dsParser";
+            properties.add(docProperty(parser, "textConverter", converterUuid, "TextConverter"));
+        }
+        if (group == null) {
+            // A group's pipeline has its XSLT set by create_pipeline group=.
+            properties.add(docProperty("translationFilter", "xslt", uuidOf(map(generated, "saved")), "XSLT"));
+        }
+        if ("Event Data (JSON)".equals(evalCase.get("template"))) {
+            // JSON lines need the parser's root map round the top-level objects; an array reads better without it.
+            final boolean lines = "lines".equals(((Map<String, Object>) reference.get("mapping")).get("json_layout"));
+            properties.add(valueProperty("jsonParser", "addRootObject", lines));
+        }
+        final String pipeline;
+        final String pipelineName;
+        if (joins) {
+            // The promoted group's pipeline, run in the build as its new version, under the names proposed.
+            final Map<String, Object> copied = agreed("copy_pipeline", args("build", build, "source_uuid",
+                    setup.built().pipeline(), "new_name", setup.built().pipelineName()));
+            pipeline = uuidOf(copied);
+            pipelineName = (String) copied.get("name");
+        } else {
+            // A group's pipeline is named for its group.
+            final Map<String, Object> made = agreed("create_pipeline", args("build", build, "name", group == null
+                            ? feed + "-Events"
+                            : null, "group", group, "template_uuid", template, "set_properties", properties,
+                    "replace_parser", replaceParser, "references", references.isEmpty()
+                            ? null
+                            : references));
+            pipeline = uuidOf(made);
+            pipelineName = (String) made.get("name");
+        }
+        final Map<String, Object> stepped = stepSample(pipeline, raws);
+        if ("blocking".equals(stepped.get("verdict"))) {
+            score.problem("stepping blocking: " + firstLines(String.valueOf(stepped.get("groups"))));
+        }
+        final Map<String, Object> gate = process(pipeline, raws);
+        final List<Long> events = new ArrayList<>();
+        for (final Map<String, Object> stream : list(gate, "streams")) {
+            ((List<?>) stream.getOrDefault("events", List.of())).forEach(id -> events.add(number(id)));
+        }
+        checkOutput(evalCase, score, events);
+        // The documentation: its Field mapping section is generated from the kept mapping over the sample streams.
+        final Map<String, Object> written = agreed("write_documentation", args("build", build,
+                "pipeline_uuid", pipeline, "markdown", DOC_SKELETON, "change", "Created", "stream_ids", raws));
+        final String section = String.valueOf(written.getOrDefault("field_mapping", ""));
+        if (!section.contains("### Event types") || section.contains("not written by a rule")) {
+            score.problem("documentation: field mapping section incomplete ("
+                          + section.substring(0, Math.min(120, section.length())) + ")");
+        }
+        final List<String> checks = strings(json("build_status", args("build", build)), "before_promotion");
+        if (checks.stream().anyMatch(check -> check.contains("Field mapping") || check.contains("differs"))) {
+            score.problem("documentation: build checks report a stale field mapping or a hand-edited XSLT: "
+                          + checks);
+        }
+        final Map<String, Object> saved = group != null
+                ? map(generated, "group")
+                : Map.of();
+        final Indexed indexed = score.stage1()
+                ? index(build, feed, group, pipeline, events, score, setup)
+                : null;
+        if (promotes(evalCase)) {
+            // A feed made in the build goes with it, beside a setup's.
+            final Map<String, Object> destinations = new LinkedHashMap<>(DESTINATIONS);
+            if (setup == null && stored == null) {
+                destinations.put("Feed", FEEDS);
+            }
+            promote(build, destinations);
+        }
+        // The group's XSLT, or the build's own for a build with no group.
+        final String xslt = saved.get("xslt") != null
+                ? uuidOf(map(saved, "xslt"))
+                : group == null && generated.get("saved") != null
+                        ? uuidOf(map(generated, "saved"))
+                        : null;
+        score.scoreRuleNames(evalCase, ruleNames(xslt));
+        final Built built = new Built(List.copyOf(raws), group, pipeline, pipelineName, xslt, indexed);
+        if (sourceTypes != null) {
+            final Map<String, Object> registry = promotes(evalCase)
+                    ? registryBesideFeed(feed)
+                    : saved.get("registry") != null
+                            ? SourceTypeRegistry.read(documentation(uuidOf(map(saved, "registry"))))
+                            : null;
+            scoreSourceTypes(evalCase, score, registry, gate, group, raws);
+            if (promotes(evalCase)) {
+                score.scoreLayout(evalCase, groupPipelineFolder(registry, group));
+            }
+            if (setup != null) {
+                final String indexUsed = indexed != null
+                        ? indexed.index()
+                        : null;
+                score.scoreLaterBuild(evalCase, registry, setup.before(), snapshot(setup.built()), build, indexUsed);
+            }
+        }
+        score.scoreForms(evalCase, formsAnswered());
+        return built;
+    }
+
+    /// The names the mapping an XSLT keeps (in its description) gives its `events` rules, for
+    /// [EvalScore#scoreRuleNames].
+    ///
+    /// @param xslt The XSLT's UUID, or null.
+    /// @return The rules' names, in order; null when there is no XSLT or it keeps no mapping.
+    @SuppressWarnings("unchecked")
+    List<String> ruleNames(final String xslt) {
+        if (xslt == null) {
+            return null;
+        }
+        return KeptMapping.readMapping(readXslt(xslt).getDescription())
+                .map(kept -> kept.payload().get("mapping") instanceof final Map<?, ?> mapping
+                             && mapping.get("events") instanceof final List<?> rules
+                        ? ((List<Map<String, Object>>) rules).stream()
+                                .map(rule -> String.valueOf(rule.get("name")))
+                                .toList()
+                        : List.<String>of())
+                .orElse(null);
+    }
+
+    // The case's own text converter saved in the build (once): its code as given, the CSV header splitter, or the
+    // one profile_sample gives for the sample; its UUID.
+    private String saveConverter(final String build,
+                                 final String feed,
+                                 final Map<String, Object> reference,
+                                 final List<String> samples) {
+        final String converter = (String) reference.get("converter");
+        String code = "csv_header".equals(converter)
+                ? CSV_SPLITTER
+                : converter;
+        if ("profile".equals(converter)) {
+            // The server's own: the text converter profile_sample gives for the sample.
+            code = (String) map(json("profile_sample", args("sample", samples.getFirst())), "text_converter")
+                    .get("code");
+        }
+        return uuidOf(agreed("save_text_converter", args("build", build, "name", feed, "converter_type",
+                reference.getOrDefault("converter_type", "DATA_SPLITTER"), "code", code)));
+    }
+
+    // catalogue_event_types confirms the case's reference catalogue before the translation, as an agent and its user
+    // would: each event type proposed (as the agent's: the reference's user_confirmed basis is the user's form's to
+    // give), the catalogue checked against the sample with nothing refused, then every set and the catch-all
+    // confirmed by the user in their forms; the build's catalogue is then scored ([EvalScore#scoreCatalogue]) from
+    // its source notes, not the reference.
+    @SuppressWarnings("unchecked")
+    private void confirmCatalogue(final Map<String, Object> evalCase,
+                                  final EvalScore score,
+                                  final String build,
+                                  final List<Long> raws,
+                                  final Map<String, Object> mapping) {
+        final Map<String, Object> catalogue = EvalCatalogues.reference(evalCase);
+        if (catalogue == null) {
+            return;
+        }
+        // The records read as the reference mapping reads them (its extractions, pairs and held fields), as a
+        // source with no mapping saved yet gives its reading.
+        final Map<String, Object> reading = new LinkedHashMap<>();
+        for (final String key : READING_KEYS) {
+            if (mapping != null && mapping.get(key) != null) {
+                reading.put(key, mapping.get(key));
+            }
+        }
+        // Listed first, as an agent starts: a next version's build starts from the promoted catalogue (eval case
+        // 70), whose event types are kept as they are, only the reference's others added.
+        // A build on a feed a pipeline translates already is asked first how it starts (decided by the user,
+        // 2026-11-24): the reference is the case's whole mapping, so a new translation is drafted.
+        client.answeringWith(choosing("Draft a new translation"));
+        final Map<String, Object> listed;
+        try {
+            listed = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws, "reading",
+                    reading.isEmpty()
+                            ? null
+                            : reading));
+        } finally {
+            client.answeringWith(McpTestClient::agree);
+        }
+        final Set<Object> kept = new HashSet<>();
+        list(map(listed, "catalogue"), "event_types").forEach(type -> kept.add(type.get("type_id")));
+        final List<Map<String, Object>> proposals = new ArrayList<>();
+        for (final Map<String, Object> type : (List<Map<String, Object>>) catalogue.get("event_types")) {
+            if (kept.contains(type.get("type_id"))) {
+                continue;
+            }
+            final Map<String, Object> proposal = new LinkedHashMap<>(type);
+            proposal.put("op", "add");
+            proposal.remove("status");
+            if ("user_confirmed".equals(proposal.get("basis"))) {
+                proposal.put("basis", "agent_knowledge");
+            }
+            proposals.add(proposal);
+        }
+        final Map<String, Object> checked = proposals.isEmpty()
+                ? Map.of("recorded", true, "check", listed.getOrDefault("check", Map.of()))
+                : json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws, "proposals", proposals,
+                        "reading", reading.isEmpty()
+                                ? null
+                                : reading));
+        if (!Boolean.TRUE.equals(checked.get("recorded")) || checked.get("refused") != null) {
+            score.problem("catalogue_event_types refused the reference catalogue: " + firstLines(String.valueOf(
+                    checked.getOrDefault("refused", checked.get("hint")))));
+            return;
+        }
+        answering(choosing("Accept all"));
+        Map<String, Object> confirmed = Map.of();
+        for (int set = 0; set < CATALOGUE_SETS && !"confirmed".equals(confirmed.get("status")); set++) {
+            confirmed = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws, "confirm", true,
+                    "catch_all", Map.of("allow_unknown", "records no event type recognises")));
+        }
+        answering(choosing("Keep as is"));
+        if (!"confirmed".equals(confirmed.get("status"))) {
+            score.problem("catalogue_event_types confirmed nothing: " + firstLines(String.valueOf(confirmed)));
+        }
+        score.scoreCatalogue(evalCase, catalogueOf(build), map(checked, "check"));
+    }
+
+    // The case's data in the feed: its streams of parts stored as the proxy aggregated them, its files on the user's
+    // disk sent whole by the upload command (their bytes, not text), or its samples uploaded.
+    private List<Long> uploadData(final Map<String, Object> evalCase, final String feed, final List<String> samples) {
+        final List<Long> raws = new ArrayList<>();
+        final List<EvalCases.SampleFile> files = EvalCases.files(evalCase);
+        final List<List<EvalCases.StreamPart>> streams = EvalCases.streams(evalCase);
+        if (!streams.isEmpty()) {
+            for (final List<EvalCases.StreamPart> parts : streams) {
+                raws.add(storeParts(feed, feedParts(feed, parts)));
+            }
+        } else if (!files.isEmpty()) {
+            for (final EvalCases.SampleFile file : files) {
+                raws.add(uploadFile(feed, file));
+            }
+        } else {
+            for (final String sample : samples) {
+                raws.add(upload(feed, sample));
+            }
+        }
+        return raws;
+    }
+
+    // The aggregated feed surveyed (its source type field named, unless the registry beside the feed says it), then
+    // record_source_types: the table shown (with the case's rows, if any), and the registry written once the user
+    // puts the group's source types in the group and names it, in the form.
+    private void recordSourceTypes(final String build,
+                                   final String feed,
+                                   final Map<String, Object> sourceTypes) {
+        json("survey_feed", args("feed", feed, "build", build, "source_type_field", sourceTypes.get("field")));
+        // A later build's system and environment are the registry's.
+        final String environment = sourceTypes.get("system_name") != null
+                ? "Eval"
+                : null;
+        final Map<String, Object> shown = json("record_source_types", args("build", build, "feed", feed,
+                "system_name", sourceTypes.get("system_name"), "environment", environment, "rows",
+                sourceTypes.get("rows"), "patterns", sourceTypes.get("patterns")));
+        if (!"needs_review".equals(shown.get("status"))) {
+            throw new AssertionError("record_source_types showed no table: " + firstLines(String.valueOf(shown)));
+        }
+        answering(grouping(strings(sourceTypes, "source_types"), (String) sourceTypes.get("group")));
+        final Map<String, Object> written = json("record_source_types", args("build", build, "feed", feed,
+                "system_name", sourceTypes.get("system_name"), "environment", environment, "reviewed",
+                shown.get("review_id"), "rows", shown.get("rows"), "patterns", sourceTypes.get("patterns"), "group",
+                sourceTypes.get("group")));
+        if (written.get("registry") == null) {
+            throw new AssertionError("record_source_types wrote no registry: " + firstLines(String.valueOf(written)));
+        }
+    }
+
+    // A user who puts these source types in the build's group, named so, keeps the Ids as they are when the
+    // translation asks, and agrees to everything else (the group's Events into the feed's, a new version's names as
+    // proposed).
+    private static Function<ElicitFormRequest, ElicitResult> grouping(final List<String> sourceTypes,
+                                                                      final String group) {
+        final Function<ElicitFormRequest, ElicitResult> scoping = TestE2eSourceTypeGroups.scopeOf(sourceTypes,
+                group);
+        final Function<ElicitFormRequest, ElicitResult> keeping = choosing("Keep as is");
+        return form -> form.message().contains(TestE2eSourceTypeGroups.SCOPE_FORM)
+                ? scoping.apply(form)
+                : keeping.apply(form);
+    }
+
+    // The user's answers, each form and its answer kept.
+    private void answering(final Function<ElicitFormRequest, ElicitResult> user) {
+        client.answeringWith(form -> {
+            final ElicitResult answer = form.message().startsWith(CHANGE_SIDES_QUESTION) && !changeSides.isEmpty()
+                    ? choosing(changeSides.toArray(String[]::new)).apply(form)
+                    : user.apply(form);
+            final Map<String, Object> answered = new LinkedHashMap<>();
+            answered.put("message", form.message());
+            answered.put("content", answer.content());
+            answered.put("options", formOptions(form.requestedSchema()));
+            synchronized (formsAnswered) {
+                formsAnswered.add(answered);
+            }
+            return answer;
+        });
+    }
+
+    // The group's build scored: the registry given, the records its pipeline passed over (told as the tools tell
+    // them, by the registry over the raw records, its XSLT logging nothing of them) and what it logged processing
+    // the feed.
+    private void scoreSourceTypes(final Map<String, Object> evalCase,
+                                  final EvalScore score,
+                                  final Map<String, Object> registry,
+                                  final Map<String, Object> gate,
+                                  final String group,
+                                  final List<Long> raws) {
+        int errorLines = 0;
+        for (final Map<String, Object> stream : list(gate, "streams")) {
+            for (final long errors : ids(stream, "errors")) {
+                final String logged = storedText(errors);
+                errorLines += (int) logged.lines().filter(line -> ERROR_LINE.matcher(line).find()).count();
+            }
+        }
+        final Long passedOver = registry == null || group == null || list(gate, "streams").isEmpty()
+                ? null
+                : passedOver(registry, group, coveredByFilters(raws));
+        score.scoreSourceTypes(evalCase, registry, passedOver, errorLines);
+    }
+
+    /// The raw streams of a build's that its processor filters cover ([EvalScore#theBuildsRaws]): those some
+    /// processor filter in Stroom (not deleted) selects, every case starting from an empty Stroom; all of them when
+    /// no filter selects any.
+    ///
+    /// @param raws The raw streams found in the build's feeds.
+    /// @return The raw streams to score the build's raw-stream checks on.
+    List<Long> coveredByFilters(final List<Long> raws) {
+        final Set<Long> covered = new HashSet<>();
+        final List<ExpressionOperator> expressions = asUser(admin, () -> processorFilterService.find(
+                        new ExpressionCriteria(ExpressionOperator.builder().build())).getValues().stream()
+                .filter(filter -> !filter.isDeleted() && filter.getQueryData() != null
+                                  && filter.getQueryData().getExpression() != null)
+                .map(filter -> filter.getQueryData().getExpression())
+                .toList());
+        for (final ExpressionOperator expression : expressions) {
+            asUser(admin, () -> metaService.find(new FindMetaCriteria(expression)).getValues()).stream()
+                    .map(Meta::getId)
+                    .forEach(covered::add);
+        }
+        return EvalScore.theBuildsRaws(raws, covered);
+    }
+
+    // The raw records of source types outside the group, by the registry's source type field and rows (the first
+    // match winning; a part's meta for a meta: field), as review_coverage tells them.
+    private long passedOver(final Map<String, Object> registry, final String group, final List<Long> raws) {
+        final List<String> types = new ArrayList<>();
+        list(registry, "rows").stream()
+                .filter(row -> group.equalsIgnoreCase(String.valueOf(row.get("group"))))
+                .forEach(row -> types.add(String.valueOf(row.get("name"))));
+        return passedOverOutside(registry, types, raws);
+    }
+
+    /// The raw records of source types outside a set of them, by the registry's source type field and rows (the
+    /// first match winning; a part's meta for a meta: field), as review_coverage tells them: what a group's pipeline
+    /// passes over, its XSLT logging nothing of them.
+    ///
+    /// @param registry The registry, as [SourceTypeRegistry#read] reads it.
+    /// @param types    The source types kept, by row name.
+    /// @param raws     The raw streams.
+    /// @return The records of the other source types.
+    long passedOverOutside(final Map<String, Object> registry, final List<String> types, final List<Long> raws) {
+        final String field = String.valueOf(registry.get("field"));
+        final SourceTypeScope scope = new SourceTypeScope(null, field, SourceTypeRegistry.rows(registry), types);
+        long passed = 0;
+        for (final long raw : raws) {
+            for (final StoredPart part : storedParts(raw)) {
+                final SourceTypeScope.Filtered filtered = scope.byPart()
+                        ? scope.filter(part.text(), SourceTypeMeta.partFields(field, part.attributes()))
+                        : scope.filter(part.text());
+                passed += filtered.passedOver().values().stream().mapToLong(Integer::longValue).sum();
+            }
+        }
+        return passed;
+    }
+
+    // A stream's parts, each with its receipt headers and the case's feed as its Feed.
+    private static List<Map.Entry<Map<String, String>, String>> feedParts(final String feed,
+                                                                         final List<EvalCases.StreamPart> parts) {
+        final List<Map.Entry<Map<String, String>, String>> out = new ArrayList<>();
+        for (final EvalCases.StreamPart part : parts) {
+            final Map<String, String> meta = new LinkedHashMap<>(part.meta());
+            meta.put("Feed", feed);
+            out.add(Map.entry(meta, part.text()));
+        }
+        return out;
+    }
+
+    // The user directory: a Raw Reference feed, a Reference Data pipeline, processed to Reference streams.
+    private String referenceData(final String build,
+                                 final String feed,
+                                 final Map<String, Object> referenceData,
+                                 final EvalScore score) {
+        final String referenceFeed = feed + "-USERS";
+        agreed("create_feed", args("build", build, "name", referenceFeed, "stream_type", "Raw Reference"));
+        // Reference data applies from its effective time: before the events' streams, or lookups find nothing.
+        final long raw = number(json("upload_sample", args("feed", referenceFeed, "sample",
+                referenceData.get("sample"), "stream_type", "Raw Reference",
+                "effective_time", "2000-01-01T00:00:00.000Z")).get("stream_id"));
+        final Map<String, Object> code = json("build_reference_xslt", args("mapping", referenceData.get("mapping")));
+        if (!Boolean.TRUE.equals(code.get("ok"))) {
+            throw new AssertionError("reference mapping problems: " + code.get("problems"));
+        }
+        final String template = templateUuid("reference", "Reference Data");
+        final List<Map<String, Object>> properties = new ArrayList<>();
+        final String converter = "csv_header".equals(referenceData.get("converter"))
+                ? CSV_SPLITTER
+                : (String) referenceData.get("converter");
+        if (converter != null) {
+            properties.add(docProperty("combinedParser", "textConverter", uuidOf(agreed("save_text_converter",
+                    args("build", build, "name", referenceFeed, "converter_type", "DATA_SPLITTER", "code",
+                            converter))), "TextConverter"));
+        }
+        properties.add(docProperty("translationFilter", "xslt", saveXslt(build, referenceFeed + "-Reference",
+                (String) code.get("xslt")), "XSLT"));
+        final String pipeline = uuidOf(agreed("create_pipeline", args("build", build,
+                "name", referenceFeed + "-Reference", "template_uuid", template, "set_properties", properties)));
+        final Map<String, Object> stepped = stepSample(pipeline, List.of(raw));
+        if (!"clean".equals(stepped.get("verdict"))) {
+            score.problem("reference pipeline stepping: " + stepped.get("verdict"));
+        }
+        agreed("create_processor_filter", args("pipeline_uuid", pipeline, "stream_ids", List.of(raw)));
+        processAll();
+        final Map<String, Object> gate = json("wait_for_processing", args("pipeline_uuid", pipeline,
+                "stream_ids", List.of(raw), "output_type", "Reference", "timeout_seconds", 10));
+        if (!"pass".equals(gate.get("gate"))) {
+            score.problem("reference data: " + gate.getOrDefault("problems", gate));
+        }
+        return referenceFeed;
+    }
+
+    // The events in a Lucene index, through its pipeline, found by the verification searches. A later build's new
+    // group gets an index of its own, named like the setup group's; the setup's group, joined, indexes into its own
+    // index through a working copy of its indexing pipeline, the build's plan written to the copy's XSLT.
+    private Indexed index(final String build,
+                          final String feed,
+                          final String group,
+                          final String eventsPipeline,
+                          final List<Long> events,
+                          final EvalScore score,
+                          final Setup setup) {
+        final Indexed before = setup != null
+                ? setup.built().indexed()
+                : null;
+        final boolean joins = before != null && group != null && group.equalsIgnoreCase(setup.built().group());
+        final String indexName;
+        if (before == null) {
+            indexName = feed + "-INDEX";
+        } else if (joins) {
+            indexName = before.name();
+        } else if (group == null) {
+            // A later build of a feed with no source type groups: its new version's index beside the setup's.
+            indexName = before.name() + "-V2";
+        } else {
+            indexName = FeedIndexes.groupIndexName(before.name(), List.of(setup.built().group()), group);
+        }
+        final Map<String, Object> plan = map(json("draft_index_mapping", args("backend", "lucene",
+                "index_name", indexName, "convention", "stroom-flat", "events_stream_ids", events)), "plan");
+        final String index;
+        final String pipeline;
+        if (joins) {
+            index = before.index();
+            // The group's indexing pipeline as its new version, under the names proposed, writing to the
+            // group's index.
+            final Map<String, Object> copied = agreed("copy_pipeline", args("build", build, "source_uuid",
+                    before.pipeline(), "new_name", indexName + " - Indexing"));
+            pipeline = uuidOf(copied);
+            final String xslt = list(copied, "copied_documents").stream()
+                    .filter(doc -> "XSLT".equals(doc.get("type")))
+                    .map(doc -> (String) doc.get("uuid"))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("The indexing pipeline's new version has no XSLT: "
+                                                          + copied));
+            json("save_xslt", args("build", build, "uuid", xslt, "index_plan", plan));
+        } else {
+            index = uuidOf(agreed("create_index_doc", args("build", build, "backend", "lucene",
+                    "name", indexName, "time_field", plan.get("time_field"))));
+            // Generated from the plan.
+            final String xslt = uuidOf(agreed("save_xslt", args("build", build, "name", indexName + "-XSLT",
+                    "index_plan", plan)));
+            final String template = (String) templates("indexing").stream()
+                    .filter(candidate -> "lucene".equals(candidate.get("backend")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No Lucene indexing template"))
+                    .get("uuid");
+            pipeline = uuidOf(agreed("create_indexing_pipeline", args("build", build,
+                    "name", indexName + " - Indexing", "template_uuid", template, "xslt_uuid", xslt,
+                    "index_uuid", index)));
+        }
+        final Map<String, Object> stepped = stepSample(pipeline, events);
+        if (!"clean".equals(stepped.get("verdict"))) {
+            score.problem("indexing pipeline stepping: " + stepped.get("verdict"));
+        }
+        agreed("create_processor_filter", args("pipeline_uuid", pipeline, "stream_ids", events,
+                "source_pipeline_uuid", eventsPipeline));
+        processAll();
+        flushIndexShards();
+        final Map<String, Object> gate = json("wait_for_processing", args("pipeline_uuid", pipeline,
+                "stream_ids", events, "expect_events", false, "timeout_seconds", 10));
+        final Map<String, Object> verified = agreed("verify_index", args("build", build, "index_uuid", index,
+                "backend", "lucene", "stream_ids", events, "expected_documents", score.events(),
+                "fields", List.of("StreamId", "EventId", plan.get("time_field"))));
+        // A joined group's working copy indexes into the build's test index, which has the plan's new fields: the
+        // production index is left as it is until promotion.
+        final boolean indexed = "pass".equals(gate.get("gate")) && Boolean.TRUE.equals(verified.get("passed"));
+        score.indexed(indexed);
+        final Map<String, Object> documented = agreed("write_documentation", args("build", build,
+                "pipeline_uuid", pipeline, "markdown", DOC_SKELETON, "change", "Created", "stream_ids", events));
+        final String section = String.valueOf(documented.getOrDefault("field_mapping", ""));
+        if (!section.contains("| Index field |")) {
+            score.problem("documentation: no index field mapping generated");
+        } else if (!SAMPLED_VALUES.matcher(section).find()) {
+            score.problem("documentation: the index field mapping has no sampled values");
+        }
+        if (!indexed) {
+            score.problem("indexing: gate " + gate.get("gate") + " " + firstLines(String.valueOf(gate.get("problems")))
+                          + ", logged " + loggedProblems(gate, 3) + ", searches " + verified.get("checks"));
+        }
+        return new Indexed(index, indexName, pipeline);
+    }
+
+    // The ERROR, FATAL and WARN lines of the Error streams a processing round wrote, up to a limit a stream.
+    private List<String> loggedProblems(final Map<String, Object> gate, final int limit) {
+        final List<String> lines = new ArrayList<>();
+        for (final Map<String, Object> stream : list(gate, "streams")) {
+            for (final long errors : ids(stream, "errors")) {
+                storedText(errors).lines()
+                        .filter(line -> ERROR_LINE.matcher(line).find() || line.contains("WARN"))
+                        .limit(limit)
+                        .forEach(lines::add);
+            }
+        }
+        return lines;
+    }
+
+    // promote_build: the layout shown first (needs_review), then promoted once the user agrees in the form.
+    private void promote(final String build, final Map<String, Object> destinations) {
+        final Map<String, Object> review = json("promote_build", args("build", build, "destinations",
+                destinations));
+        if (!"needs_review".equals(review.get("status"))) {
+            throw new AssertionError("promote_build showed no layout for " + build + ": " + firstLines(
+                    String.valueOf(review)));
+        }
+        final Map<String, Object> promoted = json("promote_build", args("build", build, "destinations",
+                destinations, "reviewed", review.get("review_id")));
+        if (promoted.get("promoted") == null) {
+            throw new AssertionError(build + " not promoted: " + firstLines(String.valueOf(promoted)));
+        }
+    }
+
+    // Up to count events from first, reading on past the size limit; and how many the stream holds.
+    private Read readEvents(final long stream, final int first, final int count) {
+        final List<String> got = new ArrayList<>();
+        Integer total = null;
+        int from = first;
+        while (got.size() < count) {
+            final Map<String, Object> read = json("fetch_events", args("streamId", stream, "firstRecord", from,
+                    "recordCount", Math.min(100, count - got.size()), "maxChars", 200_000));
+            final List<String> records = strings(read, "records");
+            got.addAll(records);
+            if (read.get("total_records") instanceof final Number number) {
+                total = number.intValue();
+            }
+            from = read.get("next_first_record") instanceof final Number next
+                    ? next.intValue()
+                    : from + records.size();
+            if (records.isEmpty() || (total != null && from >= total)) {
+                break;
+            }
+        }
+        return new Read(got, total);
+    }
+
+    // As the user's terminal runs the command upload_sample files= gives for the file.
+    private long uploadFile(final String feed, final EvalCases.SampleFile file) {
+        final String path = "/home/user/" + file.name();
+        final Map<String, Object> given = json("upload_sample", args("feed", feed, "files", List.of(path)));
+        final Map<String, Object> command = list(given, "commands").getFirst();
+        final McpTerminal.Posted posted = McpTerminal.run(injector, admin, (String) command.get("bash"), path,
+                file.data());
+        assertThat(posted.status()).as("%s reached Stroom: %s", file.name(), posted.body()).isEqualTo(200);
+        return number(posted.body().get("stream_id"));
+    }
+
+    // So many streams for a question's events, in a feed of the index's name.
+    private List<Long> questionStreams(final String indexName, final int count) {
+        final List<Long> streams = new ArrayList<>();
+        asUser(admin, () -> {
+            for (int i = 0; i < count; i++) {
+                streams.add(metaService.create(MetaProperties.builder()
+                        .feedName("EVAL-QUESTION-" + indexName.toUpperCase(Locale.ROOT))
+                        .typeName(StreamTypeNames.EVENTS)
+                        .createMs(System.currentTimeMillis())
+                        .build(), Status.UNLOCKED).getId());
+            }
+        });
+        return streams;
+    }
+
+    // A question's records indexed into Elasticsearch, a keyword, long or date field a column, each record an event
+    // of the stream.
+    private static void seedElastic(final ElasticTestNode node,
+                                    final String indexName,
+                                    final EvalCases.QuestionTable table,
+                                    final long stream) {
+        final ObjectNode body = JsonUtil.getMapper().createObjectNode();
+        body.putObject("settings").put("number_of_shards", 1).put("number_of_replicas", 0);
+        final ObjectNode properties = body.putObject("mappings").putObject("properties");
+        table.types().forEach((column, type) -> properties.putObject(column).put("type", "text".equals(type)
+                ? "keyword"
+                : type));
+        properties.putObject(STREAM_ID).put("type", "long");
+        properties.putObject(EVENT_ID).put("type", "long");
+        node.createIndex(indexName, JsonUtil.writeValueAsString(body, false));
+        // In batches, so a large question (case 82's months of every person's events) isn't one request body.
+        ArrayNode documents = JsonUtil.getMapper().createArrayNode();
+        for (int i = 0; i < table.records().size(); i++) {
+            if (documents.size() >= BULK_BATCH) {
+                node.bulkIndex(indexName, documents);
+                documents = JsonUtil.getMapper().createArrayNode();
+            }
+            final ObjectNode document = documents.addObject();
+            document.put("_id", String.valueOf(i + 1));
+            table.records().get(i).forEach((column, value) -> {
+                if ("long".equals(table.types().get(column))) {
+                    document.put(column, Long.parseLong(value));
+                } else {
+                    document.put(column, value);
+                }
+            });
+            document.put(STREAM_ID, stream);
+            document.put(EVENT_ID, i + 1);
+        }
+        if (!documents.isEmpty()) {
+            node.bulkIndex(indexName, documents);
+        }
+    }
+
+    // A question's records in a Lucene index of the table's name, a field a column (text as keywords), each record
+    // an event of one stream, flushed so searches see them.
+    private DocRef questionLuceneIndex(final EvalCases.QuestionTable table, final ExplorerNode folder) {
+        final ExplorerNode created = create(LuceneIndexDoc.TYPE, table.name(), folder);
+        final LuceneIndexField streamId = LuceneIndexField.createIdField(STREAM_ID);
+        final LuceneIndexField eventId = LuceneIndexField.createIdField(EVENT_ID);
+        final Map<String, LuceneIndexField> fields = new LinkedHashMap<>();
+        table.types().forEach((column, type) -> fields.put(column, LuceneIndexField.builder()
+                .fldName(column)
+                .fldType(luceneType(type))
+                .analyzerType("text".equals(type)
+                        ? AnalyzerType.KEYWORD
+                        : AnalyzerType.ALPHA_NUMERIC)
+                .caseSensitive("text".equals(type))
+                .indexed(true)
+                .stored(true)
+                .build()));
+        final List<LuceneIndexField> all = new ArrayList<>(List.of(streamId, eventId));
+        all.addAll(fields.values());
+        final LuceneIndexDoc doc = asUser(admin, () -> {
+            indexStore.writeDocument(indexStore.readDocument(created.getDocRef()).copy()
+                    .fields(all)
+                    .timeField(table.timeField())
+                    .volumeGroupName("Default Volume Group")
+                    .build());
+            return indexStore.readDocument(created.getDocRef());
+        });
+        final long stream = questionStreams(table.name().replaceAll("\\W+", "-"), 1).getFirst();
+        final IndexShardKey key = IndexShardKey.createKey(doc);
+        securityContext.asProcessingUser(() -> {
+            for (int i = 0; i < table.records().size(); i++) {
+                final IndexDocument document = new IndexDocument();
+                document.add(new FieldValue(streamId, ValLong.create(stream)));
+                document.add(new FieldValue(eventId, ValLong.create(i + 1)));
+                table.records().get(i).forEach((column, value) -> {
+                    final LuceneIndexField field = fields.get(column);
+                    document.add(new FieldValue(field, luceneValue(table.types().get(column), value)));
+                });
+                indexer.addDocument(key, document);
+            }
+        });
+        flushIndexShards();
+        return created.getDocRef();
+    }
+
+    // A question's CSV records in a data connection of the table's name, a column each with its type.
+    private DocRef questionDataConnection(final EvalCases.QuestionTable table) {
+        final ExplorerNode created = create(DataConnectionDoc.TYPE, table.name(), templateFolder());
+        final List<DataColumn> columns = new ArrayList<>();
+        table.types().forEach((column, type) -> columns.add(new DataColumn(column, columnType(type))));
+        final StringBuilder csv = new StringBuilder(String.join(",", table.types().keySet())).append('\n');
+        table.records().forEach(record -> csv.append(String.join(",", record.values())).append('\n'));
+        asUser(admin, () -> dataConnectionStore.writeDocument(dataConnectionStore.readDocument(created.getDocRef())
+                .copy()
+                .sourceType(DataConnectionType.CSV)
+                .csv(CsvSettings.builder()
+                        .columns(columns)
+                        .data(csv.toString())
+                        .build())
+                .build()));
+        return created.getDocRef();
+    }
+
+    // A question's column type as a Lucene field's.
+    private static FieldType luceneType(final String type) {
+        return switch (type) {
+            case "long" -> FieldType.LONG;
+            case "date" -> FieldType.DATE;
+            default -> FieldType.TEXT;
+        };
+    }
+
+    // A question's value as a Lucene field holds it.
+    private static Val luceneValue(final String type, final String value) {
+        return switch (type) {
+            case "long" -> ValLong.create(Long.parseLong(value));
+            case "date" -> ValDate.create(Instant.parse(value).toEpochMilli());
+            default -> ValString.create(value);
+        };
+    }
+
+    // A question's column type as a data connection's.
+    private static DataColumnType columnType(final String type) {
+        return switch (type) {
+            case "long" -> DataColumnType.LONG;
+            case "date" -> DataColumnType.DATE;
+            default -> DataColumnType.TEXT;
+        };
+    }
+
+    // The table run_stroomql wrote (its result names the file): its `columns` and `rows`, each cell as text.
+    private Map<String, Object> stroomQlTable(final String result) {
+        final Matcher matcher = STROOMQL_RESULTS.matcher(result);
+        if (!matcher.find()) {
+            return Map.of();
+        }
+        final String file = McpTestClient.text(client.call("read_file", args("path", matcher.group(1),
+                "count", 1_000)));
+        return markdownTable(file);
+    }
+
+    /// The first Markdown table in a text (lines read with read_file, numbered, are read past their numbers): its
+    /// `columns` and `rows`, each cell as text.
+    ///
+    /// @param text The text.
+    /// @return The table's `columns` and `rows`, both empty if there is none.
+    static Map<String, Object> markdownTable(final String text) {
+        List<String> header = null;
+        final List<List<String>> rows = new ArrayList<>();
+        for (final String line : text.split("\n")) {
+            final int tab = line.indexOf('\t');
+            final String row = tab < 0
+                    ? line
+                    : line.substring(tab + 1);
+            if (!row.startsWith("|") || row.startsWith("| ---") || row.startsWith("|---")) {
+                continue;
+            }
+            final List<String> cells = new ArrayList<>();
+            for (final String cell : row.substring(1, row.lastIndexOf('|')).split("\\|", -1)) {
+                cells.add(cell.strip());
+            }
+            if (header == null) {
+                header = cells;
+            } else {
+                rows.add(cells);
+            }
+        }
+        final Map<String, Object> table = new LinkedHashMap<>();
+        table.put("columns", header == null
+                ? List.of()
+                : header);
+        table.put("rows", rows);
+        return table;
+    }
+
+    private List<String> luceneFields(final DocRef index) {
+        return asUser(admin, () -> indexFieldService.findFields(new FindFieldCriteria(new PageRequest(0, 500),
+                FindFieldCriteria.DEFAULT_SORT_LIST, index)).getValues().stream().map(Field::getFldName).toList());
+    }
+
+    // pipeline_writes.element_id: XMLFragmentParser is xmlFragmentParser, DSParser dsParser (a leading acronym is
+    // lowered whole).
+    private static String elementId(final String elementType) {
+        final String lowered = Pattern.compile("^[A-Z]+(?=[A-Z][a-z])").matcher(elementType)
+                .replaceFirst(match -> match.group().toLowerCase());
+        return Character.toLowerCase(lowered.charAt(0)) + lowered.substring(1);
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// What a case's setup left ([#setUp]).
+    ///
+    /// @param feed   The feed, promoted to [#FEEDS].
+    /// @param build  The setup's build, promoted.
+    /// @param built  What its reference build made.
+    /// @param before Its group's pipeline, XSLT and index as it left them, for the case's score.
+    /// @param later  The case's later data's raw streams ([EvalCases#later]), which the case's build processes in
+    ///               place of the setup's; none if it has none.
+    record Setup(String feed, String build, Built built, EvalScore.Before before, List<Long> later) {
+
+    }
+
+    /// What a reference build made.
+    ///
+    /// @param raws         The feed's raw streams it processed.
+    /// @param group        Its source type group, or null for none.
+    /// @param pipeline     Its events pipeline's UUID (a working copy, for a promoted group joined).
+    /// @param pipelineName The pipeline's name.
+    /// @param xslt         The group's XSLT's UUID, or the build's own for a build with no group.
+    /// @param indexed      Its index, or null if it reached none.
+    record Built(List<Long> raws,
+                 String group,
+                 String pipeline,
+                 String pipelineName,
+                 String xslt,
+                 Indexed indexed) {
+
+    }
+
+    /// A build's index.
+    ///
+    /// @param index    The index's UUID.
+    /// @param name     Its name.
+    /// @param pipeline Its indexing pipeline's UUID.
+    record Indexed(String index, String name, String pipeline) {
+
+    }
+
+    private record Read(List<String> records, Integer total) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A question's index.
+    ///
+    /// @param node      The Elasticsearch node holding it.
+    /// @param indexName Its name there.
+    /// @param doc       Its Elastic Index doc.
+    /// @param cluster   The Elastic Cluster doc it is on.
+    /// @param feed      The Feed doc of the stream holding its events' Events XML, or null if Stroom holds none.
+    record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc, DocRef cluster, DocRef feed) {
+
+    }
+
+    /// A question's data in Stroom ([#questionData]).
+    ///
+    /// @param elastic  Its Elasticsearch index, or null if it has none.
+    /// @param docs     The documents its data is read through: its indexes (and the Elastic Cluster), its data
+    ///                 connections.
+    /// @param removals Removes each document left beside the indexes that would apply to the next case (its AGENTS
+    ///                 doc).
+    record QuestionData(QuestionIndex elastic, List<DocRef> docs, List<Runnable> removals) {
+
+        /// Copies the lists.
+        QuestionData {
+            docs = List.copyOf(docs);
+            removals = List.copyOf(removals);
+        }
+
+        /// Removes what Stroom doesn't remove between cases: the AGENTS doc, the Elasticsearch index.
+        void remove() {
+            removals.forEach(Runnable::run);
+            if (elastic != null) {
+                elastic.node().deleteIndices(elastic.indexName());
+            }
+        }
+    }
+
+    /// What a skill case's setup left ([#setUpSkill]).
+    ///
+    /// @param data          Its data.
+    /// @param user          The user who chats.
+    /// @param chats         Runs and reads the chat.
+    /// @param scripted      The scripted model's server, for the setup's turns and a reference's.
+    /// @param scriptedModel The model doc of the scripted model.
+    /// @param chat          The chat, holding the setup's turns.
+    /// @param baseline      A timeline case's tables as the setup's turns left them, by path ([EvalTimelineScore]).
+    record SkillSetup(QuestionData data,
+                      UserRef user,
+                      EvalChat chats,
+                      FakeModelServer scripted,
+                      DocRef scriptedModel,
+                      AiChat chat,
+                      Map<String, String> baseline) implements AutoCloseable {
+
+        /// Stops the scripted model and removes the data Stroom doesn't remove between cases.
+        @Override
+        public void close() {
+            scripted.close();
+            data.remove();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a CEF forwarder case's setup made.
+    ///
+    /// @param events     The feed's Events stream.
+    /// @param template   The forwarding template's UUID.
+    /// @param shared     Its shared XSLT's UUID.
+    /// @param sharedCode The shared XSLT as the setup wrote it.
+    record Forwarding(long events, String template, String shared, String sharedCode) {
+
+    }
+}

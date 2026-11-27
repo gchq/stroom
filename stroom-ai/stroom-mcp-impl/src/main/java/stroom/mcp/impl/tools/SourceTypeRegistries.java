@@ -1,0 +1,247 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/// A feed's source type registry ([SourceTypeRegistry]), kept beside the feed once promoted (its survey doc stays in
+/// the build). A build makes or changes it in its own folder, through [WriteGuard]: one beside the feed already is
+/// changed through a working copy, which promotion writes back over it, as any promoted document is.
+class SourceTypeRegistries {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceTypeRegistries.class);
+    // The workspace's folder of backups promotion makes: not a build.
+    private static final String BACKUPS = "backups";
+
+    private final WriteGuard guard;
+    private final DocumentAccess documentAccess;
+    private final DocumentWrites documentWrites;
+    private final FeedNames feedNames;
+    private final DocumentPlaces places;
+    private final Provider<BuildRecords> records;
+
+    @Inject
+    SourceTypeRegistries(final WriteGuard guard,
+                         final DocumentAccess documentAccess,
+                         final DocumentWrites documentWrites,
+                         final FeedNames feedNames,
+                         final DocumentPlaces places,
+                         final Provider<BuildRecords> records) {
+        this.guard = guard;
+        this.documentAccess = documentAccess;
+        this.documentWrites = documentWrites;
+        this.feedNames = feedNames;
+        this.places = places;
+        this.records = records;
+    }
+
+    /// One open build per aggregated feed (decided 2026-11-12): so the registry, the groups' pipelines and the
+    /// feed's documents are only ever changed by one build, and promotion needs no merging. A build is open on a feed
+    /// while its folder holds the feed's registry, or works from the feed (or holds it) and holds work (an XSLT or a
+    /// pipeline): made and not promoted or abandoned (its folder deleted). A build holding only the feed and its
+    /// samples, or only what its promotion kept in the workspace (a test feed, its survey doc, a document
+    /// given 'keep') and unchanged since, is not.
+    ///
+    /// @param feed       A feed's name.
+    /// @param build      The build asking, left out.
+    /// @param aggregated True when the build asking makes the feed's registry (record_source_types); otherwise the
+    ///                   feed counts as aggregated only with a registry beside it or in another build.
+    /// @throws ToolRefusal naming the other open build, if there is one.
+    void refuseOpenBuild(final String feed, final String build, final boolean aggregated) {
+        if (feed == null || feed.isBlank()) {
+            return;
+        }
+        final String name = SourceTypeRegistry.docName(feed);
+        boolean isAggregated = aggregated || besideFeed(feed, name).isPresent();
+        String open = null;
+        for (final String other : guard.builds()) {
+            if (other.equals(build) || BACKUPS.equals(other)) {
+                continue;
+            }
+            final Map<String, Object> record = recordOf(other);
+            final Map<String, Object> entries = BuildRecords.docs(record);
+            // What the build's promotion kept in the workspace is no work in progress, until it is changed.
+            final List<WriteGuard.BuildDoc> docs = guard.folderContents(other).stream()
+                    .filter(doc -> !BuildRecords.keptUnchanged(documentAccess, doc, entries.get(doc.uuid())))
+                    .toList();
+            final boolean registry = docs.stream()
+                    .anyMatch(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()));
+            final boolean onFeed = registry
+                                   || docs.stream().anyMatch(doc -> FeedDoc.TYPE.equals(doc.type())
+                                                                    && feed.equalsIgnoreCase(doc.name()))
+                                   || JsonValues.strings(record.get(BuildRecords.SOURCE_FEEDS)).stream()
+                                           .anyMatch(feed::equalsIgnoreCase);
+            final boolean work = registry || docs.stream().anyMatch(doc -> XsltDoc.TYPE.equals(doc.type())
+                                                                           || PipelineDoc.TYPE.equals(doc.type()));
+            isAggregated |= registry;
+            if (onFeed && work && open == null) {
+                open = other;
+            }
+        }
+        if (isAggregated && open != null) {
+            throw new ToolRefusal("Feed '" + feed + "' aggregates source types, and build '" + open + "' is open on "
+                                  + "it: one build at a time per feed, so its registry, pipelines and documents "
+                                  + "change in one place. Finish build '" + open + "' (promote_build) or abandon it "
+                                  + "(the user deletes its folder) first, or carry on in it.");
+        }
+    }
+
+    // A build's record: the existing feeds it works from, and what its promotion kept; empty if it can't be read.
+    private Map<String, Object> recordOf(final String build) {
+        try {
+            return records.get().load(build);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No record read for build {}: {}", build, e.getMessage()));
+            return BuildRecords.empty();
+        }
+    }
+
+    /// @param build A build.
+    /// @param name  A Documentation doc's name.
+    /// @return The build's Documentation doc of that name, if the user can read it.
+    Optional<SurveyRecord> inBuild(final String build, final String name) {
+        return guard.folderContents(build).stream()
+                .filter(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()))
+                .findFirst()
+                .flatMap(doc -> read(doc.docRef()));
+    }
+
+    /// @param feed A feed's name.
+    /// @param name A Documentation doc's name.
+    /// @return The Documentation doc of that name in the folder of the feed, or in the feed's own folder beside it
+    /// (one outside any build), if the user can read it: a registry promoted beside the feed.
+    Optional<SurveyRecord> besideFeed(final String feed, final String name) {
+        try {
+            for (final DocRef ref : feedNames.feedsNamed(feed)) {
+                if (guard.buildOf(ref).isPresent()) {
+                    continue;
+                }
+                // Beside the feed, else in its own folder (where promotion files it when the feed's folder holds
+                // other sources).
+                final Optional<SurveyRecord> found = places.documentationBeside(ref, name)
+                        .filter(doc -> guard.buildOf(doc).isEmpty())
+                        .or(() -> places.documentationInOwnFolder(ref, name)
+                                .filter(doc -> guard.buildOf(doc).isEmpty()))
+                        .flatMap(this::read);
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+        } catch (final RuntimeException e) {
+            // Advice: a feed whose folder can't be read is surveyed as if nothing were beside it.
+            LOGGER.debug(() -> LogUtil.message("Nothing read beside feed {}: {}", feed, e.getMessage()));
+        }
+        return Optional.empty();
+    }
+
+    /// @param build A build, or null.
+    /// @param feed  A feed's name.
+    /// @return The feed's registry: the build's own, else the one promoted beside the feed; empty when neither is.
+    Optional<Found> registry(final String build, final String feed) {
+        final String name = SourceTypeRegistry.docName(feed);
+        final Optional<SurveyRecord> own = build == null
+                ? Optional.empty()
+                : inBuild(build, name);
+        if (own.isPresent()) {
+            return own.map(doc -> new Found(doc, false, SourceTypeRegistry.read(doc.text())))
+                    .filter(found -> found.state() != null);
+        }
+        return besideFeed(feed, name).map(doc -> new Found(doc, true, SourceTypeRegistry.read(doc.text())))
+                .filter(found -> found.state() != null);
+    }
+
+    /// Writes a feed's registry in the build: over the build's own, else made new, as a working copy of the one
+    /// beside the feed when there is one. A working copy records the version it was copied at, so promotion asks
+    /// before writing it over a registry changed since; and is made only while no other build is open on the feed.
+    ///
+    /// @param session  The session, for the audit log.
+    /// @param build    The build.
+    /// @param feed     The feed.
+    /// @param existing The registry found ([#registry]), or null.
+    /// @param text     The registry's text.
+    /// @return The registry as written.
+    SurveyRecord writeRegistry(final ToolSession session,
+                               final String build,
+                               final String feed,
+                               final Found existing,
+                               final String text) {
+        if (existing != null && !existing.promoted()) {
+            final DocRef ref = new DocRef(DocumentationDoc.TYPE, existing.doc().uuid(), existing.doc().name());
+            guard.checkInBuild(session, ref);
+            return write(ref, text);
+        }
+        if (existing != null) {
+            // The build starts work on the feed from the registry beside it: one open build per feed.
+            refuseOpenBuild(feed, build, true);
+        }
+        final DocRef made = guard.create(DocumentationDoc.TYPE, SourceTypeRegistry.docName(feed), build,
+                existing == null
+                        ? null
+                        : existing.doc().uuid(), false, null);
+        if (existing != null) {
+            documentAccess.read(new DocRef(DocumentationDoc.TYPE, existing.doc().uuid(), existing.doc().name()),
+                            DocumentationDoc.class)
+                    .map(DocumentationDoc::getVersion)
+                    .ifPresent(version -> records.get().update(build, made, entry ->
+                            entry.put(BuildRecords.COPY_OF_VERSION, version)));
+        }
+        return write(made, text);
+    }
+
+    private Optional<SurveyRecord> read(final DocRef ref) {
+        return documentAccess.read(ref, DocumentationDoc.class)
+                .map(doc -> new SurveyRecord(doc.getUuid(), doc.getName(), BuildRecords.bodyText(doc)));
+    }
+
+    private SurveyRecord write(final DocRef ref, final String text) {
+        final DocumentationDoc saved = documentWrites.writeText(ref, text);
+        return new SurveyRecord(saved.getUuid(), saved.getName(), text);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A registry found.
+    ///
+    /// @param doc      Its document.
+    /// @param promoted True when it is beside the feed, not in the build: changed through a working copy.
+    /// @param state    Its machine block.
+    record Found(SurveyRecord doc, boolean promoted, Map<String, Object> state) {
+
+    }
+}

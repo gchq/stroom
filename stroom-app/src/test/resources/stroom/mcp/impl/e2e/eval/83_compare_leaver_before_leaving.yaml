@@ -1,0 +1,69 @@
+name: Has the leaver's behaviour changed in the 90 days before they left (a question, nothing built)
+kind: question
+capabilities: [compare, elasticsearch, insider]
+# The insider-risk dataset (InsiderDataset) from 2 February to 30 September 2026, its proxy and cloud audit events in
+# one Elasticsearch index "Insider events". The known answer: the leaver (P10001, Finance, leaving 2026-09-25) browses
+# job sites from 2026-07-01 (Category "Job Search"), reaches cloud sites outside the usual from 2026-08-10, downloads
+# in bulk from 2026-09-08 and uploads to a personal cloud domain. The answer: compare_activity of the 90 days before
+# the leaving date against her months before, with categories (on by default: the AGENTS doc beside the index names
+# its Category field); TestEvalCases checks the expected findings against the generator's known answer. The sites
+# outside her usual (the access graph, accessField) aren't asked for, so aren't expected. The traps: the proxy's pipeline change on 2026-06-15
+# (everyone's volume doubles: the source's, not the leaver's), stating intent, and reading her events one by one.
+# Skipped without an Elasticsearch node.
+elastic_index:
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
+             sources: [proxy, cloud]}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
+request: >
+  Dana Whitfield (person id P10001) left on 25 September 2026. Has her behaviour changed in the 90 days before she
+  left, compared with her own earlier months? Use the "Insider events" index.
+user_knows: >
+  The "Insider events" Elasticsearch index holds every source's events: a person's id is the same in every source
+  (their account differs by source); Destination is the site a web request reached, Category the proxy's category
+  of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
+  Times are Sydney time (Australia/Sydney).
+  Her leaving date is 25 September 2026; she had no leave in the period.
+expected:
+  tools_used: [compare_activity]
+  answer:
+    tool: compare_activity
+    result: {person: P10001}
+  findings:
+    # The job-site browsing from 1 July as her own weekly category finding from the window's first week, and the bulk
+    # downloads from 8 September as her own weekly events finding: not as change points, as her events step at
+    # both (and everyone's at the pipeline change on 15 June), so their one change point falls on either by the
+    # data's noise.
+    must_include:
+      - {kind: week, feature: 'category:Job Search', near: '2026-07-01', days: 4}
+      - {kind: week, feature: events, near: '2026-09-08', days: 3}
+    must_not_include:
+      - {kind: change, feature: events, near: '2026-06-15', days: 5}
+    answer_must_not_say: [guilty, intends to, malicious, stole]
+reference:
+  compare_activity:
+    person: P10001
+    sources: [Insider events]
+    windowFrom: '2026-06-27'
+    windowTo: '2026-09-25'
+    baselineFrom: '2026-02-02'
+    unit: week
+    breadthFields: [Destination]
+    sumFields: [BytesOut]
+    peers: false
+    timeZone: Australia/Sydney

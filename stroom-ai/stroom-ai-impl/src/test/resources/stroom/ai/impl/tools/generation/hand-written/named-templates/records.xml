@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records xmlns="records:2">
+  <record>
+    <data name="time" value="2026-11-04T07:45:12.000Z"/>
+    <data name="client" value="10.20.30.40"/>
+    <data name="user" value="jbloggs"/>
+    <data name="method" value="GET"/>
+    <data name="url" value="https://intranet.example.org/home"/>
+    <data name="status" value="200"/>
+    <data name="bytes" value="5123"/>
+  </record>
+  <record>
+    <data name="time" value="2026-11-04T07:46:00.000Z"/>
+    <data name="client" value="10.20.30.41"/>
+    <data name="user" value="asmith"/>
+    <data name="method" value="POST"/>
+    <data name="url" value="https://intranet.example.org/upload"/>
+    <data name="status" value="201"/>
+    <data name="bytes" value="88231"/>
+  </record>
+  <record>
+    <data name="time" value="2026-11-04T07:47:30.000Z"/>
+    <data name="client" value="10.20.30.42"/>
+    <data name="user" value="-"/>
+    <data name="method" value="GET"/>
+    <data name="url" value="https://intranet.example.org/admin"/>
+    <data name="status" value="403"/>
+    <data name="bytes" value="0"/>
+  </record>
+</records>

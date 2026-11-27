@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records xmlns="records:2">
+  <record>
+    <data name="EventID" value="1001"/>
+    <data name="TimeCreated" value="2026-11-02T09:15:00.000Z"/>
+    <data name="Computer" value="ws-014.example.org"/>
+    <data name="TargetUserName" value="jbloggs"/>
+    <data name="IpAddress" value="192.0.2.41"/>
+    <data name="LogonType" value="2"/>
+  </record>
+  <record>
+    <data name="EventID" value="1002"/>
+    <data name="TimeCreated" value="2026-11-02T09:16:10.000Z"/>
+    <data name="Computer" value="ws-014.example.org"/>
+    <data name="TargetUserName" value="asmith"/>
+    <data name="IpAddress" value="192.0.2.77"/>
+    <data name="FailureReason" value="Unknown user name or bad password"/>
+  </record>
+  <record>
+    <data name="EventID" value="1003"/>
+    <data name="TimeCreated" value="2026-11-02T17:30:00.000Z"/>
+    <data name="Computer" value="ws-014.example.org"/>
+    <data name="TargetUserName" value="jbloggs"/>
+  </record>
+  <record>
+    <data name="EventID" value="2001"/>
+    <data name="TimeCreated" value="2026-11-02T10:02:33.000Z"/>
+    <data name="Computer" value="fs-002.example.org"/>
+    <data name="SubjectUserName" value="jbloggs"/>
+    <data name="ObjectName" value="D:\Shares\Finance\budget.xlsx"/>
+    <data name="AccessMask" value="0x1"/>
+  </record>
+  <record>
+    <data name="EventID" value="9999"/>
+    <data name="TimeCreated" value="2026-11-02T11:00:00.000Z"/>
+    <data name="Computer" value="ws-014.example.org"/>
+    <data name="Message" value="Service heartbeat"/>
+  </record>
+</records>

@@ -1,0 +1,2775 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SourceTypeRegistry;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+/// The onboarding plan, with its state read from the build.
+///
+/// A model that treats each request as one tool call stops when the tool returns. So the plan is not only in the
+/// prompts: start_onboarding returns it, build_status derives each step's state from what the build holds (feed,
+/// sample streams, converter, XSLT with its mapping, pipeline, a clean step, Events, documentation, index), and
+/// every write tool's result carries `next`, the first unfinished step and the one call that does it.
+///
+/// A write tool ends with [#withNext] (or [#nextFor], for a document whose build it hasn't named) on its result.
+@Singleton
+public class BuildPlan {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildPlan.class);
+
+    /// Which parser element reads which profiled format.
+    public static final Map<String, List<String>> PARSER_FOR_FORMAT = parsers();
+    /// The formats a text converter turns into XML.
+    public static final Set<String> TEXT_FORMATS = Set.of("delimited", "syslog rfc5424", "syslog rfc3164",
+            "key=value", "unknown text", "cef", "multi-line text", "cri", "mixed lines", "keyed sections", "leef");
+    /// With the plan when a build starts. Seen in testing: no task list kept, and the agent stopped at the end of
+    /// each stage to report.
+    public static final String TASK_LIST = "With a task-list tool (Stroom AI: task_list), write plan's steps into "
+                                           + "it now, and keep it to each result's next.progress. Go on from stage "
+                                           + "to stage without stopping to report.";
+    /// What an agent is told of the tools named in `next`, hints and refusals.
+    public static final String HIDDEN_TOOLS = "A tool this server names (in `next`, a hint or a refusal) may not be "
+                                              + "in your tool list yet: some clients hide part of a server's tools "
+                                              + "behind tools that enable a group of them (VS Code: activate_*). "
+                                              + "Call the one in your tool list whose description names it, then "
+                                              + "the named tool. Only names your list shows: the client makes them, "
+                                              + "they differ from session to session, and a guessed one only fails "
+                                              + "(seen: 360 calls to made-up activate_* names). If none names it, "
+                                              + "ask the user to enable it. Never work around a hidden tool with "
+                                              + "others.";
+    /// The stage a step is in.
+    public static final String STAGE_EVENTS = "1 events";
+    /// The indexing stage.
+    public static final String STAGE_INDEXING = "2 indexing";
+    /// The output stage.
+    public static final String STAGE_OUTPUT = "3 output";
+    /// The last step.
+    public static final String STAGE_FINISH = "finish";
+    /// The status's key for the survey of each feed of a build of several.
+    static final String FEED_SURVEYS = "feed_surveys";
+    /// The status's key for the indexes of a build indexed one index per feed.
+    static final String INDEX_PER_FEED = "index_per_feed";
+    /// The reference data stage: a table to look values up in, loaded by a reference-data pipeline.
+    public static final String STAGE_REFERENCE = "1 reference";
+
+    // The step that writes the build's Events.
+    private static final String PROCESSED = "processed";
+    // The step an existing feed's survey is covered by.
+    private static final String COVERED = "covered";
+    // The step an aggregated feed's source types are profiled and scoped by.
+    private static final String SOURCE_TYPES = "source_types";
+    // The step the build's samples (or the feed it works from) are surveyed by, before the source is catalogued:
+    // the survey alone finds an aggregated feed's source type field. Seen (evals 58 and 59): the agent went straight
+    // on with its own uploads, and an aggregated feed was never recognised.
+    static final String SURVEYED = "surveyed";
+    /// The step a build of several feeds' surveys are compared by (compare_feeds), before the catalogue.
+    static final String FEEDS_COMPARED = "feeds_compared";
+    /// The step the source's event types are catalogued by (catalogue_event_types), before the translation.
+    static final String CATALOGUE = "catalogue";
+    // The kind of build that only assesses a feed: its plan ends once its source type registry is written.
+    private static final String ASSESSMENT = "assessment";
+    // The steps an assessment takes.
+    private static final Set<String> ASSESSMENT_STEPS = Set.of(SOURCE_TYPES, COVERED, "promoted");
+    private static final List<List<String>> STAGE_1 = List.of(
+            List.of("feed", "Create the feed in the build", "create_feed"),
+            List.of("samples", "Upload every sample file as its own stream",
+                    "upload_sample files=[their paths] (sample= only for text pasted into the chat)"),
+            List.of("converter", "Text converter for the format: build_data_splitter infers the Data Splitter from "
+                                 + "the sample text (for XML fragments: the wrapper, as the environment writes "
+                                 + "them; stroom://guide/data-splitter)",
+                    "build_data_splitter stream_ids=<the sample streams>, save_text_converter"),
+            List.of(SURVEYED, "The samples (or the feed the build works from) surveyed: their formats, kinds of "
+                              + "event and any source type field, as of an aggregated feed, whose source types are "
+                              + "built a group at a time (quick on a small sample)",
+                    "survey_feed build=... feed=... (stream_ids=<the sample streams> for the build's own)"),
+            List.of(SOURCE_TYPES, "An aggregated feed's source types: the source type field confirmed (by the "
+                                  + "survey), each source type profiled and the registry written, the user choosing "
+                                  + "in a form which go in the build's one source type group and its name, the rest "
+                                  + "parked for later builds (an assessment: the registry written)",
+                    "record_source_types build=... feed=... (then again with reviewed=<its review_id> and "
+                    + "group=<a name you suggest>)"),
+            List.of(FEEDS_COMPARED, "A build of several feeds: how their surveys differ (fields or kinds of event "
+                                    + "in some only, formats, time zones), each feed's streams and dates (a dormant "
+                                    + "feed included), and the AGENTS rules their folders give differently, shown to "
+                                    + "the user; they confirm one translation for the union, and answer each feed's "
+                                    + "zone and each conflict",
+                    CompareFeedsTool.NAME + " build=..."),
+            List.of(CATALOGUE, "The source's event types catalogued: you propose each event type and how its "
+                               + "records are recognised, from the evidence and what you know of the source; each "
+                               + "proposal is checked against every sampled record; the user confirms them a set at "
+                               + "a time, then the catch-all for uncatalogued records (into the source notes the "
+                               + "draft follows)",
+                    CatalogueEventTypesTool.NAME + " build=... (without proposals, then with them, then "
+                    + "confirm=true)"),
+            List.of("translation", "Translation XSLT from a mapping: draft it from the sample, decide the action "
+                                   + "elements, generate and save it with the mapping (stroom://guide/mapping)",
+                    "draft_translation_mapping, build_translation_xslt build=... name=... (uuid=... to replace)"),
+            List.of("pipeline", "Events pipeline as a child of the right template, with its text converter and XSLT "
+                                + "set (create_pipeline fills them from the build; update_pipeline sets a missing "
+                                + "one)",
+                    "find_pipeline_templates stage=translation, create_pipeline, update_pipeline"),
+            List.of("stepped", "Every sample record stepped clean",
+                    "step_sample over all sample streams (an existing feed's: step_records over the survey's "
+                    + "locations when next gives them); fix the mapping and build_translation_xslt uuid=... in "
+                    + "between"),
+            List.of("covered", "An existing feed surveyed until covered: no new kind of event in a full batch, or "
+                               + "every stream read; every location stepped clean",
+                    "survey_feed build=..., step_records over every location"),
+            List.of("processed", "Sample streams processed into Events",
+                    "create_processor_filter, wait_for_processing"),
+            List.of("unmapped", "Every field processing reported as read by no rule decided with the user: mapped "
+                                + "(then the streams holding it reprocessed) or left out (ignored_fields)",
+                    "build_translation_xslt changes= (or ignored_fields), reprocess_streams"),
+            List.of("validated", "Events validated against the schema and the quality rules", "check_events"),
+            List.of("documented", "Events pipeline documented, with its Field mapping generated",
+                    "write_documentation stream_ids=..."));
+    // A table to look values up in (stroom://guide/reference-data): on its own, or before the events pipeline that
+    // looks values up in it is stepped (a lookup made before its Reference stream exists is remembered for 10
+    // minutes), so it comes after the converter and before the translation.
+    private static final List<List<String>> REFERENCE = List.of(
+            List.of("reference_pipeline", "Reference-data pipeline: its XSLT from the maps (each a name, a key and "
+                                          + "values), saved in the build, and a child of the Reference Data "
+                                          + "template with the build's converter and that XSLT",
+                    "build_reference_xslt, save_xslt, find_pipeline_templates stage=reference, create_pipeline"),
+            List.of("reference_stepped", "Every reference sample record stepped clean through it",
+                    "step_sample over the Raw Reference streams"),
+            List.of("reference_processed", "The reference sample processed into Reference streams, which lookups "
+                                           + "read: its filter is created disabled, for the user to enable",
+                    "create_processor_filter, wait_for_processing"),
+            List.of("reference_documented", "Reference-data pipeline documented: what each map holds",
+                    "write_documentation stream_ids=<Raw Reference streams>"));
+    private static final List<List<String>> STAGE_2 = List.of(
+            List.of("index", "Index doc for the agreed backend, convention and name",
+                    "get_field_conventions, draft_index_mapping, create_index_doc"),
+            List.of("indexing_pipeline", "Indexing pipeline from the plan (XSLT saved with index_plan)",
+                    "save_xslt index_plan=... (no code), create_indexing_pipeline"),
+            List.of("index_template", "Elasticsearch: the index template agreed with the user, built from the example "
+                                      + "index template they pasted (or confirmed without one), then committed to the "
+                                      + "cluster by them",
+                    "propose_index_template example_template=<theirs>, check_index_template"),
+            List.of("indexed", "Sample Events indexed and found by verify_index's searches (stepping clean is not "
+                               + "indexing)", "create_processor_filter, wait_for_processing, verify_index"),
+            List.of("index_documented", "Indexing pipeline documented",
+                    "write_documentation stream_ids=<Events streams>"));
+    private static final List<List<String>> STAGE_3 = List.of(
+            List.of("cef_mapping", "CEF mapping drafted from the Events and saved with its XSLT",
+                    "draft_cef_mapping stream_ids=<Events streams> build=... name=..."),
+            List.of("cef_pipeline", "CEF output pipeline with its XSLT and KafkaConfig set",
+                    "create_pipeline (a forwarding template, or standalone=kafka), update_pipeline"),
+            List.of("cef_stepped", "The Events stepped clean through it (stepping sends nothing)",
+                    "step_sample over Events streams"),
+            List.of("cef_documented", "CEF pipeline documented", "write_documentation stream_ids=<Events streams>"));
+    private static final List<List<String>> FINISH = List.of(
+            List.of("promoted", "Promoted beside sibling sources, filters handed over disabled",
+                    "build_status, promote_build"));
+    // The plan step each core tool implements, put first in its description so a client that picks tools by
+    // similarity to the prompt pulls the whole onboarding chain for an "onboard these logs" request.
+    private static final Map<String, String> STEP_OF = stepOf();
+    // Parsers that read the raw data themselves: no text converter before them.
+    private static final Set<String> NO_CONVERTER = Set.of("JSONParser", "XMLParser");
+    // A processor filter's term selecting a stream by id, as processing_status lists it ("Id EQUALS 123").
+    private static final Pattern SELECTED_ID = Pattern.compile(
+            "\\b" + ProcessorFilters.ID + " EQUALS (\\d{1,18})\\b");
+    // A sample's processor filter is created enabled once the user approves it in a form (asked for by the user);
+    // one made disabled (before, or a feed's) is the user's to enable.
+    private static final String APPROVE = "the user approves it in a form, and processing starts";
+    private static final String ASK = "ask them to, on the pipeline's Processors tab, if they haven't said";
+    private static final String DOCUMENTATION = "<the documentation, from the documentation guide>";
+    // The steps whose call depends on how processing stands, as step:processing.
+    private static final Set<String> CALLS = Set.of("pipeline:version", "stepped:surveyed", "stepped:copied",
+            "processed:disabled", "processed:running", "index_template:unstepped", "indexed:disabled",
+            "indexed:unstepped", "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited",
+            "feed:reference", "samples:reference", "reference_processed:disabled", "reference_processed:running",
+            "stepped:no_reference", "index:discovery", "translation:redraft", CATALOGUE + ":offer",
+            CATALOGUE + ":existing_copy", CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm",
+            CATALOGUE + ":in_place_confirm", CATALOGUE + ":in_place_unread");
+    // The steps before the translation, which a reference-only build keeps.
+    private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
+
+    private final BuildFacts facts;
+    private final WriteGuard guard;
+    private final Consent consent;
+    private final BuildMemory memory;
+
+    /// @param facts   What the plan reads from Stroom about a build.
+    /// @param guard   Finds the build a document is in.
+    /// @param consent Gives what the user changed in the call's forms.
+    /// @param memory  The build each session is working on.
+    @Inject
+    BuildPlan(final BuildFacts facts, final WriteGuard guard, final Consent consent, final BuildMemory memory) {
+        this.facts = facts;
+        this.guard = guard;
+        this.consent = consent;
+        this.memory = memory;
+    }
+
+    /// @return Every step of the plan, in order: each `step`, `what`, `tools` and `stage`.
+    public static List<Map<String, Object>> checklist() {
+        final List<Map<String, Object>> steps = new ArrayList<>();
+        final int translation = STAGE_1.stream().map(List::getFirst).toList().indexOf("translation");
+        addSteps(steps, STAGE_EVENTS, STAGE_1.subList(0, translation));
+        addSteps(steps, STAGE_REFERENCE, REFERENCE);
+        addSteps(steps, STAGE_EVENTS, STAGE_1.subList(translation, STAGE_1.size()));
+        addSteps(steps, STAGE_INDEXING, STAGE_2);
+        addSteps(steps, STAGE_OUTPUT, STAGE_3);
+        addSteps(steps, STAGE_FINISH, FINISH);
+        return steps;
+    }
+
+    /// @return A new source's steps: without an existing feed's survey rounds, the comparison of several existing
+    /// feeds, or CEF output, which other builds take.
+    public static List<Map<String, Object>> onboardingChecklist() {
+        return checklist().stream()
+                .filter(step -> !"covered".equals(step.get("step")) && !SOURCE_TYPES.equals(step.get("step"))
+                                && !FEEDS_COMPARED.equals(step.get("step"))
+                                && !STAGE_OUTPUT.equals(step.get("stage"))
+                                && !STAGE_REFERENCE.equals(step.get("stage")))
+                .toList();
+    }
+
+    /// @param toolName A tool's name.
+    /// @return What its description starts with, naming its onboarding plan step (e.g. `Onboarding step 5 of 15
+    /// (pipeline): `, `Onboarding start: `, `Onboarding, any step: `), or an empty string for a tool that is no step.
+    public static String onboardingLabel(final String toolName) {
+        final String step = STEP_OF.get(toolName);
+        if (step == null) {
+            return "";
+        }
+        final List<Object> steps = onboardingChecklist().stream().map(item -> item.get("step")).toList();
+        if (steps.contains(step)) {
+            return "Onboarding step " + (steps.indexOf(step) + 1) + " of " + steps.size() + " (" + step + "): ";
+        }
+        if (FEEDS_COMPARED.equals(step)) {
+            return "Onboarding several existing feeds (" + step + "): ";
+        }
+        return "any step".equals(step)
+                ? "Onboarding, any step: "
+                : "Onboarding start: ";
+    }
+
+    /// Remembers the build the user is working on, so tools called without `build` fall back to it (in this
+    /// node's memory, for the session: a call that can't be helped is told to name the build).
+    ///
+    /// @param context The call's context.
+    /// @param build   The build, or null (nothing is remembered).
+    public void rememberBuild(final ToolCallContext context, final String build) {
+        memory.remember(context == null
+                ? null
+                : context.session(), build);
+    }
+
+    /// @param context The call's context.
+    /// @param build   The build the call names, or null.
+    /// @param tool    The tool, to say which needs it.
+    /// @return The build named (remembered for the session), or else the one the session last worked on.
+    /// @throws ToolRefusal if neither is known.
+    public String resolveBuild(final ToolCallContext context, final String build, final String tool) {
+        if (NullSafe.isNonBlankString(build)) {
+            rememberBuild(context, build);
+            return build;
+        }
+        return memory.current(context == null
+                        ? null
+                        : context.session())
+                .orElseThrow(() -> new ToolRefusal(tool + " needs build: the build this work belongs to, as "
+                                                   + "start_onboarding or start_build named it (e.g. "
+                                                   + "'onboard-acme-door'). build_status shows a build's state."));
+    }
+
+    /// @param context The call's context, or null.
+    /// @return The build the session last worked on; empty when none is known.
+    public Optional<String> currentBuild(final ToolCallContext context) {
+        return memory.current(context == null
+                ? null
+                : context.session());
+    }
+
+    /// @param build A build, or null.
+    /// @return Its next step while it has no Events yet (no Events stream from its sample, its next step one before
+    /// processing); empty once it has Events, or when the build is unknown or unreadable. Seen in an e2e run: an
+    /// XSLT written by hand left the translation step to do while the build's Events were processed and documented.
+    public Optional<Map<String, Object>> nextBeforeEvents(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> status = status(build, null);
+            if (status.get("events_streams") instanceof final List<?> events && !events.isEmpty()) {
+                return Optional.empty();
+            }
+            return Optional.ofNullable(JsonValues.map(status.get("next")))
+                    .filter(next -> isBeforeEvents(next.get("step")));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param build A build, or null.
+    /// @return Why the build can't be processed yet for want of coverage: it surveys an existing feed and its plan's
+    /// coverage step is still to do (asked for by the user: seen in chat 163, a feed processed and called complete
+    /// while its survey said NOT COVERED, its two rarest kinds of event never seen nor classified). Empty when it is
+    /// covered (or the user chose to stop reading deeper), surveys no existing feed, or can't be told.
+    public Optional<String> uncovered(final String build) {
+        return uncovered(build, List.of());
+    }
+
+    /// @param build     A build, or null.
+    /// @param streamIds The streams to be processed, or empty for a feed-wide filter.
+    /// @return Why it isn't to be processed yet, as [#uncovered(String)]; empty too when every stream named was read
+    /// whole by the survey (or read in part and stopped at by the user): processing only those needs no more survey
+    /// (asked for by the user: seen in testing, a feed's survey couldn't be covered, and processing the streams it
+    /// had read was refused as much as the whole feed).
+    public Optional<String> uncovered(final String build, final List<Long> streamIds) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        if (!streamIds.isEmpty() && readWhole(build).containsAll(streamIds)) {
+            return Optional.empty();
+        }
+        try {
+            return JsonValues.maps(status(build, null).get("steps")).stream()
+                    .filter(step -> COVERED.equals(step.get("step")) && "to do".equals(step.get("state")))
+                    .findFirst()
+                    .map(step -> "The survey of the feed build '" + build + "' works from isn't covered yet: "
+                                 + "survey_feed build=" + build + " until it is (it asks the user whether to read "
+                                 + "deeper the parts it read only in part, or they choose to stop there), then "
+                                 + "process. Processed before, kinds of event no one has classified would go "
+                                 + "through the mapping's catch-all rules unseen. If the user wants to go ahead "
+                                 + "with the survey as it is, survey_feed build=" + build + " accept_as_is=true "
+                                 + "(they confirm it); a filter over stream_ids the survey read whole goes ahead "
+                                 + "as it is.");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    // The streams the build's survey read whole (or the user stopped at); none when it can't be told.
+    private Set<Long> readWhole(final String build) {
+        try {
+            final List<Map<String, Object>> surveys = facts.buildDocs(build).stream()
+                    .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                    .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                    .toList();
+            final Set<Long> out = new HashSet<>();
+            facts.surveyState(surveys).ifPresent(survey -> JsonValues.listOrEmpty(
+                    survey.get(StroomBuildFacts.READ_WHOLE)).forEach(id -> out.add(((Number) id).longValue())));
+            return out;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No survey read for build {}: {}", build, e.getMessage()), e);
+            return Set.of();
+        }
+    }
+
+    /// @param build A build, or null.
+    /// @return Why a dashboard isn't to be proposed yet: the build has an indexing pipeline whose indexing isn't
+    /// verified (its plan's `indexed` step still to do), so the index may hold nothing, or not all the build's
+    /// Events, and the time window a dashboard would guess may show none of them (seen in testing: the agent
+    /// skipped the processor filter and verify_index, and proposed a dashboard over the last 24 hours of data from
+    /// months before). Says the plan's next step. Empty when indexed (or not needed), with no indexing pipeline, or
+    /// when the build is unknown or unreadable.
+    public Optional<String> unverifiedIndexing(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> status = status(build, null);
+            final Map<String, Object> states = new LinkedHashMap<>();
+            JsonValues.maps(status.get("steps")).forEach(step -> states.put(String.valueOf(step.get("step")),
+                    step.get("state")));
+            if (!"done".equals(states.get("indexing_pipeline")) || !"to do".equals(states.get("indexed"))) {
+                return Optional.empty();
+            }
+            final Map<String, Object> next = JsonValues.mapOrEmpty(status.get("next"));
+            final Map<String, Object> call = JsonValues.mapOrEmpty(next.get("call"));
+            final String nextSaid = call.get("tool") == null
+                    ? "the plan's next step (build_status build=" + build + ")"
+                    : "the plan's next step, " + next.get("step") + ": " + call.get("tool") + " "
+                      + ToolJson.dumpsSortedKeys(JsonValues.mapOrEmpty(call.get("arguments")))
+                      + NullSafe.getOrElse(next.get("then"), then -> " (" + then + ")", "");
+            return Optional.of("No dashboard was proposed: build '" + build + "' has an indexing pipeline whose "
+                               + "indexing isn't verified yet, so its index may hold none (or not all) of the "
+                               + "build's Events. Do " + nextSaid + ". The indexing steps end with verify_index, "
+                               + "which makes the build's -VERIFY dashboard over the time window the data really "
+                               + "has; give the user its link. Propose another dashboard only once that passes, "
+                               + "if they still want one.");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No status for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param step A step of the plan, as `next` names it, or null.
+    /// @return Whether it comes before the build's Events exist: a step of stage 1 up to processing (which, as the
+    /// next step, has not run).
+    public static boolean isBeforeEvents(final Object step) {
+        if (step == null) {
+            return false;
+        }
+        for (final List<String> item : STAGE_1) {
+            if (item.getFirst().equals(step)) {
+                return true;
+            }
+            if (PROCESSED.equals(item.getFirst())) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /// @param ref A document.
+    /// @return The build a managed document belongs to: the build folder it is in. Empty for any other document,
+    /// or if it can't be told.
+    public Optional<String> buildOf(final DocRef ref) {
+        try {
+            return guard.tags(ref).contains(WriteGuard.MANAGED)
+                    ? guard.buildOf(ref)
+                    : Optional.empty();
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to tell the build of {}", ref, e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param build A build, or null.
+    /// @return The existing feeds the build works from ([BuildFacts#sourceFeeds]), with its documents read here;
+    /// none for no build.
+    public List<String> worksFrom(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        return facts.sourceFeeds(build, facts.buildDocs(build));
+    }
+
+    /// @param build A build, or null.
+    /// @return The feeds of a build of several not surveyed yet, in order; none for one feed, a new source, or a
+    /// build that can't be read.
+    public List<String> feedsToSurvey(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        try {
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final List<Map<String, Object>> surveys = docs.stream()
+                    .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                    .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                    .toList();
+            return feedSurveys(build, docs, facts.sourceFeeds(build, docs), surveys).unsurveyed();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No feeds to survey read for build {}: {}", build, e.getMessage()));
+            return List.of();
+        }
+    }
+
+    /// @param build A build, or null.
+    /// @return The existing feeds the build is for ([BuildFacts#buildSourceFeeds]): those start_build or
+    /// start_onboarding was given and those it surveyed; none for a new source, or no build.
+    public List<String> buildFeeds(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        return facts.buildSourceFeeds(build, facts.buildDocs(build));
+    }
+
+    /// @param build A build, or null.
+    /// @return The feeds whose streams the build's events pipelines read: the existing feeds it works from, else its
+    /// own feeds but its test feeds; none for no build.
+    public List<String> inputFeeds(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        final List<Map<String, Object>> docs = facts.buildDocs(build);
+        final List<String> sources = facts.sourceFeeds(build, docs);
+        if (!sources.isEmpty()) {
+            return sources;
+        }
+        return docs.stream()
+                .filter(doc -> FeedDoc.TYPE.equals(doc.get("type")))
+                .map(doc -> String.valueOf(doc.get("name")))
+                .filter(name -> !name.endsWith(OutputFeeds.TEST_FEED))
+                .toList();
+    }
+
+    /// @param build A build.
+    /// @return Each feed whose survey for the build was refused because nothing could be read, with why; empty when
+    /// none was.
+    Map<String, String> unreadableSurveys(final String build) {
+        return facts.unreadableSurveys(build);
+    }
+
+    /// @param build A build.
+    /// @param max   The most streams given.
+    /// @return The build's newest raw sample streams (its feeds' own Raw Events streams, else Raw Reference),
+    /// newest first; none for a build with none of its own.
+    public List<Long> rawSampleStreams(final String build, final int max) {
+        final Map<String, List<Map<String, Object>>> streams = facts.sampleStreams(build, facts.buildDocs(build));
+        List<Map<String, Object>> metas = NullSafe.list(streams.get(StreamTypeNames.RAW_EVENTS));
+        if (metas.isEmpty()) {
+            metas = NullSafe.list(streams.get(StreamTypeNames.RAW_REFERENCE));
+        }
+        return metas.stream()
+                .sorted(Comparator.comparingLong((Map<String, Object> meta) -> number(meta.get("createMs")))
+                        .reversed())
+                .map(meta -> number(meta.get("id")))
+                .limit(max)
+                .toList();
+    }
+
+    /// @param build A build.
+    /// @return The profiled format of the build's newest raw sample stream (its head): `stream_id`, `feed`,
+    /// `format`, `namespace`, `root`, `suggested_parser` and `needs_text_converter`; for a build on an existing
+    /// feed, with no sample stream of its own, the format its survey found; empty without either.
+    public Optional<Map<String, Object>> sampleFormat(final String build) {
+        final List<Map<String, Object>> docs = facts.buildDocs(build);
+        final Optional<Map<String, Object>> own = sampleFormat(facts.sampleStreams(build, docs));
+        if (own.isPresent()) {
+            return own;
+        }
+        // A build on an existing feed has no sample stream of its own: its survey read the feed. Seen in testing:
+        // survey_feed found XML fragments, create_pipeline took the XMLParser template with no replace_parser, and
+        // the parser kept only each record's <System> block, so no rule matched.
+        final List<String> sources = facts.sourceFeeds(build, docs);
+        final List<Map<String, Object>> surveys = docs.stream()
+                .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                .toList();
+        if (sources.isEmpty() || surveys.isEmpty()) {
+            return Optional.empty();
+        }
+        return facts.surveyState(surveys)
+                .filter(survey -> JsonValues.truthy(survey.get("sample"))
+                                  || JsonValues.truthy(survey.get("format")))
+                .map(survey -> {
+                    final Map<String, Object> format = new LinkedHashMap<>();
+                    format.put("stream_id", JsonValues.strings(survey.get("streams")).stream()
+                            .findFirst()
+                            .orElse("surveyed"));
+                    // The feed surveyed, not the first the build names (the many-feeds audit, 2026-11-25); with
+                    // several, each feed's format, where they differ.
+                    final Map<String, String> formats = surveyedFormats(surveys);
+                    format.put("feed", formats.isEmpty()
+                            ? sources.getFirst()
+                            : formats.keySet().iterator().next());
+                    if (formats.size() > 1) {
+                        format.put("feeds", List.copyOf(formats.keySet()));
+                        if (new HashSet<>(formats.values()).size() > 1) {
+                            format.put("formats_by_feed", formats);
+                        }
+                    }
+                    format.putAll(formatFromSurvey(survey));
+                    return format;
+                });
+    }
+
+    // Each surveyed feed's format, as its own survey doc found it, in the docs' order; a feed whose survey found
+    // none left out.
+    private Map<String, String> surveyedFormats(final List<Map<String, Object>> surveys) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : surveys) {
+            final String name = String.valueOf(doc.get("name"));
+            facts.surveyState(List.of(doc))
+                    .map(state -> JsonValues.text(state.get("format")))
+                    .filter(found -> !found.isEmpty())
+                    .ifPresent(found -> out.put(name.substring(0, name.length() - StroomBuildFacts.SURVEY.length()),
+                            found));
+        }
+        return out;
+    }
+
+    /// @param build A build.
+    /// @return The steps its plan takes (each `step`, `what`, `tools` and `stage`), leaving out those its kind of
+    /// work doesn't need; the onboarding checklist when the build can't be read (the plan is advice).
+    public List<Map<String, Object>> plannedSteps(final String build) {
+        try {
+            final List<Map<String, Object>> steps = new ArrayList<>();
+            final Object all = status(build, null).get("steps");
+            for (final Object item : all instanceof final List<?> list
+                    ? list
+                    : List.of()) {
+                final Map<String, Object> step = new LinkedHashMap<>(JsonValues.map(item));
+                if (!"not needed".equals(step.remove("state"))) {
+                    steps.add(step);
+                }
+            }
+            return steps;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No steps for build {}: {}", build, e.getMessage()), e);
+            return onboardingChecklist();
+        }
+    }
+
+    /// @param build A build.
+    /// @return The steps of its plan done so far, in the plan's order; none when it is unknown or unreadable.
+    public List<String> doneSteps(final String build) {
+        try {
+            final List<String> done = new ArrayList<>();
+            final Object all = status(build, null).get("steps");
+            for (final Object item : all instanceof final List<?> list
+                    ? list
+                    : List.of()) {
+                final Map<String, Object> step = JsonValues.map(item);
+                if ("done".equals(step.get("state"))) {
+                    done.add(String.valueOf(step.get("step")));
+                }
+            }
+            return done;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No steps for build {}: {}", build, e.getMessage()), e);
+            return List.of();
+        }
+    }
+
+    /// The pipeline already translating what the build is to, for the user to choose whether the build starts from it
+    /// (decided by the user, 2026-11-24): offered once, before the build holds any XSLT or pipeline of its own.
+    ///
+    /// @param build A build.
+    /// @return The pipeline (`name`, `uuid`, and `source_types` for a source type group's), or empty when there is
+    /// none, the user has chosen already, or the build has a translation of its own (advice: never a failure).
+    public Optional<Map<String, Object>> existingToOffer(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            if (facts.startFrom(build).isPresent()) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            if (docs.stream().anyMatch(doc -> PipelineDoc.TYPE.equals(doc.get("type"))
+                                              || XsltDoc.TYPE.equals(doc.get("type")))) {
+                return Optional.empty();
+            }
+            return facts.existingTranslation(build, facts.sourceFeeds(build, docs));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No existing translation offered for build {}: {}", build,
+                    e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param pipelineUuid A pipeline.
+    /// @return True if it is a translation pipeline whose XSLT keeps no mapping (one the tools never built); false
+    /// where Stroom can't load it or it can't be told.
+    public boolean handWrittenTranslation(final String pipelineUuid) {
+        try {
+            return "translation".equals(facts.pipelineShape(pipelineUuid).stage())
+                   && facts.keptXsltUuid(pipelineUuid).isEmpty();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Whether {} is a hand-written translation wasn't read: {}",
+                    pipelineUuid, e.getMessage()), e);
+            return false;
+        }
+    }
+
+    /// The pipeline [#existingToOffer] offers, where its translation is one the tools never built (its XSLT keeps
+    /// no mapping): copy_pipeline refuses to copy it (or any pipeline running its translation XSLT) until the user
+    /// has chosen how the build starts.
+    ///
+    /// @param build A build.
+    /// @return The pipeline (`name`, `uuid`), or empty when none is offered or the tools built it.
+    public Optional<Map<String, Object>> handWrittenToOffer(final String build) {
+        return existingToOffer(build).filter(pipeline -> {
+            try {
+                return facts.keptXsltUuid(ToolText.str(pipeline.get("uuid"))).isEmpty();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Whether build {}'s offer is hand-written wasn't read: {}", build,
+                        e.getMessage()), e);
+                return false;
+            }
+        });
+    }
+
+    /// Whether nothing is left in a build but what its promotion left in the workspace on purpose, unchanged since
+    /// (its survey, say): promoted, with no work of its own still to do. A build holding anything else (a pipeline,
+    /// an XSLT, a document changed since or made after) still has work.
+    ///
+    /// @param build A build.
+    /// @return True when every document left in it was kept at promotion and is unchanged; false for a build with
+    /// nothing in it, or nothing kept.
+    public boolean onlyKeptAtPromotion(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return false;
+        }
+        try {
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final Set<String> kept = facts.keptAtPromotion(build);
+            return !docs.isEmpty() && docs.stream().allMatch(doc -> kept.contains(uuid(doc)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("What build {}'s promotion kept wasn't read: {}", build,
+                    e.getMessage()), e);
+            return false;
+        }
+    }
+
+    /// @param build A build.
+    /// @return How the user chose to start it ([BuildFacts#startFrom]), or empty when not asked yet.
+    public Optional<Map<String, Object>> startFrom(final String build) {
+        try {
+            return NullSafe.isBlankString(build)
+                    ? Optional.empty()
+                    : facts.startFrom(build);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("How build {} starts wasn't read: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// What a build starting from an existing pipeline (the user's choice, or a copy of a translation pipeline made
+    /// without it asked) does before anything else of its translation: the copy made, then its XSLT read back into
+    /// a mapping and catalogue. Seen in eval cases 97 and 104 on Haiku: the copy's XSLT edited by hand, and the
+    /// catalogue listed before the copy, its origin "0 event types", the source notes left with no catalogue.
+    ///
+    /// @param build A build.
+    /// @return The step still to do, and the copy's XSLTs not read back; empty once the build holds a translation
+    /// mapping, or where it doesn't start from an existing pipeline (drafted, described in place, a new source, or
+    /// a new version of an indexing pipeline alone).
+    public Optional<ReadBack> awaitingReadBack(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+            if (startFrom != null && !ExistingTranslations.EXISTING.equals(startFrom.get("choice"))) {
+                return Optional.empty();
+            }
+            if (facts.readBackFailed(build).isPresent()) {
+                // rebuild_mapping couldn't read the copy's XSLT back: the translation is drafted anew instead
+                // (decided by the user, 2026-11-25), so nothing waits for the read-back.
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final List<Map<String, Object>> copies = docs.stream()
+                    .filter(doc -> PipelineDoc.TYPE.equals(doc.get("type")) && doc.get("version_of") != null)
+                    .filter(doc -> "translation".equals(stageOf(doc)))
+                    .toList();
+            if (startFrom == null && copies.isEmpty()) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> xslts = docs.stream()
+                    .filter(doc -> XsltDoc.TYPE.equals(doc.get("type")))
+                    .toList();
+            if (hasMapping(xslts(xslts), KeptMapping.TRANSLATION)) {
+                return Optional.empty();
+            }
+            if (copies.isEmpty()) {
+                // Chosen (a copy made unasked is one already): the copy is to make.
+                final Map<String, Object> pipeline = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+                return Optional.of(new ReadBack("copy_pipeline build=" + build + " source_uuid=" + ToolText.str(
+                        pipeline.get("uuid")) + " first: the build starts from '" + ToolText.str(pipeline.get(
+                        "name")) + "', copied as a new version, then rebuild_mapping reads the copy's XSLT back "
+                                                + "into its mapping and catalogue", Set.of()));
+            }
+            final Set<String> unread = new LinkedHashSet<>();
+            xslts.stream()
+                    .filter(doc -> doc.get("version_of") != null)
+                    .map(BuildPlan::uuid)
+                    .forEach(unread::add);
+            return Optional.of(new ReadBack("rebuild_mapping uuid=" + unread.stream().findFirst()
+                    .orElse("<the copy's XSLT>") + " pipeline_uuid=" + uuid(copies.getFirst()) + " first: it "
+                                            + "reads the copy's XSLT back into its mapping and catalogue of event "
+                                            + "types, the original's translation kept (what it can't read stays "
+                                            + "as XSLT)", Set.copyOf(unread)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Build {}'s read-back wasn't checked: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// What a build starting from an existing pipeline does once its copy's XSLT is read back, before the
+    /// translation changes: the catalogue read back confirmed by the user (each event type, then the catch-all), so
+    /// the change is made on what they agreed the original translates. Seen in eval case 97 on Haiku and Sonnet, and
+    /// 104 on Haiku: the field added at once after the read-back, the catalogue put to the user only at promotion.
+    ///
+    /// @param build A build, or null.
+    /// @param xslt  The XSLT to change.
+    /// @return The call still to make; empty where the XSLT isn't the copy's read back, the catalogue is confirmed,
+    /// the build doesn't start from an existing pipeline (drafted, described in place, a new source), or its
+    /// read-back failed (the translation drafted anew, through the draft's own gates).
+    public Optional<String> awaitingCatalogue(final String build, final String xslt) {
+        if (NullSafe.isBlankString(build) || NullSafe.isBlankString(xslt)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+            if (startFrom == null || !ExistingTranslations.EXISTING.equals(startFrom.get("choice"))
+                || facts.readBackFailed(build).isPresent()) {
+                return Optional.empty();
+            }
+            final boolean readBack = facts.xsltMapping(xslt)
+                    .filter(kept -> KeptMapping.TRANSLATION.equals(kept.kind()))
+                    .isPresent();
+            if (!readBack) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final boolean copy = docs.stream().anyMatch(doc -> XsltDoc.TYPE.equals(doc.get("type"))
+                                                               && xslt.equals(uuid(doc))
+                                                               && doc.get("version_of") != null);
+            if (!copy || facts.catalogued(docs)) {
+                return Optional.empty();
+            }
+            return Optional.of("catalogue_event_types build=" + build + " stream_ids=<the sample streams> first: it "
+                               + "lists the catalogue read back from '" + ToolText.str(JsonValues.mapOrEmpty(
+                    startFrom.get("pipeline")).get("name")) + "' with its check against the sample, then "
+                               + "confirm=true puts it to the user (each event type, then the catch-all)");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Build {}'s catalogue wasn't checked: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    // A pipeline's stage, or null where Stroom can't load it.
+    private String stageOf(final Map<String, Object> doc) {
+        try {
+            return facts.pipelineShape(uuid(doc)).stage();
+        } catch (final PipelineUnreadableException e) {
+            return null;
+        }
+    }
+
+    /// @param build The build, or null.
+    /// @param made  A document the calling tool has just created, which counts whether or not the build's listing
+    ///              shows it yet, or null.
+    /// @return The first unfinished step of the build's plan, or empty when the build is unknown or unreadable
+    /// (the plan is advice: never fail a write over it).
+    public Optional<Map<String, Object>> nextStep(final String build, final DocRef made) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(JsonValues.map(status(build, made).get("next")));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No next step for build {}: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// [#withNext] for the build the document is in, when it is in one: a save by uuid, or a copy, names no build
+    /// (seen: such results carried no next, and the agent lost its place in the plan).
+    ///
+    /// @param context The call's context.
+    /// @param ref     The document the tool wrote.
+    /// @param result  The tool's result.
+    /// @return The result, with `next` if the document is in a build.
+    public Map<String, Object> nextFor(final ToolCallContext context,
+                                       final DocRef ref,
+                                       final Map<String, Object> result) {
+        final Optional<String> build = buildOf(ref);
+        return build.isPresent()
+                ? withNext(context, build.get(), result)
+                : result;
+    }
+
+    /// The tool result with `next`, the plan's next step, added (and a reminder that the work is not done:
+    /// `done: false` until the next step is promotion). A confirmation or approval round (a result with `status`)
+    /// passes through untouched. Where the user changed a proposed value in the call's form, the result says so
+    /// (`changed_by_user`, and a note), so the agent doesn't carry on with its own value. The build is remembered for
+    /// the session.
+    ///
+    /// @param context The call's context, or null.
+    /// @param build   The build the result belongs to, or null.
+    /// @param result  The tool's result.
+    /// @return The result, with `next`.
+    public Map<String, Object> withNext(final ToolCallContext context,
+                                        final String build,
+                                        final Map<String, Object> result) {
+        if (result == null || result.containsKey("status")) {
+            return result;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(result);
+        final Map<String, Consent.Change> changes = context == null
+                ? Map.of()
+                : consent.changes(context);
+        if (!changes.isEmpty()) {
+            final Map<String, Object> changed = new LinkedHashMap<>();
+            final List<String> said = new ArrayList<>();
+            changes.forEach((key, change) -> {
+                changed.put(key, change.theirs());
+                said.add("the user changed " + key.replace('_', ' ') + " from '" + change.proposed() + "' to '"
+                         + change.theirs() + "': use '" + change.theirs() + "' from here on");
+            });
+            out.put("changed_by_user", changed);
+            final String text = String.join("; ", said);
+            out.put("note", out.get("note") instanceof final String note && !note.isEmpty()
+                    ? note + " " + Character.toUpperCase(text.charAt(0)) + text.substring(1) + "."
+                    : text);
+        }
+        rememberBuild(context, build);
+        final DocRef made = out.get("type") instanceof final String type && out.get("uuid") instanceof final String uuid
+                            && out.get("name") instanceof final String name
+                ? new DocRef(type, uuid, name)
+                : null;
+        nextStep(build, made).ifPresent(next -> {
+            final Map<String, Object> shown = new LinkedHashMap<>(next);
+            final Object tool = JsonValues.map(next.get("call")) == null
+                    ? null
+                    : JsonValues.map(next.get("call")).get("tool");
+            if (tool != null) {
+                // Seen: create_pipeline hidden in a VS Code tool group; the agent wrote a handoff note and stopped.
+                // Seen (Qwen3 Coder Next): 360 calls to activate_* names it made up, each refused as not existing.
+                shown.put("if_missing", tool + " not in your tool list? Call the activate_* tool in your list whose "
+                                        + "description names it, then " + tool + ". Only a name your list shows: "
+                                        + "the names are your client's and a guessed one only fails. If none names "
+                                        + "it, ask the user to enable " + tool + ". Never work around it.");
+            }
+            out.put("next", shown);
+            if (!"promoted".equals(next.get("step"))) {
+                out.put("done", false);
+            }
+        });
+        return out;
+    }
+
+    /// @param build A build's name.
+    /// @throws ToolRefusal if the workspace has no build of the name, naming the user's builds.
+    public void refuseUnlessABuild(final String build) {
+        guard.refuseUnlessABuild(build);
+    }
+
+    /// Each plan step's state, read from the build.
+    ///
+    /// @param build A build.
+    /// @param made  A document the calling tool has just created, which counts whether or not the listing shows it
+    ///              yet, or null.
+    /// @return The build's state, as build_status gives it: `build`, `documents`, `sample`, `feeds`,
+    /// `sample_streams`, `xslts`, `pipelines`, `events_streams`, `before_promotion`, `steps`, `works_from` (on
+    /// existing data) and `next`.
+    public Map<String, Object> status(final String build, final DocRef made) {
+        final List<Map<String, Object>> docs = new ArrayList<>(facts.buildDocs(build));
+        if (made != null && docs.stream().noneMatch(doc -> made.getUuid().equals(doc.get("uuid")))) {
+            // Just created, the explorer can leave it out for a moment (seen in the plan walk: create_feed's next
+            // named the feed step again, inviting a second feed).
+            final Map<String, Object> doc = new LinkedHashMap<>();
+            doc.put("type", made.getType());
+            doc.put("uuid", made.getUuid());
+            doc.put("name", made.getName());
+            doc.put("path", null);
+            doc.put("working_copy_of", null);
+            docs.add(doc);
+        }
+        final Map<String, List<Map<String, Object>>> byType = new LinkedHashMap<>();
+        docs.forEach(doc -> byType.computeIfAbsent(String.valueOf(doc.get("type")), ignored -> new ArrayList<>())
+                .add(doc));
+        final Map<String, List<Map<String, Object>>> streams = facts.sampleStreams(build, docs);
+        final List<Map<String, Object>> raw = NullSafe.list(streams.get("Raw Events"));
+        Map<String, Object> fmt = raw.isEmpty()
+                ? null
+                : sampleFormat(streams).orElse(null);
+        final List<Map<String, Object>> xslts = xslts(of(byType, XsltDoc.TYPE));
+        final List<Map<String, Object>> pipelines = pipelines(of(byType, PipelineDoc.TYPE));
+        final List<Map<String, Object>> translation = withStage(pipelines, Set.of("translation"));
+        // A discovery build indexes its raw streams as they are: no events pipeline, its discovery pipeline indexes.
+        // Known by its pipeline's raw parser, or by its plan: an XML discovery pipeline from an XMLParser indexing
+        // template reads as indexing.
+        // The kind of work the build was started as, when it was named (start_build or start_onboarding kind=): its
+        // steps follow it from the start, before the build holds what would tell it.
+        final String kind = facts.kind(build).orElse(null);
+        final List<Map<String, Object>> referencePipelines = withStage(pipelines, Set.of("reference"));
+        final List<Map<String, Object>> rawReference = NullSafe.list(streams.get(StreamTypeNames.RAW_REFERENCE));
+        final boolean reference = "reference".equals(kind) || !referencePipelines.isEmpty()
+                                  || !rawReference.isEmpty();
+        final boolean discovery = ("discovery".equals(kind) || !withStage(pipelines, Set.of("discovery")).isEmpty()
+                                   || xslts.stream().anyMatch(x -> Boolean.TRUE.equals(x.get("discovery"))))
+                                  && translation.isEmpty();
+        List<Map<String, Object>> indexing = withStage(pipelines, Set.of("indexing", "discovery"));
+        // A CEF output build: Events sent on as CEF, a stage of its own (none of the events or indexing steps).
+        final List<Map<String, Object>> forwarding = withStage(pipelines, Set.of("forwarding"));
+        final boolean cefBuild = !forwarding.isEmpty() || hasMapping(xslts, "cef");
+        final Set<String> documented = new HashSet<>(names(of(byType, DocumentationDoc.TYPE)));
+        // A build on data already in Stroom (an existing feed, a production pipeline's new version or working copy)
+        // has no feed of its own to create and nothing to upload: its feeds, if any, are test feeds. Seen in VS
+        // Code: told to create_feed and upload_sample, the agent uploaded a workspace file though the user chose
+        // production streams, and made a new feed to build an indexing pipeline's next version.
+        final List<String> sources = facts.sourceFeeds(build, docs);
+        final List<Map<String, Object>> copies = pipelines.stream()
+                .filter(p -> p.get("working_copy_of") != null || p.get("version_of") != null)
+                .toList();
+        final List<Map<String, Object>> surveys = of(byType, DocumentationDoc.TYPE).stream()
+                .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                .toList();
+        final boolean surveyed = !surveys.isEmpty();
+        // Each feed the build is for surveyed, not any one (the many-feeds audit, 2026-11-25: a build of three
+        // feeds went on once the first was surveyed, and the others were never read).
+        final FeedSurveys perFeed = feedSurveys(build, docs, sources, surveys);
+        final boolean assessment = ASSESSMENT.equals(kind);
+        // A survey of the build's own feed (a new source's sample) leaves it a new source: only the feeds outside the
+        // build make it one on existing data (sourceFeeds leaves the build's own out). Seen: onboarding surveyed its
+        // sample with the build, and the plan skipped indexing as if the feed already existed.
+        final boolean existing = !sources.isEmpty() || !copies.isEmpty();
+        final boolean ownFeed = !of(byType, FeedDoc.TYPE).isEmpty();
+        // A new source's sample survey is read too, for an aggregated feed's source type field.
+        final Map<String, Object> surveyState = surveyed
+                ? facts.surveyState(surveys).orElse(null)
+                : null;
+        final Map<String, Object> survey = existing
+                ? surveyState
+                : null;
+        // An existing feed onboarded (not a copy of a production pipeline) is surveyed before it is processed, with
+        // or without a survey record: seen in testing, the agent deleted the build's survey record and the plan's
+        // covered step, and the gate on processing, went with it.
+        final boolean surveyRequired = !sources.isEmpty() && copies.isEmpty();
+        if (survey != null && fmt == null && (JsonValues.truthy(survey.get("sample"))
+                                              || JsonValues.truthy(survey.get("format")))) {
+            fmt = formatFromSurvey(survey);
+        }
+        // Which stages the build does: on existing data, those it has the pipelines (or survey, or index doc) for. A
+        // CEF output build does neither, whatever it works from.
+        final boolean cefOnly = cefBuild && translation.isEmpty() && indexing.isEmpty() && !surveyed;
+        final boolean newSource = !existing && !cefOnly;
+        // A translation XSLT saved from a mapping starts it too: a next version written anew needn't survey first (seen
+        // in testing: its XSLT saved, the plan still said to choose the work, and never reached its pipeline).
+        final boolean stage1 = newSource || !translation.isEmpty() || surveyed || hasMapping(xslts, "translation");
+        // Indexing too when the build onboards an existing feed (surveyed for its events pipeline), as for a new
+        // source, or holds any indexing work (an indexing XSLT saved from its plan comes before the index doc and
+        // pipeline). Seen in Ask Stroom AI: the user asked for an index, and after the events pipeline's
+        // documentation, and again after save_xslt index_plan=, next said "step 9 of 9, promoted".
+        final boolean hasIndexDoc = !of(byType, "Index").isEmpty() || !of(byType, "ElasticIndex").isEmpty();
+        final boolean stage2 = newSource || surveyed || !indexing.isEmpty() || hasIndexDoc
+                               || hasMapping(xslts, "index") || discovery;
+        // A table to look values up in, loaded on its own: no translation, Events or index (asked for by the user:
+        // a reference feed's build was planned as an events onboarding).
+        final boolean referenceOnly = reference && !"events".equals(kind) && translation.isEmpty() && raw.isEmpty()
+                                      && !hasMapping(xslts, "translation") && !surveyed && indexing.isEmpty()
+                                      && !hasIndexDoc && !cefBuild && !discovery && copies.isEmpty();
+        if (fmt == null && referenceOnly && !rawReference.isEmpty()) {
+            fmt = sampleFormat(streams, StreamTypeNames.RAW_REFERENCE).orElse(null);
+        }
+        for (final Map<String, Object> p : pipelines) {
+            if (p.get("working_copy_of") != null) {
+                // A working copy's documentation is the production pipeline's, under its name.
+                facts.docName(PipelineDoc.TYPE, String.valueOf(p.get("working_copy_of")))
+                        .filter(documented::contains)
+                        .ifPresent(original -> documented.add(String.valueOf(p.get("name"))));
+            }
+        }
+        final List<Long> events = new ArrayList<>();
+        final List<Long> eventsLeftOut = new ArrayList<>();
+        final List<String> translations = pipelines.stream()
+                .filter(p -> "translation".equals(p.get("stage")))
+                .map(BuildPlan::uuid)
+                .toList();
+        of(byType, FeedDoc.TYPE).forEach(feed -> {
+            final BuildFacts.EventsStreams found = facts.eventsStreams(feed, translations);
+            events.addAll(found.current());
+            eventsLeftOut.addAll(found.leftOut());
+        });
+        // Fields processing reported as read by no rule, not yet mapped or left out (asked for by the user: the build
+        // doesn't go on with them silently unmapped).
+        final Map<String, List<Long>> unmapped = events.isEmpty()
+                ? Map.of()
+                : facts.unmappedFields(events, translations);
+        // Elasticsearch: the index template agreed with the user for each indexing pipeline's current code. Not
+        // needed for Lucene; to do for Elasticsearch until every such pipeline has one.
+        final List<Optional<String>> problems = new ArrayList<>();
+        for (final Map<String, Object> p : indexing) {
+            facts.elasticDestination(uuid(p)).ifPresent(destination ->
+                    problems.add(facts.agreementProblem(uuid(p), destination)));
+        }
+        // To do once the build is known to be Elasticsearch; otherwise (Lucene, or no index yet) not needed.
+        final Boolean agreed = !problems.isEmpty()
+                ? (Boolean) problems.stream().noneMatch(Optional::isPresent)
+                : !of(byType, "ElasticIndex").isEmpty() || discovery
+                        ? Boolean.FALSE
+                        : null;
+        final List<String> checks = facts.buildChecks(docs);
+        final boolean stale = checks.stream().anyMatch(check -> check.contains("Field mapping")
+                                                                || check.contains("differs"));
+
+        final Map<String, Boolean> done = new LinkedHashMap<>();
+        done.put("feed", ownFeed);
+        done.put("samples", !raw.isEmpty() || (referenceOnly && !rawReference.isEmpty()));
+        // Not needed either once the events pipeline reads the raw data with a JSON or XML parser: its clean step is
+        // what proves the format (seen in testing: a JSON-lines feed's working pipeline, and step 1 still to do).
+        done.put("converter", fmt != null && JsonValues.truthy(fmt.get("needs_text_converter"))
+                              && translation.stream().noneMatch(p -> p.get("parser") != null
+                                                                    && NO_CONVERTER.contains(p.get("parser")))
+                ? (Boolean) !of(byType, TextConverterDoc.TYPE).isEmpty()
+                : null);
+        // A copied pipeline's XSLT is there already, with its mapping or written by hand.
+        // Asked for by the user (work package E8): before the draft; not needed once the build has a translation
+        // (saved from a mapping, written by hand, or a copied pipeline's).
+        // Done once surveyed, or once a survey for the build was refused for nothing readable (catalogue_event_types
+        // then goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
+        // pipeline's), as the catalogue step isn't.
+        // A pipeline described in place (or copied) whose translation a pre-processor feeds: a survey of the raw
+        // records made before the start was chosen no longer counts; survey_feed reads them again at the
+        // translation's input (decided 2026-11-25).
+        final Map<String, Object> started = facts.startFrom(build).orElse(null);
+        final List<String> staleSurveys = surveys.stream()
+                .filter(doc -> TranslationInputs.staleSurvey(started, facts.surveyState(List.of(doc)).orElse(null)))
+                .map(doc -> String.valueOf(doc.get("name")))
+                .map(name -> name.substring(0, name.length() - StroomBuildFacts.SURVEY.length()))
+                .toList();
+        done.put(SURVEYED, (surveyed || !facts.unreadableSurveys(build).isEmpty()) && perFeed.unsurveyed().isEmpty()
+                           && staleSurveys.isEmpty()
+                ? Boolean.TRUE
+                : hasMapping(xslts, "translation") || !translation.isEmpty()
+                        ? null
+                        : Boolean.FALSE);
+        done.put(SOURCE_TYPES, sourceTypesDone(build, surveyState, of(byType, DocumentationDoc.TYPE), sources,
+                assessment));
+        // A build of several feeds: their surveys compared and the union confirmed by the user (decided by the
+        // user, 2026-11-25); not needed for one feed, or a new source.
+        // Not needed either where the survey isn't (a copied translation with no survey).
+        done.put(FEEDS_COMPARED, perFeed.feeds().size() > 1 && !discovery && done.get(SURVEYED) != null
+                ? (Boolean) facts.feedsCompared(build, docs)
+                : null);
+        // How the user chose to start, where a pipeline already translates what the build is to (decided by the user,
+        // 2026-11-24): from it, the catalogue is to do (read back from its XSLT, then confirmed) though the build
+        // holds its copy's translation.
+        final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+        // A copy of an existing pipeline made without the start offer answered (seen in the multi-feed lane's eval
+        // runs: copied straight away, and the catalogue dropped to "not needed") starts from it all the same: its
+        // XSLT read back and the catalogue confirmed are never skipped.
+        final boolean copiedUnasked = startFrom == null && copies.stream()
+                .anyMatch(p -> p.get("version_of") != null);
+        // rebuild_mapping couldn't read the copy's XSLT back (decided by the user, 2026-11-25): the translation is
+        // drafted anew, into the copy (a child of the same template), the catalogue first as for any new translation.
+        final Map<String, Object> readBackFailed = copiedUnasked || startFrom != null
+                                                                    && ExistingTranslations.EXISTING.equals(
+                startFrom.get("choice"))
+                ? facts.readBackFailed(build).orElse(null)
+                : null;
+        final boolean inducting = readBackFailed == null && (copiedUnasked || startFrom != null
+                                                             && ExistingTranslations.EXISTING.equals(
+                startFrom.get("choice")));
+        // Described in place (decided with the user 2026-11-25): surveyed and catalogued, no new version.
+        final boolean inPlace = InPlaceInduction.inPlace(startFrom);
+        // Built on the pipeline described in place: an index or a forwarder, promoted alone.
+        final boolean builtOnInPlace = inPlace && (!indexing.isEmpty() || hasIndexDoc || hasMapping(xslts, "index")
+                                                   || cefBuild);
+        // Until the copy is made and its XSLT read back, whatever catalogue the build holds already (one carried in
+        // from the promoted notes beside the feed, confirmed) is no reason to skip them.
+        final boolean readBack = !translation.isEmpty() && xslts.stream().noneMatch(x -> x.get("mapping") == null);
+        done.put(CATALOGUE, inPlace
+                ? Boolean.valueOf(facts.catalogued(docs))
+                : readBackFailed != null
+                ? Boolean.valueOf(facts.catalogued(docs) || hasMapping(xslts, "translation"))
+                : inducting && !readBack
+                ? Boolean.FALSE
+                : facts.catalogued(docs)
+                        ? Boolean.TRUE
+                        : inducting
+                                ? Boolean.FALSE
+                                : hasMapping(xslts, "translation") || !translation.isEmpty()
+                                        ? null
+                                        : Boolean.FALSE);
+        done.put("translation", hasMapping(xslts, "translation")
+                                || (readBackFailed == null && existing && !translation.isEmpty()
+                                    && xslts.stream().anyMatch(x -> !"index".equals(x.get("mapping")))));
+        done.put("pipeline", !translation.isEmpty() && translation.stream().noneMatch(BuildPlan::hasMissing));
+        done.put("stepped", translation.stream().anyMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
+        // Not recorded (not needed) unless the build surveys an existing feed.
+        done.put("covered", survey == null
+                ? surveyRequired
+                        ? Boolean.FALSE
+                        : null
+                : (Boolean) (JsonValues.truthy(survey.get("saturated")) && perFeed.unsurveyed().isEmpty()
+                             && perFeed.uncovered().isEmpty()));
+        done.put("processed", !events.isEmpty());
+        done.put("unmapped", !events.isEmpty() && unmapped.isEmpty());
+        done.put("validated", !translation.isEmpty() && translation.stream().allMatch(facts::validated));
+        done.put("documented", !translation.isEmpty() && allNamed(translation, documented) && !stale);
+        // A discovery index's doc is made at verification, once documents are in it: its pipeline comes first. A new
+        // version of an indexing pipeline has its plan from the one it copies; its index doc comes once indexed.
+        done.put("index", hasIndexDoc || (discovery && !indexing.isEmpty())
+                          || indexing.stream().anyMatch(copies::contains));
+        done.put("indexing_pipeline", !indexing.isEmpty());
+        // One index per feed, as the user chose (create_index_doc): an index doc and an indexing pipeline for each
+        // feed, not one for them all.
+        final PerFeedIndexing perFeedIndexing = perFeedIndexing(build, of(byType, "Index"),
+                of(byType, "ElasticIndex"), indexing);
+        if (!perFeedIndexing.feeds().isEmpty()) {
+            done.put("index", perFeedIndexing.withoutIndex().isEmpty());
+            done.put("indexing_pipeline", perFeedIndexing.withoutPipeline().isEmpty());
+        }
+        done.put("index_template", agreed);
+        // A working copy of a production indexing pipeline is stepped clean in the build; indexing production Events
+        // into its index, after promotion, is the user's.
+        // Verified over Events that are still the build's current ones: an Events reprocess makes new streams, which
+        // the index lacks (seen in testing: the plan said indexed after a reprocess, and the index was stale).
+        final Predicate<Map<String, Object>> indexedNow = p -> {
+            final List<Long> indexed = facts.indexedStreams(p);
+            return facts.verified(p) && !staleIndex(indexed, eventsLeftOut, discovery || indexed.isEmpty()
+                    ? Set.of()
+                    : facts.goneStreams(indexed), discovery);
+        };
+        done.put("indexed", !indexing.isEmpty() && indexing.stream().allMatch(p ->
+                (p.get("working_copy_of") != null && Boolean.TRUE.equals(p.get("stepped"))) || indexedNow.test(p)));
+        done.put("index_documented", !indexing.isEmpty() && allNamed(indexing, documented));
+        done.put("cef_mapping", hasMapping(xslts, "cef")
+                                || forwarding.stream().anyMatch(p -> p.get("working_copy_of") != null));
+        done.put("cef_pipeline", !forwarding.isEmpty() && forwarding.stream().noneMatch(BuildPlan::hasMissing));
+        done.put("cef_stepped", !forwarding.isEmpty()
+                                && forwarding.stream().allMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
+        done.put("cef_documented", !forwarding.isEmpty() && allNamed(forwarding, documented) && !stale);
+        done.put("reference_pipeline", !referencePipelines.isEmpty()
+                                       && referencePipelines.stream().noneMatch(BuildPlan::hasMissing));
+        done.put("reference_stepped", referencePipelines.stream().anyMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
+        final List<String> referenceFeeds = new ArrayList<>(rawReference.stream()
+                .map(meta -> String.valueOf(meta.get("feed")))
+                .distinct()
+                .toList());
+        if (referenceFeeds.isEmpty() && referenceOnly) {
+            referenceFeeds.addAll(sources);
+        }
+        done.put("reference_processed", !referenceFeeds.isEmpty()
+                                        && referenceFeeds.stream().allMatch(feed -> !facts.referenceStreams(feed)
+                .isEmpty()));
+        done.put("reference_documented", !referencePipelines.isEmpty() && allNamed(referencePipelines, documented));
+        done.put("promoted", false);
+
+        final Set<String> declined = memory.skippedStages(build);
+        final List<Map<String, Object>> steps = assessment
+                ? steps(done, assessmentSkips())
+                : inPlace
+                        ? steps(done, inPlaceSkips(!indexing.isEmpty() || hasIndexDoc || hasMapping(xslts, "index"),
+                        cefBuild))
+                : steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
+                survey != null || surveyRequired, existing, !copies.isEmpty() && !ownFeed,
+                stage1 && !declined.contains(STAGE_EVENTS),
+                stage2 && !declined.contains(STAGE_INDEXING), cefBuild && !declined.contains(STAGE_OUTPUT)));
+        final Map<String, Object> next = steps.stream()
+                .filter(step -> "to do".equals(step.get("state")))
+                .findFirst()
+                .orElse(null);
+        final String nextStep = next == null
+                ? null
+                : String.valueOf(next.get("step"));
+        String processing = null;
+        Map<String, Object> index = null;
+        final List<Map<String, Object>> unstepped = indexing.stream()
+                .filter(p -> !Boolean.TRUE.equals(p.get("stepped")))
+                .toList();
+        if (("index_template".equals(nextStep) || "indexed".equals(nextStep)) && !unstepped.isEmpty()) {
+            // The template is checked against the documents a clean step writes, and processing needs one: step
+            // first.
+            indexing = first(indexing, unstepped);
+            processing = "unstepped";
+        } else if ("processed".equals(nextStep) && !translation.isEmpty()) {
+            // Its filter made, disabled until the user enables it (asked for by the user): wait for them, then for it.
+            final List<Map<String, Object>> filters = facts.processingFilters(uuid(translation.getFirst()));
+            processing = filters.isEmpty()
+                    ? null
+                    : filters.stream().noneMatch(f -> Boolean.TRUE.equals(f.get("enabled")))
+                            ? "disabled"
+                            : "running";
+        } else if ("indexed".equals(nextStep)) {
+            // Which call indexing needs next: a processor filter, the wait for it, or the searches that verify it.
+            final Map<String, Object> pendingIndexing = indexing.stream()
+                    .filter(indexedNow.negate())
+                    .findFirst()
+                    .orElse(indexing.getFirst());
+            indexing = first(indexing, List.of(pendingIndexing));
+            List<Map<String, Object>> filters = facts.processingFilters(uuid(pendingIndexing));
+            if (facts.verified(pendingIndexing)) {
+                // Verified over Events since reprocessed: only a filter on the current Events indexes them, so the
+                // earlier run's finished filter doesn't lead to verify_index again over an index without them.
+                filters = filters.stream()
+                        .filter(f -> selectsAny(f, events))
+                        .toList();
+            }
+            processing = filters.isEmpty()
+                    ? null
+                    : filters.stream().noneMatch(f -> Boolean.TRUE.equals(f.get("enabled")))
+                            ? "disabled"
+                            : filters.stream().allMatch(f -> Boolean.TRUE.equals(f.get("finished")))
+                                    ? "finished"
+                                    : "running";
+            final Map<String, Object> found = !of(byType, "ElasticIndex").isEmpty()
+                    ? of(byType, "ElasticIndex").getFirst()
+                    : !of(byType, "Index").isEmpty()
+                            ? of(byType, "Index").getFirst()
+                            : null;
+            if (found != null) {
+                index = new LinkedHashMap<>();
+                index.put("uuid", found.get("uuid"));
+                index.put("backend", "ElasticIndex".equals(found.get("type"))
+                        ? "elasticsearch"
+                        : "lucene");
+                index.put("columns", facts.suggestedColumns(uuid(pendingIndexing)));
+            } else if ("finished".equals(processing)) {
+                // Searched through an index doc: a discovery build makes it now.
+                processing = "no_index";
+            }
+        }
+        final String named = sources.isEmpty()
+                ? "the feed it works from"
+                : String.join(", ", sources);
+        final Object rawIds = orElse(orElse(raw.stream().map(m -> m.get("id")).toList(),
+                survey == null
+                        ? null
+                        : survey.get("streams")), existing
+                ? "<recent raw streams of " + named + " (" + streamMetaCall(sources, null) + ")>"
+                : List.of());
+        String edited = null;
+        Map<String, Object> version = null;
+        if ("translation".equals(nextStep) && readBackFailed != null) {
+            // Drafted anew, as rebuild_mapping couldn't read the copy's XSLT back: saved into the copy's XSLT.
+            processing = "redraft";
+            edited = JsonValues.text(JsonValues.mapOrEmpty(readBackFailed.get("xslt")).get("uuid"));
+            version = readBackFailed;
+        } else if ("documented".equals(nextStep) && !translation.isEmpty()
+            && checks.stream().anyMatch(check -> check.contains("differs from what its mapping generates"))) {
+            // Changed by hand (save_xslt, or in Stroom): documentation would stay stale until the mapping is read
+            // back.
+            processing = "edited";
+            edited = facts.keptXsltUuid(uuid(translation.getFirst())).orElse(null);
+        } else if ("pipeline".equals(nextStep) && existing && translation.isEmpty() && copies.isEmpty()) {
+            // The feed's next version, its translation written anew (seen in testing: told to find the best
+            // template, the agent offered copying V1.2 or a pipeline unlike it, and the user had to ask why).
+            final List<Map<String, Object>> current = facts.translating(sources);
+            if (!current.isEmpty()) {
+                processing = "version";
+                // The newest version where several translate the build's feeds (V1.0 and V1.1 at once, say).
+                version = ExistingTranslations.newest(current, sources).orElse(current.getFirst());
+            }
+        } else if ("stepped".equals(nextStep) && startFrom == null && !copies.isEmpty() && !translation.isEmpty()
+                   && xslts.stream().anyMatch(x -> x.get("mapping") == null)) {
+            // A pipeline copied as its next version whose XSLT keeps no mapping (written by hand, say): read back
+            // first, so the change is made as a mapping change (seen in eval case 97, 2026-11-25: copied straight
+            // from start_build's advice, next said step_sample, and the agent rewrote the copy's XSLT by hand).
+            processing = "copied";
+            edited = xslts.stream()
+                    .filter(x -> x.get("mapping") == null)
+                    .map(BuildPlan::uuid)
+                    .findFirst()
+                    .orElse(null);
+        } else if ("stepped".equals(nextStep) && survey != null && JsonValues.truthy(survey.get("locations"))) {
+            // The survey's locations, when there are few enough to give: else step_sample over its streams, as the
+            // plan says (seen in Ask Stroom AI: 66 locations, and create_pipeline's next said step_records with a
+            // placeholder).
+            processing = "surveyed";
+        }
+        if (CATALOGUE.equals(nextStep) && inPlace) {
+            // Described in place: the catalogue read back from its XSLT, checked against the feeds' records and
+            // confirmed.
+            final Map<String, Object> described = new LinkedHashMap<>(JsonValues.mapOrEmpty(
+                    startFrom.get("pipeline")));
+            // Its XSLT couldn't be read back (decided by the user, 2026-11-25): its catalogue from the survey.
+            final Optional<String> notRead = InPlaceInduction.mappingNotRead(startFrom);
+            notRead.ifPresent(why -> described.put("why", why));
+            version = described;
+            processing = notRead.isPresent()
+                    ? "in_place_unread"
+                    : "in_place_confirm";
+        } else if (CATALOGUE.equals(nextStep) && inducting) {
+            // Starting from the existing pipeline: its copy, then its XSLT read back, then the catalogue confirmed.
+            final String unread = xslts.stream()
+                    .filter(x -> x.get("mapping") == null)
+                    .map(BuildPlan::uuid)
+                    .findFirst()
+                    .orElse(null);
+            version = copiedUnasked
+                    ? copyOf(copies)
+                    : JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+            processing = translation.isEmpty()
+                    ? "existing_copy"
+                    : unread != null
+                            ? "existing_rebuild"
+                            : "existing_confirm";
+            edited = unread;
+        } else if (CATALOGUE.equals(nextStep) && startFrom == null && translation.isEmpty() && existing
+                   && !hasMapping(xslts, "translation")) {
+            // Not asked yet: the catalogue's first call asks the user how to start.
+            final Optional<Map<String, Object>> found = facts.existingTranslation(build, sources);
+            if (found.isPresent()) {
+                processing = "offer";
+                version = found.get();
+            }
+        }
+        Map<String, Object> referenceArgs = null;
+        if (reference) {
+            referenceArgs = new LinkedHashMap<>();
+            referenceArgs.put("pipeline", referencePipelines.isEmpty()
+                    ? null
+                    : uuid(referencePipelines.getFirst()));
+            referenceArgs.put("raw", orElse(rawReference.stream().map(m -> m.get("id")).toList(), existing
+                    ? "<recent Raw Reference streams of " + named + " (" + streamMetaCall(sources, "Raw Reference")
+                      + ")>"
+                    : List.of()));
+        }
+        if (referenceOnly && ("feed".equals(nextStep) || "samples".equals(nextStep))) {
+            processing = "reference";
+        } else if ("reference_processed".equals(nextStep) && !referencePipelines.isEmpty()) {
+            // Created disabled, as any filter but an events or indexing pipeline's: the user enables it.
+            final List<Map<String, Object>> filters = facts.processingFilters(uuid(referencePipelines.getFirst()));
+            processing = filters.isEmpty()
+                    ? null
+                    : filters.stream().noneMatch(f -> Boolean.TRUE.equals(f.get("enabled")))
+                            ? "disabled"
+                            : "running";
+        } else if ("index".equals(nextStep) && discovery) {
+            processing = "discovery";
+        }
+        if ("stepped".equals(nextStep) && !translation.isEmpty()) {
+            // Lookups made before their reference feed has a Reference stream find nothing, and Stroom remembers that
+            // for 10 minutes (asked for by the user: the reference data processed before stepping).
+            final List<String> unloaded = facts.referencedFeeds(uuid(translation.getFirst())).stream()
+                    .filter(feed -> facts.referenceStreams(feed).isEmpty())
+                    .toList();
+            if (!unloaded.isEmpty()) {
+                processing = "no_reference";
+                referenceArgs = new LinkedHashMap<>(NullSafe.map(referenceArgs));
+                referenceArgs.put("unloaded", unloaded);
+            }
+        }
+        Object eventsIds = orElse(discovery
+                ? rawIds
+                : events.subList(0, Math.min(20, events.size())), existing
+                ? "<recent Events streams from " + named + " (" + streamMetaCall(sources, "Events") + ")>"
+                : List.of());
+        if (cefOnly || (cefBuild && raw.isEmpty())) {
+            eventsIds = orElse(eventsIds, "<recent Events streams from " + named
+                                          + " (" + streamMetaCall(sources, "Events") + ")>");
+        }
+        // The feed the survey step is for: the first not surveyed yet, or not covered yet; the others as they come.
+        final List<String> dueFirst = SURVEYED.equals(nextStep)
+                ? perFeed.first(perFeed.unsurveyed(), perFeed.first(staleSurveys, sources))
+                : COVERED.equals(nextStep)
+                        ? perFeed.first(perFeed.uncovered(), perFeed.first(perFeed.unsurveyed(), sources))
+                        : sources;
+        final CallArgs args = new CallArgs(build, names(of(byType, FeedDoc.TYPE)), rawIds, eventsIds,
+                translation.isEmpty()
+                        ? null
+                        : uuid(translation.getFirst()),
+                indexing.isEmpty()
+                        ? null
+                        : uuid(indexing.getFirst()), processing, index, dueFirst, discovery,
+                survey != null && JsonValues.truthy(survey.get("locations"))
+                        ? survey.get("locations")
+                        : "<every location survey_feed gave>",
+                forwarding.isEmpty()
+                        ? null
+                        : uuid(forwarding.getFirst()), edited, version, referenceArgs, scopeOf(surveyState));
+        final NextCall call = nextCall(nextStep == null
+                ? "promoted"
+                : nextStep, args);
+        // On existing data, before any pipeline: which stage comes next is the work's (a survey, a copy, an index).
+        final boolean onlyExistingData = existing && !stage1 && !stage2 && !cefBuild && !reference && !assessment;
+        final Map<String, Object> start = onlyExistingData
+                ? existingDataStart(build, sources, named)
+                : null;
+
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("build", build);
+        result.put("documents", docs);
+        result.put("sample", fmt);
+        result.put("feeds", names(of(byType, FeedDoc.TYPE)));
+        final Map<String, Object> sampleStreams = new LinkedHashMap<>();
+        streams.forEach((type, metas) -> sampleStreams.put(type, metas.stream().map(m -> m.get("id")).toList()));
+        result.put("sample_streams", sampleStreams);
+        result.put("xslts", xslts);
+        result.put("pipelines", pipelines.stream().map(BuildPlan::shown).toList());
+        result.put("events_streams", events.subList(0, Math.min(20, events.size())));
+        if (!eventsLeftOut.isEmpty()) {
+            result.put("events_streams_left_out", eventsLeftOut.subList(0, Math.min(20, eventsLeftOut.size())));
+            result.put("events_left_out_note", "Events streams of the build's feeds that don't show what its "
+                                               + "translation writes now, so its steps don't use them: made from a "
+                                               + "raw stream since deleted, by another pipeline, or before the "
+                                               + "translation XSLT was last saved.");
+        }
+        if (!unmapped.isEmpty()) {
+            final List<Map<String, Object>> fields = new ArrayList<>();
+            unmapped.forEach((field, in) -> fields.add(Map.of("field", field, "streams", in)));
+            result.put("unmapped_fields", fields.subList(0, Math.min(50, fields.size())));
+        }
+        result.put("before_promotion", checks);
+        result.put("steps", steps);
+        if (existing) {
+            result.put("works_from", sources);
+        }
+        if (readBackFailed != null && !hasMapping(xslts, "translation")) {
+            result.put("read_back", "rebuild_mapping couldn't read the copy's XSLT '" + ToolText.str(
+                    JsonValues.mapOrEmpty(readBackFailed.get("xslt")).get("name")) + "' back into a mapping ("
+                                    + ToolText.str(readBackFailed.get("why")) + "): the translation is drafted "
+                                    + "anew into the copy, a child of the same template, the original untouched.");
+        }
+        perFeed.said().ifPresent(said -> result.put(FEED_SURVEYS, said));
+        perFeedIndexing.said().ifPresent(said -> result.put(INDEX_PER_FEED, said));
+        if (next != null && !onlyExistingData) {
+            final Map<String, Object> shown = new LinkedHashMap<>();
+            shown.put("step", nextStep);
+            shown.put("do", next.get("what"));
+            shown.put("call", call.call());
+            shown.put("then", call.then() + documentationAfterStep(nextStep, translation, documented)
+                              + perFeedIndexing.after(nextStep));
+            shown.put("progress", progress(steps, nextStep));
+            result.put("next", shown);
+        } else if (onlyExistingData) {
+            result.put("next", start);
+        } else if (inPlace && !builtOnInPlace) {
+            // Described in place and catalogued: nothing to promote (no new version).
+            result.put(InPlaceInduction.IN_PLACE, InPlaceInduction.mappingNotRead(startFrom)
+                    .map(why -> "Done: the pipeline is described in place as far as it can be: its XSLT couldn't be "
+                                + "read back into a mapping (" + why + "), so none is kept; its confirmed catalogue "
+                                + "is in the notes beside it, linked from its translation XSLT's description. No new "
+                                + "version, nothing to promote.")
+                    .orElse("Done: the pipeline is described in place (its mapping and the link to its source notes "
+                            + "in its translation XSLT's description, its confirmed catalogue in the notes beside "
+                            + "it). No new version, nothing to promote."));
+        } else {
+            final Map<String, Object> shown = new LinkedHashMap<>();
+            shown.put("step", "promoted");
+            shown.put("do", "Everything is in place: promote_build with the user's approval");
+            shown.put("call", call.call());
+            shown.put("then", call.then());
+            result.put("next", shown);
+        }
+        return result;
+    }
+
+    // For a build the user chose to index one index per feed: which feeds have no index doc named for them yet,
+    // and which no indexing pipeline writing their index.
+    private PerFeedIndexing perFeedIndexing(final String build,
+                                            final List<Map<String, Object>> luceneIndexes,
+                                            final List<Map<String, Object>> elasticIndexes,
+                                            final List<Map<String, Object>> indexing) {
+        final List<String> feeds = facts.indexPerFeed(build);
+        if (feeds.isEmpty()) {
+            return PerFeedIndexing.NONE;
+        }
+        final List<String> named = new ArrayList<>();
+        luceneIndexes.forEach(doc -> named.addAll(FeedIndexSplit.feedsNamed(feeds, String.valueOf(doc.get("name")))));
+        elasticIndexes.forEach(doc -> named.addAll(FeedIndexSplit.feedsNamed(feeds,
+                String.valueOf(doc.get("name")))));
+        final List<String> written = new ArrayList<>();
+        indexing.forEach(pipeline -> facts.indexNameOf(uuid(pipeline)).ifPresent(name -> written.addAll(
+                FeedIndexSplit.feedsNamed(feeds, name))));
+        return new PerFeedIndexing(feeds, without(feeds, named), without(feeds, written));
+    }
+
+    private static List<String> without(final List<String> feeds, final List<String> found) {
+        return feeds.stream()
+                .filter(feed -> found.stream().noneMatch(feed::equalsIgnoreCase))
+                .toList();
+    }
+
+    // Which of the feeds the build is for are surveyed, and covered: each feed's survey doc read on its own. Only for
+    // a build of two or more feeds on data already in Stroom; one feed's (or a new source's) is the build's survey.
+    private FeedSurveys feedSurveys(final String build,
+                                    final List<Map<String, Object>> docs,
+                                    final List<String> sources,
+                                    final List<Map<String, Object>> surveys) {
+        if (sources.size() < 2) {
+            return FeedSurveys.NONE;
+        }
+        final List<String> feeds = facts.buildSourceFeeds(build, docs);
+        if (feeds.size() < 2) {
+            return FeedSurveys.NONE;
+        }
+        final Map<String, Map<String, Object>> byFeed = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : surveys) {
+            final String name = String.valueOf(doc.get("name"));
+            byFeed.put(name.substring(0, name.length() - StroomBuildFacts.SURVEY.length()).toLowerCase(Locale.ROOT),
+                    doc);
+        }
+        final Set<String> unreadable = new HashSet<>();
+        facts.unreadableSurveys(build).keySet().forEach(feed -> unreadable.add(feed.toLowerCase(Locale.ROOT)));
+        final List<String> surveyedFeeds = new ArrayList<>();
+        final List<String> unsurveyed = new ArrayList<>();
+        final List<String> uncovered = new ArrayList<>();
+        for (final String feed : feeds) {
+            final String key = feed.toLowerCase(Locale.ROOT);
+            final Map<String, Object> doc = byFeed.get(key);
+            if (doc == null) {
+                if (unreadable.contains(key)) {
+                    surveyedFeeds.add(feed);
+                } else {
+                    unsurveyed.add(feed);
+                }
+                continue;
+            }
+            surveyedFeeds.add(feed);
+            final boolean saturated = facts.surveyState(List.of(doc))
+                    .map(state -> JsonValues.truthy(state.get("saturated")))
+                    .orElse(false);
+            if (!saturated) {
+                uncovered.add(feed);
+            }
+        }
+        return new FeedSurveys(feeds, surveyedFeeds, unsurveyed, uncovered);
+    }
+
+    // An events pipeline documented before its XSLT was saved again: stepping is to do again, and its documentation
+    // after it (seen in chat 192: the doc described the XSLT the save replaced, and nothing said so).
+    private static String documentationAfterStep(final String nextStep,
+                                                 final List<Map<String, Object>> translation,
+                                                 final Set<String> documented) {
+        return "stepped".equals(nextStep) && !translation.isEmpty() && allNamed(translation, documented)
+                ? "; then update its documentation (write_documentation change=<what changed>): it was written "
+                  + "before the XSLT was saved again, and describes the XSLT as it was"
+                : "";
+    }
+
+    /// The step's first call, with the arguments the build already gives and `<...>` for those still to decide, and
+    /// what follows it. One call rather than a list of tools: a small model given several options deliberated
+    /// between them until its context ran out.
+    ///
+    /// @param step A plan step.
+    /// @param args What the build gives.
+    /// @return The call and what follows it.
+    public static NextCall nextCall(final String step, final CallArgs args) {
+        final String build = args.build();
+        final Object raw = args.raw();
+        final Object events = args.events();
+        final String tr = NullSafe.nonBlankStringElse(args.translation(), "<the events pipeline uuid>");
+        final String ix = NullSafe.nonBlankStringElse(args.indexing(), "<the indexing pipeline uuid>");
+        // Indexing Events from a pipeline outside the build (an existing feed's): the one that wrote them.
+        final String source = NullSafe.nonBlankStringElse(args.translation(),
+                "<the events pipeline that wrote those Events (processing_status on their feed names it)>");
+        final String cx = NullSafe.nonBlankStringElse(args.cef(), "<the CEF pipeline uuid>");
+        final Map<String, Object> index = NullSafe.map(args.index());
+        final String key = step + ":" + args.processing();
+        final String chosen = CALLS.contains(key)
+                ? key
+                : step;
+        return switch (chosen) {
+            case "feed" -> call("create_feed", args("build", build, "name", "<the feed name the user confirmed>"),
+                    "then upload_sample once per sample file");
+            case "samples" -> call("upload_sample", args("feed", args.feeds().isEmpty()
+                            ? "<the feed>"
+                            : args.feeds().getFirst(), "files",
+                    List.of("<each sample file's path, as the user's terminal sees it>")),
+                    "run each command it gives in the user's terminal (they approve it): each file goes from their "
+                    + "disk to Stroom whole, and prints its stream id. sample= is only for text the user pasted into "
+                    + "the chat. From then on give tools stream_ids, not the text");
+            case "converter" -> call("build_data_splitter", args("stream_ids", raw, "build", build, "save_as",
+                    "<converter name>"), "it saves the converter once every line parses");
+            // The build's own samples by their ids; a feed it works from as the survey picks its streams.
+            case SURVEYED -> call("survey_feed", args.sources().isEmpty()
+                            ? args("feed", args.feeds().isEmpty()
+                                    ? "<the feed>"
+                                    : args.feeds().getFirst(), "build", build, "stream_ids", raw)
+                            : args("feed", args.sources().getFirst(), "build", build),
+                    "it reads the records for their formats and kinds of event, and asks the user to confirm a "
+                    + "source type field if the feed looks aggregated; then carry on with the plan (next)");
+            case SOURCE_TYPES -> call("record_source_types", args("build", build, "feed", args.sources().isEmpty()
+                            ? args.feeds().isEmpty()
+                                    ? "<the feed>"
+                                    : args.feeds().getFirst()
+                            : args.sources().getFirst()),
+                    "it profiles each source type: show the user its table, then call again with reviewed=<its "
+                    + "review_id> and group=<a name you suggest>; they choose in a form which source types go in "
+                    + "this build's one source type group (one pipeline) and keep or change its name, the rest "
+                    + "parked for later builds, and the registry is written");
+            case FEEDS_COMPARED -> call(CompareFeedsTool.NAME, args("build", build),
+                    "show the user its feeds table and differences in the chat; they confirm one translation for "
+                    + "the union, and each feed's zone and AGENTS conflict, in its forms; then carry on with the plan "
+                    + "(next)");
+            case CATALOGUE -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
+                    "lists the evidence; propose the event types (proposals=), each checked against the records, "
+                    + "then confirm=true puts them to the user a set at a time");
+            // A pipeline already translates what the build is to (decided by the user, 2026-11-24): the user chooses
+            // how to start, in the catalogue's first call's form.
+            case CATALOGUE + ":offer" -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
+                    "it first asks the user (in a form) how the build starts: from the existing pipeline '"
+                    + ToolText.str(NullSafe.map(args.version()).get("name")) + "' (copied as a new version, its "
+                    + "XSLT read back into a mapping and catalogue; the original isn't touched), described in place "
+                    + "(its XSLT read into a mapping and catalogue kept with it, no new version), or with a new "
+                    + "translation drafted; then follow its next");
+            case CATALOGUE + ":existing_copy" -> {
+                final Map<String, Object> version = NullSafe.map(args.version());
+                final String name = ToolText.str(version.get("name"));
+                yield call("copy_pipeline", args("build", build, "source_uuid", version.get("uuid"), "new_name",
+                                "<the new version's name ('" + name + "' with its next version)>"),
+                        "the user confirms the new version's names in its form; then rebuild_mapping reads its "
+                        + "XSLT back (next says so). The original isn't touched");
+            }
+            case CATALOGUE + ":existing_rebuild" -> call("rebuild_mapping", args("uuid", NullSafe.nonBlankStringElse(
+                            args.editedXslt(), "<the copy's XSLT uuid>"), "pipeline_uuid", tr),
+                    "it reads the XSLT back into a mapping (what it can't read is kept as XSLT expressions, or "
+                    + "listed as not read), steps both over the sample and saves once the user confirms (differences "
+                    + "or unread parts shown to them first: accept_differences=, accept_unread= only on their "
+                    + "word); the catalogue is read back with it, and the existing version's run over the sample "
+                    + "is listed (existing_run)");
+            case CATALOGUE + ":in_place_confirm" -> call(CatalogueEventTypesTool.NAME, args("build", build,
+                            "stream_ids", raw),
+                    "lists the catalogue read back from '" + ToolText.str(NullSafe.map(args.version()).get("name"))
+                    + "' (described in place) with its check against the surveyed feeds' records: propose changes "
+                    + "only for what is worth a look, then confirm=true puts it to the user; once confirmed it is "
+                    + "written back beside the pipeline (no new version)");
+            case CATALOGUE + ":in_place_unread" -> call(CatalogueEventTypesTool.NAME, args("build", build,
+                            "stream_ids", raw),
+                    "'" + ToolText.str(NullSafe.map(args.version()).get("name")) + "' is described in place, but its "
+                    + "XSLT couldn't be read back into a mapping (" + ToolText.str(NullSafe.map(args.version())
+                            .get("why")) + "), so no catalogue was read back: it lists the evidence of the surveyed "
+                    + "feeds' records; propose the event types (proposals=), each checked against the records with "
+                    + "its timeline role, then confirm=true puts them to the user; once confirmed the catalogue is "
+                    + "written beside the pipeline, linked from its XSLT (no new version)");
+            case CATALOGUE + ":existing_confirm" -> call(CatalogueEventTypesTool.NAME, args("build", build,
+                            "stream_ids", raw),
+                    "lists the catalogue read back from '" + ToolText.str(NullSafe.map(args.version()).get("name"))
+                    + "' with its check against the sample (uncatalogued records, event types the sample lacks, "
+                    + "overlaps): propose changes only for what is worth a look, then confirm=true puts it to the "
+                    + "user");
+            // A build with a scope over an aggregated feed's source types drafts through it: the build says which.
+            case "translation" -> call("draft_translation_mapping", args.scope() == null
+                            ? args("stream_ids", raw)
+                            : args("stream_ids", raw, "build", build),
+                    "decide what its notes ask, then build_translation_xslt with the mapping, stream_ids, the "
+                    + "splitter, build and name: it saves the XSLT with the mapping" + (args.scope() == null
+                            || JsonValues.text(args.scope().get("group")).isEmpty()
+                            ? ""
+                            : ", as the build's source type group '" + JsonValues.text(args.scope().get("group"))
+                              + "' (group and source_types default to the scope's)"));
+            case "translation:redraft" -> {
+                final Map<String, Object> failed = NullSafe.map(args.version());
+                yield call("draft_translation_mapping", args("stream_ids", args.raw(), "build", args.build()),
+                        "rebuild_mapping couldn't read the copy's XSLT '" + ToolText.str(JsonValues.mapOrEmpty(
+                                failed.get("xslt")).get("name")) + "' back (" + ToolText.str(failed.get("why"))
+                        + "), so the translation is drafted anew: decide what its notes ask, then "
+                        + "build_translation_xslt uuid=" + NullSafe.nonBlankStringElse(args.editedXslt(),
+                                "<the copy's XSLT>") + " with the mapping, stream_ids, the splitter and build: it "
+                        + "replaces the copy's XSLT, the copy staying a child of the same template as the original "
+                        + "(which isn't touched). Say why to the user");
+            }
+            case "pipeline" -> call("find_pipeline_templates", args("stage", "translation"),
+                    "then create_pipeline from the best candidate: it takes the build's converter and XSLT");
+            // The feed's next version (V1.3 for V1.2): a child of the template the pipeline translating it now has.
+            case "pipeline:version" -> {
+                final Map<String, Object> version = NullSafe.map(args.version());
+                final String name = ToolText.str(version.get("name"));
+                yield call("create_pipeline", args("build", build, "version_of", version.get("uuid"), "name",
+                                "<the new version's name ('" + name + "' with its new version)>"),
+                        "a child of the template '" + name + "' has, with the build's XSLT; whether it loads that "
+                        + "pipeline's reference data too is the user's choice (keep_references): ask them when it "
+                        + "asks");
+            }
+            case "stepped" -> call("step_sample", args("pipeline_uuid", tr, "stream_ids", raw),
+                    "until the verdict is clean: fix the mapping and build_translation_xslt uuid=... in between");
+            case "stepped:copied" -> call("rebuild_mapping", args("uuid", NullSafe.nonBlankStringElse(
+                            args.editedXslt(), "<the copy's XSLT uuid>"), "pipeline_uuid", tr),
+                    "the copy's XSLT keeps no mapping (written by hand, say): this reads it back into one, proven "
+                    + "against the original on the sample (what it can't read is kept as XSLT expressions), so the "
+                    + "change asked for is made with build_translation_xslt uuid=<it> changes= only what changes, "
+                    + "never by rewriting the XSLT; then step it");
+            case "stepped:surveyed" -> call("step_records", args("pipeline_uuid", tr, "locations", args.locations()),
+                    "until clean: the feed's own records, stepped where they are; fix the mapping and "
+                    + "build_translation_xslt uuid=... in between");
+            case "covered" -> call("survey_feed", args("feed", args.sources().isEmpty()
+                            ? "<the feed>"
+                            : args.sources().getFirst(), "build", build),
+                    "it carries on from the survey doc. New kinds of event: add rules (build_translation_xslt "
+                    + "changes=), then step_records over every location so far; again until its coverage says "
+                    + "covered. Kinds not worth translating: ask the user (set_shape_handling, a drop rule)"
+                    + scopeSaid(args.scope()));
+            case "processed" -> call("create_processor_filter", args("pipeline_uuid", tr, "stream_ids", raw),
+                    APPROVE + "; then wait_for_processing with its filter_id, and check_events");
+            case "processed:disabled" -> call("wait_for_processing", args("pipeline_uuid", tr, "stream_ids", raw),
+                    "only once the user says they enabled its filter (" + ASK + "); then check_events");
+            case "processed:running" -> call("wait_for_processing", args("pipeline_uuid", tr, "stream_ids", raw),
+                    "then check_events");
+            case "unmapped" -> call("build_translation_xslt", args("uuid", "<the translation XSLT's uuid>",
+                            "changes", "<each field in unmapped_fields mapped, or added to ignored_fields>"),
+                    "ask the user about each field in unmapped_fields: map it, then reprocess_streams the streams it "
+                    + "lists, or leave it out (ignored_fields, no reprocessing needed); then build_status. Tell the "
+                    + "user the Error streams already written keep their 'No rule reads field' lines until those "
+                    + "streams are reprocessed (reprocess_streams, if they want them gone)");
+            case "validated" -> call("check_events", args("stream_ids", orElse(events,
+                            "<the Events streams wait_for_processing gave>")),
+                    "the server reads the Events itself: never read them back to send them");
+            case "documented" -> call("write_documentation", args("build", build, "pipeline_uuid", tr, "stream_ids",
+                    raw, "markdown", DOCUMENTATION), "the Field mapping section is generated");
+            case "feed:reference" -> call("create_feed", args("build", build, "name",
+                            "<the reference feed name the user confirmed>", "stream_type", "Raw Reference"),
+                    "then upload_sample stream_type='Raw Reference' once per file of the table");
+            case "samples:reference" -> call("upload_sample", args("feed", args.feeds().isEmpty()
+                            ? "<the reference feed>"
+                            : args.feeds().getFirst(), "stream_type", "Raw Reference", "files",
+                    List.of("<each file of the table, as the user's terminal sees it>")),
+                    "run each command it gives in the user's terminal; each prints its stream id. A reference sample "
+                    + "applies from 2000-01-01 unless effective_time says otherwise");
+            case "reference_pipeline" -> call("build_reference_xslt", args("build", build, "mapping",
+                            "<the maps the user confirmed: each a name, a key and its values (stroom://guide/"
+                            + "reference-data)>"),
+                    "save_xslt it in the build; then find_pipeline_templates stage=reference and create_pipeline "
+                    + "from the Reference Data template: it takes the build's converter and that XSLT");
+            case "reference_stepped" -> call("step_sample", args("pipeline_uuid", referencePipeline(args),
+                            "stream_ids", referenceRaw(args)),
+                    "until the verdict is clean: fix the maps, build_reference_xslt and save_xslt uuid=... in "
+                    + "between");
+            case "reference_processed" -> call("create_processor_filter", args("pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args)),
+                    "it is created disabled: give the user its pipeline_link and ask them to enable it on the "
+                    + "Processors tab; once they say so, wait_for_processing with its filter_id");
+            case "reference_processed:disabled" -> call("wait_for_processing", args("pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args)),
+                    "only once the user says they enabled its filter (" + ASK + "): it writes the Reference "
+                    + "streams lookups read");
+            case "reference_processed:running" -> call("wait_for_processing", args("pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args)),
+                    "it writes the Reference streams lookups read");
+            case "reference_documented" -> call("write_documentation", args("build", build, "pipeline_uuid",
+                            referencePipeline(args), "stream_ids", referenceRaw(args), "markdown", DOCUMENTATION),
+                    "what each map holds, its key and its values");
+            case "stepped:no_reference" -> call("find_reference_data", args(),
+                    "the events pipeline looks values up in " + ToolText.list(JsonValues.strings(
+                            NullSafe.map(args.reference()).get("unloaded"))) + ", which holds no Reference stream "
+                    + "yet: every lookup would find nothing, and Stroom remembers that for 10 minutes. Have it "
+                    + "processed first by the pipeline that loads it (its filter, enabled by the user), then "
+                    + "step_sample");
+            case "index:discovery" -> call("draft_index_mapping", args("backend", "elasticsearch", "index_name",
+                            "<the index name the user confirmed, e.g. stroom-discovery-<source>-v1>",
+                            "events_stream_ids", events, "discovery", args("input", "<json, delimited or xml>",
+                                    "timestamp_field", "<the field holding each record's time, as the user "
+                                                       + "confirmed>")),
+                    "with what the user confirmed in one message (cluster, index name, template, time field, stream "
+                    + "meta, fields to drop, an example index template); then save_xslt index_plan=plan, "
+                    + "find_pipeline_templates stage=discovery and create_indexing_pipeline from the discovery "
+                    + "template (stroom://guide/indexing)");
+            case "index" -> call("get_field_conventions", args(),
+                    "unless the user said not to index now (then build_status skip_stage=indexing and go on), go "
+                    + "straight on, without asking first: it finds the backend and asks the user, in a form, how "
+                    + "the index's fields are named; then draft_index_mapping as its reply says (index_name, "
+                    + "events_stream_ids=" + pythonText(events) + "), and create_index_doc with plan= once the user "
+                    + "confirms");
+            case "indexing_pipeline" -> call("save_xslt", args("build", build, "name", "<index name>-XSLT",
+                            "index_plan", "<the plan from draft_index_mapping>"),
+                    "then create_indexing_pipeline with that XSLT and the index"
+                    + (args.translation() != null || args.discovery()
+                            ? ""
+                            : ", and events_stream_ids=" + pythonText(events) + " (no events pipeline in this build)"));
+            case "index_template" -> call("propose_index_template", args("pipeline_uuid", ix, "plan",
+                            "<the index plan saved with the indexing XSLT>", "events_stream_ids", events,
+                            "example_template", "<the user's example index template, exactly as they pasted it>"),
+                    "the user confirms it in a form; give them its dev_tools to have it committed to the cluster, "
+                    + "and wait for them to say it is. No example in this conversation: ask them to paste it, and "
+                    + "end your turn");
+            case "index_template:unstepped" -> call("step_sample", args("pipeline_uuid", ix, "stream_ids", events),
+                    "until the verdict is clean (fix the index plan and save_xslt in between); then "
+                    + "propose_index_template with the user's example");
+            case "indexed" -> {
+                final Map<String, Object> arguments = args("pipeline_uuid", ix, "stream_ids", events);
+                if (!args.discovery()) {
+                    arguments.put("source_pipeline_uuid", source);
+                }
+                yield call("create_processor_filter", arguments, APPROVE + " (Elasticsearch: once the agreed "
+                        + "template is committed; an index this pipeline wrote to before is dropped first, from the "
+                        + "drop_first reply's button); then wait_for_processing expect_events=false, and "
+                        + "verify_index");
+            }
+            case "indexed:disabled" -> call("wait_for_processing", args("pipeline_uuid", ix, "stream_ids", events,
+                            "expect_events", false),
+                    "only once the user says they enabled its filter (" + ASK + "); then verify_index");
+            case "indexed:unstepped" -> call("step_sample", args("pipeline_uuid", ix, "stream_ids", events),
+                    "until the verdict is clean; then create_processor_filter");
+            case "indexed:running" -> call("wait_for_processing", args("pipeline_uuid", ix, "stream_ids", events,
+                    "expect_events", false), "then verify_index");
+            case "indexed:no_index" -> call("create_index_doc", args("build", build, "backend", "elasticsearch",
+                    "name", "<the index name>", "index_name", "<the index name>", "cluster_uuid",
+                    "<the cluster the pipeline writes to>", "time_field", "@timestamp"),
+                    "then verify_index through it");
+            case "indexed:finished" -> {
+                final List<String> columns = JsonValues.strings(index.get("columns"));
+                yield call("verify_index", args("build", build,
+                        "index_uuid", Objects.requireNonNullElse(index.get("uuid"), "<the index doc uuid>"),
+                        "backend", Objects.requireNonNullElse(index.get("backend"), "<lucene or elasticsearch>"),
+                        "stream_ids", events,
+                        "expected_documents", "<the Events records in those streams>",
+                        // Chat 194: the agent offered the user event.type (an ECS name the plan lacked; it had
+                        // event.code), not the names suggested here, and lost a dozen calls over it.
+                        "fields", columns.isEmpty()
+                                ? "<the columns the user chose, from the index's own fields (describe_data_source "
+                                  + "lists them): never a name it lacks>"
+                                : "<the columns the user chose; suggest " + String.join(", ", columns)
+                                  + " (the index's own fields for its time, user, host, address, event type and "
+                                  + "outcome, from its plan: offer these, never a name it lacks) and confirm them>",
+                        "pipeline_uuid", ix), "the step is done once its searches pass");
+            }
+            case "index_documented" -> call("write_documentation", args("build", build, "pipeline_uuid", ix,
+                    "stream_ids", events, "markdown", DOCUMENTATION), "the Field mapping section is generated");
+            case "documented:edited" -> call("rebuild_mapping", args("uuid", NullSafe.nonBlankStringElse(
+                            args.editedXslt(), "<the translation XSLT>"), "pipeline_uuid", tr),
+                    "its XSLT was changed by hand (save_xslt, or in Stroom): this reads the mapping back from it, "
+                    + "proven on the sample, so the documentation can be generated; then write_documentation. One "
+                    + "it can't read back (not laid out as the generator writes one): carry the edit with "
+                    + "build_translation_xslt uuid=<it> changes= instead");
+            case "cef_mapping" -> call("draft_cef_mapping", args("stream_ids", events, "feeds",
+                            args.sources().isEmpty()
+                                    ? "<the Events feed>"
+                                    : List.copyOf(args.sources()), "build", build, "name", "<the CEF XSLT name>"),
+                    "show the user its tables and not-sent list; their changes go back as overrides");
+            case "cef_pipeline" -> call("create_pipeline", args("build", build, "name", "<the CEF pipeline name>",
+                            "template_uuid", "<a forwarding template, or one existing CEF pipelines inherit from>"),
+                    "or standalone='kafka' when there is no template; set its XSLT and "
+                    + "standardKafkaProducer.kafkaConfig (update_pipeline for one left unset)");
+            case "cef_stepped" -> call("step_sample", args("pipeline_uuid", cx, "stream_ids", events),
+                    "stepping sends nothing; then draft_cef_mapping pipeline_uuid= reviews what it writes");
+            case "cef_documented" -> call("write_documentation", args("build", build, "pipeline_uuid", cx,
+                    "stream_ids", events, "markdown", DOCUMENTATION), "the CEF section is generated");
+            case "promoted" -> call("promote_build", args("build", build, "destinations",
+                    "<the folders sibling sources use, by type>"), "with the user's approval");
+            default -> throw new IllegalArgumentException("No plan step '" + step + "'");
+        };
+    }
+
+    /// Where the plan stands, in a line, for a task list the agent keeps (seen in testing: its checklist stayed on
+    /// 'Process samples into Events' while the work went on): the steps done, and the one now.
+    ///
+    /// @param steps The plan's steps, each with its `state`.
+    /// @param now   The step now.
+    /// @return E.g. `step 3 of 4, validated; done: feed, processed`.
+    public static String progress(final List<Map<String, Object>> steps, final String now) {
+        final List<Map<String, Object>> counted = steps.stream()
+                .filter(step -> !"not needed".equals(step.get("state")))
+                .toList();
+        final List<String> done = counted.stream()
+                .filter(step -> "done".equals(step.get("state")))
+                .map(step -> String.valueOf(step.get("step")))
+                .toList();
+        int at = done.size() + 1;
+        for (int i = 0; i < counted.size(); i++) {
+            if (Objects.equals(counted.get(i).get("step"), now)) {
+                at = i + 1;
+                break;
+            }
+        }
+        return "step " + at + " of " + counted.size() + ", " + now + "; done: " + (done.isEmpty()
+                ? "none yet"
+                : String.join(", ", done));
+    }
+
+    /// @param profiled Sample text's profile ([SampleProfiling#profile]).
+    /// @return Its format, and whether it needs a text converter: `format`, `namespace`, `root`,
+    /// `suggested_parser` and `needs_text_converter`.
+    public static Map<String, Object> textFormat(final Map<String, Object> profiled) {
+        final String format = String.valueOf(profiled.get("format"));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        if (JsonValues.truthy(profiled.get("malformed_lines")) && "json lines".equals(format)) {
+            // Lines that aren't JSON: the Data Splitter route (one record a line, the JSON parsed in the XSLT), as the
+            // JSONParser would stop at the first of them.
+            result.put("format", "json lines (some not JSON)");
+            result.put("suggested_parser", profiled.get("suggested_parser"));
+            result.put("needs_text_converter", true);
+            return result;
+        }
+        result.put("format", format);
+        result.put("namespace", profiled.get("namespace"));
+        result.put("root", profiled.get("root"));
+        result.put("suggested_parser", profiled.get("suggested_parser"));
+        result.put("needs_text_converter", TEXT_FORMATS.contains(format) || "xml fragments".equals(format));
+        return result;
+    }
+
+    // The format of the newest raw sample stream.
+    private Optional<Map<String, Object>> sampleFormat(final Map<String, List<Map<String, Object>>> streams) {
+        return sampleFormat(streams, StreamTypeNames.RAW_EVENTS);
+    }
+
+    // The format of the newest sample stream of a type (Raw Events, or a reference feed's Raw Reference).
+    private Optional<Map<String, Object>> sampleFormat(final Map<String, List<Map<String, Object>>> streams,
+                                                      final String type) {
+        final List<Map<String, Object>> metas = NullSafe.list(streams.get(type));
+        if (metas.isEmpty()) {
+            return Optional.empty();
+        }
+        Map<String, Object> newest = metas.getFirst();
+        for (final Map<String, Object> meta : metas) {
+            if (number(meta.get("createMs")) > number(newest.get("createMs"))) {
+                newest = meta;
+            }
+        }
+        final long streamId = number(newest.get("id"));
+        final Map<String, Object> profiled;
+        try {
+            profiled = facts.profile(facts.streamHead(streamId));
+        } catch (final ToolRefusal e) {
+            // A sample that can't be profiled (or no profiling in this Stroom yet): the plan goes on without its
+            // format, as it does before any sample is uploaded.
+            LOGGER.debug(() -> LogUtil.message(
+                    "The sample in stream {} wasn't profiled: {}",
+                    streamId,
+                    e.getMessage()));
+            return Optional.empty();
+        }
+        final Map<String, Object> format = new LinkedHashMap<>();
+        format.put("stream_id", streamId);
+        format.put("feed", newest.get("feed"));
+        format.putAll(textFormat(profiled));
+        return Optional.of(format);
+    }
+
+    // An existing feed's format from its survey: its examples profiled, or, when there are none whole or they don't
+    // profile, the format the survey split the streams by (read from whole text).
+    private Map<String, Object> formatFromSurvey(final Map<String, Object> survey) {
+        Map<String, Object> fmt = null;
+        if (JsonValues.truthy(survey.get("sample"))) {
+            try {
+                fmt = textFormat(facts.profile(String.valueOf(survey.get("sample"))));
+            } catch (final ToolRefusal e) {
+                // Examples that don't profile together: the survey's own reading stands.
+                LOGGER.debug(() -> LogUtil.message("A survey's examples didn't profile: {}", e.getMessage()));
+            }
+        }
+        if (fmt == null) {
+            final String format = NullSafe.nonBlankStringElse(NullSafe.get(survey.get("format"), String::valueOf),
+                    "unknown text");
+            fmt = new LinkedHashMap<>();
+            fmt.put("format", format);
+            fmt.put("suggested_parser", PARSER_FOR_FORMAT.getOrDefault(format, List.of("DSParser")).getFirst());
+            fmt.put("needs_text_converter", TEXT_FORMATS.contains(format) || "xml fragments".equals(format));
+        }
+        final List<Long> streams = JsonValues.strings(survey.get("streams")).stream()
+                .map(Long::parseLong)
+                .toList();
+        if ("xml".equals(survey.get("format")) && !"xml".equals(fmt.get("format")) && !streams.isEmpty()) {
+            // The examples are one document's records without its root: joined, they read as XML fragments (seen in
+            // production: a <tweets> feed, and the plan said XMLFragmentParser). A surveyed stream's head is the
+            // document.
+            try {
+                final Map<String, Object> head = textFormat(facts.profile(facts.streamHead(streams.getLast())));
+                if ("xml".equals(head.get("format"))) {
+                    fmt = head;
+                }
+            } catch (final RuntimeException e) {
+                // That stream gone under retention: the examples' reading stands.
+                LOGGER.debug(() -> LogUtil.message("A surveyed stream's head couldn't be read: {}", e.getMessage()));
+            }
+        }
+        return fmt;
+    }
+
+    private List<Map<String, Object>> xslts(final List<Map<String, Object>> docs) {
+        final List<Map<String, Object>> xslts = new ArrayList<>();
+        for (final Map<String, Object> doc : docs) {
+            final Optional<KeptMapping.Kept> kept = facts.xsltMapping(uuid(doc));
+            final Map<String, Object> xslt = new LinkedHashMap<>();
+            xslt.put("name", doc.get("name"));
+            xslt.put("uuid", doc.get("uuid"));
+            xslt.put("mapping", kept.map(KeptMapping.Kept::kind).orElse(null));
+            // A discovery plan: raw records indexed as they are, whatever parser reads them (XML too).
+            xslt.put("discovery", kept.filter(found -> "index".equals(found.kind()))
+                    .map(found -> JsonValues.truthy(found.payload().get("discovery")))
+                    .orElse(false));
+            xslts.add(xslt);
+        }
+        return xslts;
+    }
+
+    private List<Map<String, Object>> pipelines(final List<Map<String, Object>> docs) {
+        final List<Map<String, Object>> pipelines = new ArrayList<>();
+        for (final Map<String, Object> doc : docs) {
+            final Map<String, Object> pipeline = new LinkedHashMap<>(doc);
+            try {
+                final PipelineShapes.Shape shape = facts.pipelineShape(uuid(doc));
+                final List<String> missing = facts.openSlots(uuid(doc));
+                pipeline.put("stage", shape.stage());
+                pipeline.put("parser", shape.parser());
+                pipeline.put("stepped", facts.steppedClean(doc));
+                pipeline.put("missing", missing);
+            } catch (final PipelineUnreadableException e) {
+                // A pipeline Stroom can't load (a working copy of a production one with a property its element type
+                // lost, or one whose template can't be loaded): listed as unreadable with why, the build's status
+                // still given.
+                pipeline.put("stage", "unreadable");
+                pipeline.put("parser", null);
+                pipeline.put("stepped", false);
+                pipeline.put("missing", List.of("Stroom can't load it: " + e.getMessage()));
+            }
+            pipelines.add(pipeline);
+        }
+        return pipelines;
+    }
+
+    private Map<String, Object> existingDataStart(final String build,
+                                                  final List<String> sources,
+                                                  final String named) {
+        final String feed = sources.isEmpty()
+                ? "<the feed>"
+                : sources.getFirst();
+        final Map<String, Object> call = new LinkedHashMap<>();
+        call.put("tool", "stream_meta");
+        // Every feed the build works from, not only the first (the many-feeds audit, 2026-11-25).
+        call.put("arguments", args("feeds", sources.isEmpty()
+                ? List.of(feed)
+                : sources));
+        final List<Map<String, Object>> current = facts.translating(sources);
+        // A translation's new version is offered after the survey, never copied from here.
+        final String otherVersion = current.isEmpty()
+                ? "another production pipeline's new version (an indexing one, say), copy_pipeline"
+                : "an indexing pipeline's new version, copy_pipeline of that indexing pipeline only";
+        String then = "this build works from data already in Stroom: create no feed and upload nothing. Then, for "
+                      + "what the user asked: an events pipeline for the feed, survey_feed build=... (its kinds of "
+                      + "event); " + otherVersion + "; indexing its Events, get_field_conventions and the index; "
+                      + "sending its Events on as CEF, draft_cef_mapping; indexing its raw data as it is, for "
+                      + "exploration (a discovery index), start_build kind=discovery for this build; loading it as a "
+                      + "table to look values up in (reference data), start_build kind=reference";
+        if (!current.isEmpty()) {
+            // Every existing translation, hand-written or built by Stroom AI, goes through the survey first (decided
+            // by the user, 2026-11-25): seen in eval case 97, this advice offered copy_pipeline, both models copied a
+            // hand-written pipeline at once, and the survey and the catalogue's offer to start from it (and its
+            // confirmation) were skipped. The copy is offered after the survey, by catalogue_event_types.
+            final String shown = current.stream()
+                    .map(p -> "'" + p.get("name") + "' (" + p.get("uuid") + ")")
+                    .collect(Collectors.joining(", "));
+            then = feed + " is translated now by " + shown + ". For any change to its translation (its next "
+                   + "version, a field added, a fix), whoever wrote it: survey_feed build=" + build + " feed=" + feed
+                   + " first, and copy nothing before it. After the survey, catalogue_event_types' first call asks "
+                   + "the user how the build starts: from the existing pipeline (recommended: copied as a new "
+                   + "version, its XSLT read back into a mapping and catalogue, its lookups and all; the original "
+                   + "isn't touched) or a translation drafted anew (a new schema version, say: a child of the same "
+                   + "template with the new XSLT, and its reference data if the user keeps them); next leads "
+                   + "through either. " + Character.toUpperCase(then.charAt(0)) + then.substring(1);
+        }
+        final Map<String, Object> start = new LinkedHashMap<>();
+        start.put("step", "existing data");
+        start.put("do", "Work from " + named + ", already in Stroom");
+        start.put("call", call);
+        start.put("then", then);
+        if (!current.isEmpty()) {
+            start.put("translated_by", current);
+        }
+        if (sources.size() > 1) {
+            start.put("several_feeds", "The build is for " + sources.size() + " feeds (" + named + "): each is "
+                                       + "surveyed (survey_feed build=" + build + " feed=<each>, next names them in "
+                                       + "turn), their differences shown to the user (compare_feeds), and the "
+                                       + "translation serves them all.");
+        }
+        return start;
+    }
+
+    private static List<Map<String, Object>> steps(final Map<String, Boolean> done, final Set<String> skipped) {
+        // Not needed when their state is null: a converter for a format that needs none, a template for Lucene.
+        final Set<String> notNeeded = Set.of("converter", SURVEYED, SOURCE_TYPES, FEEDS_COMPARED, CATALOGUE,
+                "index_template", "covered");
+        final List<Map<String, Object>> steps = new ArrayList<>();
+        for (final Map<String, Object> item : checklist()) {
+            final String step = String.valueOf(item.get("step"));
+            final Boolean state = done.get(step);
+            final Map<String, Object> shown = new LinkedHashMap<>(item);
+            shown.put("state", skipped.contains(step)
+                    ? "not needed"
+                    : Boolean.TRUE.equals(state)
+                            ? "done"
+                            : state == null && notNeeded.contains(step)
+                                    ? "not needed"
+                                    : state == null
+                                            ? "not recorded"
+                                            : "to do");
+            steps.add(shown);
+        }
+        return steps;
+    }
+
+    // The existing pipeline a build's copy is the next version of: its name and UUID, as the start offer gives it.
+    private static Map<String, Object> copyOf(final List<Map<String, Object>> copies) {
+        final Map<String, Object> copy = copies.stream()
+                .filter(p -> p.get("version_of") != null)
+                .findFirst()
+                .orElse(Map.of());
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("name", copy.get("name"));
+        out.put("uuid", copy.get("version_of"));
+        return out;
+    }
+
+    // A pipeline described in place is surveyed and its catalogue confirmed (its source types first, for an
+    // aggregated feed): no translation, pipeline or processing of its own. An index or a forwarder built on it
+    // (decided by the user, 2026-11-25) keeps its stage's steps, and promotion, which moves only those.
+    private static Set<String> inPlaceSkips(final boolean indexing, final boolean forwarding) {
+        final Set<String> skipped = new HashSet<>();
+        checklist().forEach(step -> skipped.add(String.valueOf(step.get("step"))));
+        skipped.removeAll(Set.of(SURVEYED, SOURCE_TYPES, CATALOGUE));
+        if (indexing) {
+            stepsOf(STAGE_INDEXING).forEach(skipped::remove);
+        }
+        if (forwarding) {
+            stepsOf(STAGE_OUTPUT).forEach(skipped::remove);
+        }
+        if (indexing || forwarding) {
+            skipped.remove("promoted");
+        }
+        return skipped;
+    }
+
+    // An assessment surveys the feed and writes its source type registry: every other step is left out.
+    private static Set<String> assessmentSkips() {
+        final Set<String> skipped = new HashSet<>();
+        checklist().forEach(step -> skipped.add(String.valueOf(step.get("step"))));
+        skipped.removeAll(ASSESSMENT_STEPS);
+        return skipped;
+    }
+
+    // The build's scope over an aggregated feed's source types, as the survey keeps it with its share of the records
+    // read; null for a build without one.
+    private static Map<String, Object> scopeOf(final Map<String, Object> surveyState) {
+        final Map<String, Object> sources = surveyState == null
+                ? Map.of()
+                : JsonValues.mapOrEmpty(surveyState.get(SourceTypeProfiles.STATE_KEY));
+        final Map<String, Object> scope = JsonValues.mapOrEmpty(sources.get(SourceTypeProfiles.SCOPE));
+        if (scope.isEmpty()) {
+            return null;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("build", scope.get("build"));
+        if (scope.get(RecordSourceTypesTool.SCOPE_GROUP) != null) {
+            out.put("group", scope.get(RecordSourceTypesTool.SCOPE_GROUP));
+        }
+        out.put("source_types", JsonValues.strings(scope.get("source_types")));
+        out.put("share_percent", JsonValues.mapOrEmpty(sources.get(StroomBuildFacts.SCOPE_SHARE))
+                .get("share_percent"));
+        return out;
+    }
+
+    // The coverage step's words for a build with a scope: what it covers, and its share of the feed.
+    private static String scopeSaid(final Map<String, Object> scope) {
+        if (scope == null) {
+            return "";
+        }
+        final Object share = scope.get("share_percent");
+        final String group = JsonValues.text(scope.get("group"));
+        return ". Coverage is judged within the build's scope, " + (group.isEmpty()
+                ? ""
+                : "group '" + group + "': ") + String.join(", ",
+                JsonValues.strings(scope.get("source_types"))) + (share == null
+                ? ""
+                : " (about " + share + "% of the feed's records read)")
+               + ": the survey reads only its records, the other source types counted, not read";
+    }
+
+    // The source types step: not needed (null) for a feed of one source, which never sees it; to do once the
+    // survey's field is confirmed (or a registry is beside the feed) until the registry is written in the build and,
+    // but for an assessment, the user has chosen the build's scope.
+    private Boolean sourceTypesDone(final String build,
+                                    final Map<String, Object> surveyState,
+                                    final List<Map<String, Object>> documentation,
+                                    final List<String> sources,
+                                    final boolean assessment) {
+        final Map<String, Object> said = surveyState == null
+                ? Map.of()
+                : JsonValues.mapOrEmpty(surveyState.get(SourceTypeProfiles.STATE_KEY));
+        final boolean registry = documentation.stream()
+                .anyMatch(doc -> String.valueOf(doc.get("name")).endsWith(SourceTypeRegistry.SUFFIX));
+        final boolean aggregated = said.get(SourceTypeProfiles.FIELD) != null || registry
+                                   || (!Boolean.FALSE.equals(said.get("aggregated"))
+                                       && facts.registryBeside(sources));
+        if (!aggregated) {
+            return null;
+        }
+        // The scope is in the survey state once surveyed; record_source_types before the build's survey keeps it in
+        // the build's registry alone (seen in an eval: the step stayed to do, and every next offered it again).
+        return registry && (assessment || said.get(SourceTypeProfiles.SCOPE) != null
+                            || facts.scopeRecorded(build, sources));
+    }
+
+    private static Set<String> skipped(final Kinds kinds,
+                                       final boolean surveyKnown,
+                                       final boolean existing,
+                                       final boolean copiesWithoutOwnFeed,
+                                       final boolean stage1,
+                                       final boolean stage2,
+                                       final boolean cefBuild) {
+        // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
+        final Set<String> skipped = new HashSet<>(kinds.discovery()
+                ? Set.of(SURVEYED, FEEDS_COMPARED, CATALOGUE, "translation", "pipeline", "stepped", "processed",
+                        "unmapped",
+                        "validated", "documented")
+                : Set.of());
+        if (!kinds.reference()) {
+            skipped.addAll(stepsOf(STAGE_REFERENCE));
+        }
+        if (kinds.referenceOnly()) {
+            // A table loaded on its own: its feed, sample and converter, then its reference-data pipeline.
+            stepsOf(STAGE_EVENTS).stream().filter(step -> !SOURCE_STEPS.contains(step)).forEach(skipped::add);
+            skipped.addAll(stepsOf(STAGE_INDEXING));
+        }
+        if (!surveyKnown) {
+            skipped.add("covered");
+        }
+        if (existing) {
+            // No feed to create and nothing to upload: the feed's streams are stepped where they are. An existing
+            // feed's are processed where they are too, their Events written to a test feed the server makes in the
+            // build (asked for by the user). A copy of a production pipeline is proven by stepping, unless the build
+            // processes into a test feed of its own.
+            skipped.addAll(Set.of("feed", "samples"));
+            if (copiesWithoutOwnFeed) {
+                skipped.addAll(Set.of("processed", "unmapped", "validated"));
+            }
+        }
+        if (!stage1) {
+            skipped.addAll(stepsOf(STAGE_EVENTS));
+        }
+        if (!stage2) {
+            skipped.addAll(stepsOf(STAGE_INDEXING));
+        }
+        if (!cefBuild) {
+            skipped.addAll(stepsOf(STAGE_OUTPUT));
+        }
+        return skipped;
+    }
+
+    /// The stages the user may say a build is not to do, by the name build_status takes.
+    static final Map<String, String> SKIPPABLE = Map.of("indexing", STAGE_INDEXING, "cef_output", STAGE_OUTPUT);
+
+    /// Remembers that the user said the build is not to do a stage: its steps are skipped and next goes on past
+    /// them.
+    ///
+    /// @param build The build.
+    /// @param stage A name [#SKIPPABLE] holds.
+    /// @throws ToolRefusal for another.
+    void skipStage(final String build, final String stage) {
+        final String planned = SKIPPABLE.get(stage);
+        if (planned == null) {
+            throw new ToolRefusal("skip_stage is one of " + ToolText.list(SKIPPABLE.keySet().stream().sorted()
+                    .toList()) + ", not '" + stage + "'");
+        }
+        memory.skipStage(build, planned);
+    }
+
+    /// @param build A build.
+    /// @return The stages the user said it is not to do, by the name build_status takes.
+    List<String> skippedByUser(final String build) {
+        final Set<String> declined = memory.skippedStages(build);
+        return SKIPPABLE.entrySet().stream()
+                .filter(entry -> declined.contains(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+    }
+
+    private static Set<String> stepsOf(final String stage) {
+        return checklist().stream()
+                .filter(step -> stage.equals(step.get("stage")))
+                .map(step -> String.valueOf(step.get("step")))
+                .collect(Collectors.toSet());
+    }
+
+    private static void addSteps(final List<Map<String, Object>> steps,
+                                 final String stage,
+                                 final List<List<String>> items) {
+        for (final List<String> item : items) {
+            final Map<String, Object> step = new LinkedHashMap<>();
+            step.put("step", item.get(0));
+            step.put("what", item.get(1));
+            step.put("tools", item.get(2));
+            step.put("stage", stage);
+            steps.add(step);
+        }
+    }
+
+    private static List<Map<String, Object>> of(final Map<String, List<Map<String, Object>>> byType,
+                                                final String type) {
+        return NullSafe.list(byType.get(type));
+    }
+
+    private static List<Map<String, Object>> withStage(final List<Map<String, Object>> pipelines,
+                                                       final Set<String> stages) {
+        return pipelines.stream()
+                .filter(p -> stages.contains(String.valueOf(p.get("stage"))))
+                .toList();
+    }
+
+    private static boolean hasMapping(final List<Map<String, Object>> xslts, final String kind) {
+        return xslts.stream().anyMatch(x -> kind.equals(x.get("mapping")));
+    }
+
+    /// Whether a passed index verification is of Events the build has since replaced: an Events reprocess deletes
+    /// the Events it replaces, and Events made before the translation's code was last saved are left out of the
+    /// current ones. A stream verified that is neither (e.g. one older than the feed's newest streams the plan
+    /// lists, on a busy feed) still counts.
+    ///
+    /// @param indexed   The streams the verification searched, as the record keeps them; none for a record made
+    ///                  before they were kept, which still counts (an existing build isn't sent back).
+    /// @param leftOut   The build's Events streams left out of its current ones.
+    /// @param gone      Those of the streams verified that have been deleted since.
+    /// @param discovery Whether the build indexes its raw streams (no Events): never stale by Events.
+    /// @return True if some stream verified has been deleted or left out since.
+    static boolean staleIndex(final List<Long> indexed,
+                              final List<Long> leftOut,
+                              final Set<Long> gone,
+                              final boolean discovery) {
+        if (discovery || NullSafe.isEmptyCollection(indexed)) {
+            return false;
+        }
+        final Set<Long> replaced = new HashSet<>(leftOut);
+        replaced.addAll(gone);
+        return indexed.stream().anyMatch(replaced::contains);
+    }
+
+    /// @param filter A processor filter, as processing_status lists it (its `selects` terms).
+    /// @param ids    Stream ids.
+    /// @return Whether the filter selects any of the streams by id.
+    static boolean selectsAny(final Map<String, Object> filter, final Collection<Long> ids) {
+        final Set<Long> wanted = Set.copyOf(ids);
+        for (final String term : JsonValues.strings(filter.get("selects"))) {
+            final Matcher matcher = SELECTED_ID.matcher(term);
+            while (matcher.find()) {
+                if (wanted.contains(Long.parseLong(matcher.group(1)))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasMissing(final Map<String, Object> pipeline) {
+        return JsonValues.truthy(pipeline.get("missing"));
+    }
+
+    private static boolean allNamed(final List<Map<String, Object>> pipelines, final Set<String> documented) {
+        return pipelines.stream().allMatch(p -> documented.contains(String.valueOf(p.get("name"))));
+    }
+
+    private static List<String> names(final List<Map<String, Object>> docs) {
+        return docs.stream().map(doc -> String.valueOf(doc.get("name"))).toList();
+    }
+
+    private static List<Map<String, Object>> first(final List<Map<String, Object>> all,
+                                                   final List<Map<String, Object>> first) {
+        final List<Map<String, Object>> ordered = new ArrayList<>(first);
+        all.stream().filter(p -> !first.contains(p)).forEach(ordered::add);
+        return ordered;
+    }
+
+    private static Map<String, Object> shown(final Map<String, Object> pipeline) {
+        final Map<String, Object> shown = new LinkedHashMap<>();
+        for (final String key : List.of("name", "uuid", "stage", "parser", "stepped", "missing")) {
+            shown.put(key, pipeline.get(key));
+        }
+        return shown;
+    }
+
+    private static String uuid(final Map<String, Object> doc) {
+        return String.valueOf(doc.get("uuid"));
+    }
+
+    private static NextCall call(final String tool, final Map<String, Object> arguments, final String then) {
+        final Map<String, Object> call = new LinkedHashMap<>();
+        call.put("tool", tool);
+        call.put("arguments", arguments);
+        return new NextCall(call, then);
+    }
+
+    // The stream_meta call that finds a build's recent streams (of a type, or of any when null), as a
+    // placeholder for the stream ids it gives, e.g. `stream_meta feeds=['ACME'] type='Events'`.
+    private static String streamMetaCall(final List<String> sources, final String type) {
+        final String feeds = sources.isEmpty()
+                ? "'<the feed>'"
+                : sources.stream().map(source -> "'" + source + "'").collect(Collectors.joining(", "));
+        return "stream_meta feeds=[" + feeds + "]" + (type == null
+                ? ""
+                : " type='" + type + "'");
+    }
+
+    // Arguments in the order given, as name, value, name, value, ...
+    // The build's reference-data pipeline's UUID, or a placeholder.
+    private static String referencePipeline(final CallArgs args) {
+        return NullSafe.nonBlankStringElse(ToolText.str(NullSafe.map(args.reference()).get("pipeline")),
+                "<the reference-data pipeline uuid>");
+    }
+
+    // The build's Raw Reference streams' ids, or a placeholder.
+    private static Object referenceRaw(final CallArgs args) {
+        return orElse(NullSafe.map(args.reference()).get("raw"), "<the Raw Reference streams>");
+    }
+
+    private static Map<String, Object> args(final Object... namesAndValues) {
+        final Map<String, Object> arguments = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < namesAndValues.length; i += 2) {
+            arguments.put(String.valueOf(namesAndValues[i]), namesAndValues[i + 1]);
+        }
+        return arguments;
+    }
+
+    // The value, unless it is empty or absent (an empty list, string or map, null, false or zero): then other.
+    private static Object orElse(final Object value, final Object other) {
+        return JsonValues.truthy(value)
+                ? value
+                : other;
+    }
+
+    // A value as the plan's text writes it: a list as [1, 2], anything else as it is.
+    private static String pythonText(final Object value) {
+        return value instanceof final Collection<?> collection
+                ? collection.stream().map(String::valueOf).collect(Collectors.joining(", ", "[", "]"))
+                : String.valueOf(value);
+    }
+
+    private static long number(final Object value) {
+        if (value instanceof final Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (final NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private static Map<String, List<String>> parsers() {
+        final Map<String, List<String>> map = new LinkedHashMap<>();
+        final List<String> json = List.of("JSONParser", "CombinedParser");
+        final List<String> text = List.of("DSParser", "CombinedParser");
+        map.put("json array", json);
+        map.put("json lines", json);
+        map.put("xml", List.of("XMLParser", "CombinedParser"));
+        map.put("xml fragments", List.of("XMLFragmentParser", "CombinedParser"));
+        for (final String format : List.of("delimited", "syslog rfc5424", "syslog rfc3164", "key=value",
+                "unknown text", "cef", "multi-line text", "json lines (some not JSON)", "cri", "mixed lines",
+                "keyed sections", "leef")) {
+            map.put(format, text);
+        }
+        map.put("json object", json);
+        return Collections.unmodifiableMap(map);
+    }
+
+    private static Map<String, String> stepOf() {
+        final Map<String, String> map = new LinkedHashMap<>();
+        map.put("start_onboarding", "start");
+        map.put("build_status", "any step");
+        map.put("start_build", "start");
+        map.put("create_feed", "feed");
+        map.put("upload_sample", "samples");
+        map.put("profile_sample", "start");
+        map.put("build_data_splitter", "converter");
+        map.put("survey_feed", SURVEYED);
+        map.put(CompareFeedsTool.NAME, FEEDS_COMPARED);
+        map.put(CatalogueEventTypesTool.NAME, CATALOGUE);
+        map.put("save_text_converter", "converter");
+        map.put("draft_translation_mapping", "translation");
+        map.put("build_translation_xslt", "translation");
+        map.put("save_xslt", "translation");
+        map.put("find_pipeline_templates", "pipeline");
+        map.put("describe_template", "pipeline");
+        map.put("create_pipeline", "pipeline");
+        map.put("step_sample", "stepped");
+        map.put("step_pipeline", "stepped");
+        map.put("step_records", "stepped");
+        map.put("create_processor_filter", "processed");
+        map.put("wait_for_processing", "processed");
+        map.put("check_events", "validated");
+        map.put("write_documentation", "documented");
+        map.put("get_field_conventions", "index");
+        map.put("draft_index_mapping", "index");
+        map.put("create_index_doc", "index");
+        map.put("create_indexing_pipeline", "indexing_pipeline");
+        map.put("propose_index_template", "index_template");
+        map.put("check_index_template", "index_template");
+        map.put("rename_index", "index_template");
+        map.put("verify_index", "indexed");
+        map.put("promote_build", "promoted");
+        return Collections.unmodifiableMap(map);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A step's first call, and what follows it.
+    ///
+    /// @param call The call: `tool` and `arguments`.
+    /// @param then What follows it.
+    public record NextCall(Map<String, Object> call, String then) {
+
+    }
+
+    /// What a build gives a step's call.
+    ///
+    /// @param build       The build.
+    /// @param feeds       Its feeds' names.
+    /// @param raw         Its raw sample streams' ids, or a placeholder.
+    /// @param events      Its Events streams' ids, or a placeholder.
+    /// @param translation Its events pipeline's UUID, or null.
+    /// @param indexing    Its indexing pipeline's UUID, or null.
+    /// @param processing  How processing stands for the step (e.g. `running`, `disabled`, `finished`), or null.
+    /// @param index       Its index doc (`uuid`, `backend`, `columns`), or null.
+    /// @param sources     The existing feeds it works from.
+    /// @param discovery   True for a discovery build.
+    /// @param locations   The survey's locations, or a placeholder.
+    /// @param cef         Its CEF pipeline's UUID, or null.
+    /// @param editedXslt  Its translation XSLT changed by hand, or null.
+    /// @param version     The pipeline translating the feed now (`name`, `uuid`), whose next version the build
+    ///                    makes with its translation written anew, or null.
+    /// @param reference   Its reference data: `pipeline` (the reference-data pipeline's UUID), `raw` (its Raw
+    ///                    Reference streams) and `unloaded` (feeds the events pipeline looks values up in that hold
+    ///                    no Reference stream yet); null for a build without.
+    /// @param scope       For an aggregated feed's build with a scope: its group, its source types and their share
+    ///                    of the records the survey read ([StroomBuildFacts#SCOPE_SHARE]); null for a build without.
+    public record CallArgs(String build,
+                           List<String> feeds,
+                           Object raw,
+                           Object events,
+                           String translation,
+                           String indexing,
+                           String processing,
+                           Map<String, Object> index,
+                           List<String> sources,
+                           boolean discovery,
+                           Object locations,
+                           String cef,
+                           String editedXslt,
+                           Map<String, Object> version,
+                           Map<String, Object> reference,
+                           Map<String, Object> scope) {
+
+        /// @param build       The build.
+        /// @param feeds       Its feeds' names.
+        /// @param raw         Its raw sample streams' ids, or a placeholder.
+        /// @param events      Its Events streams' ids, or a placeholder.
+        /// @param translation Its events pipeline's UUID, or null.
+        /// @param indexing    Its indexing pipeline's UUID, or null.
+        /// @return What the build gives, with nothing else known.
+        public static CallArgs of(final String build,
+                                  final List<String> feeds,
+                                  final Object raw,
+                                  final Object events,
+                                  final String translation,
+                                  final String indexing) {
+            return new CallArgs(build, feeds, raw, events, translation, indexing, null, null, List.of(), false,
+                    null, null, null, null, null, null);
+        }
+    }
+
+    /// The survey of each feed a build of several feeds is for ([#status]).
+    ///
+    /// @param feeds      The feeds the build is for.
+    /// @param surveyed   Those with a survey (or one refused for nothing readable).
+    /// @param unsurveyed Those with none yet.
+    /// @param uncovered  Those surveyed but not covered yet.
+    record FeedSurveys(List<String> feeds, List<String> surveyed, List<String> unsurveyed, List<String> uncovered) {
+
+        /// A build of one feed, or none: its survey is the build's.
+        static final FeedSurveys NONE = new FeedSurveys(List.of(), List.of(), List.of(), List.of());
+
+        /// @param due   The feeds due first.
+        /// @param feeds All the feeds.
+        /// @return The feeds with the first of those due first, the rest in their order.
+        List<String> first(final List<String> due, final List<String> feeds) {
+            if (due.isEmpty()) {
+                return feeds;
+            }
+            final List<String> out = new ArrayList<>();
+            out.add(due.getFirst());
+            feeds.stream()
+                    .filter(feed -> !feed.equalsIgnoreCase(due.getFirst()))
+                    .forEach(out::add);
+            return out;
+        }
+
+        /// @return What the build status says of them, for a build of several feeds: `surveyed`, `to_survey` and
+        /// `not_covered`; empty for one feed.
+        Optional<Map<String, Object>> said() {
+            if (feeds.isEmpty()) {
+                return Optional.empty();
+            }
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("surveyed", surveyed);
+            out.put("to_survey", unsurveyed);
+            out.put("not_covered", uncovered);
+            out.put("note", "Each feed the build is for is surveyed and covered on its own (survey_feed build=... "
+                            + "feed=<each>): next names them in turn.");
+            return Optional.of(out);
+        }
+    }
+
+    /// A build indexed one index per feed, as the user chose ([#status]).
+    ///
+    /// @param feeds           The feeds the build is for; none for a build not indexed one per feed.
+    /// @param withoutIndex    Those no index doc of the build is named for yet.
+    /// @param withoutPipeline Those no indexing pipeline of the build writes the index of yet.
+    record PerFeedIndexing(List<String> feeds, List<String> withoutIndex, List<String> withoutPipeline) {
+
+        /// A build not indexed one index per feed.
+        static final PerFeedIndexing NONE = new PerFeedIndexing(List.of(), List.of(), List.of());
+
+        /// @param step The plan's next step.
+        /// @return What to add to its `then`: the feed it is for next; empty for other steps, or another build.
+        String after(final String step) {
+            if ("index".equals(step) && !withoutIndex.isEmpty()) {
+                return "; one index per feed, as the user chose: this one for " + withoutIndex.getFirst()
+                       + ", named for it (e.g. '" + withoutIndex.getFirst() + "-Index'), then one for each of the "
+                       + "rest";
+            }
+            if ("indexing_pipeline".equals(step) && !withoutPipeline.isEmpty()) {
+                return "; one indexing pipeline per feed's index, as the user chose: this one writing "
+                       + withoutPipeline.getFirst() + "'s index, named for it, then one for each of the rest (each "
+                       + "processes only its feed's Events)";
+            }
+            return "";
+        }
+
+        /// @return What the build status says of it: `feeds`, `without_index` and `without_pipeline`; empty for a
+        /// build not indexed one per feed.
+        Optional<Map<String, Object>> said() {
+            if (feeds.isEmpty()) {
+                return Optional.empty();
+            }
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("feeds", feeds);
+            out.put("without_index", withoutIndex);
+            out.put("without_pipeline", withoutPipeline);
+            return Optional.of(out);
+        }
+    }
+
+    /// What kind of work a build is, as its plan's steps follow it.
+    ///
+    /// @param discovery     A discovery index: raw records indexed as they are, with no events pipeline.
+    /// @param reference     Reference data: a table to look values up in, loaded by a reference-data pipeline.
+    /// @param referenceOnly Reference data loaded on its own: no translation, Events or index.
+    record Kinds(boolean discovery, boolean reference, boolean referenceOnly) {
+
+    }
+
+    /// What a build starting from an existing pipeline does before its translation is changed or catalogued.
+    ///
+    /// @param next   The step, as a sentence naming its call.
+    /// @param unread The copy's XSLTs not read back yet (none before the copy is made).
+    public record ReadBack(String next, Set<String> unread) {
+
+    }
+}

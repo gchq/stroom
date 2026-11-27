@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<array xmlns="http://www.w3.org/2013/XSL/json">
+  <map>
+    <string key="when">2026-11-07T06:00:00.000Z</string>
+    <string key="kind">door</string>
+    <string key="outcome">granted</string>
+    <string key="badge">B-1001</string>
+    <string key="holder">jbloggs</string>
+    <string key="reader">Main entrance</string>
+  </map>
+  <map>
+    <string key="when">2026-11-07T06:01:00.000Z</string>
+    <string key="kind">door</string>
+    <string key="outcome">denied</string>
+    <string key="badge">B-2002</string>
+    <string key="reader">Server room</string>
+    <string key="reason">Badge not valid for this area</string>
+  </map>
+  <map>
+    <string key="when">2026-11-07T06:30:00.000Z</string>
+    <string key="kind">alarm</string>
+    <string key="reader">Loading bay</string>
+    <string key="detail">Door held open</string>
+  </map>
+  <map>
+    <string key="when">2026-11-07T06:45:00.000Z</string>
+    <string key="kind">status</string>
+    <string key="reader">Main entrance</string>
+  </map>
+</array>

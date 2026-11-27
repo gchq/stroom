@@ -1,0 +1,1220 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.api.ExplorerService;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.HasData;
+import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/// The build record: one Documentation doc, [#NAME], in each build's folder. Its format must keep reading as earlier
+/// versions of the tools wrote it: their records are still in users' build folders.
+///
+/// It holds what is remembered about the build's documents between calls: which are working copies of production
+/// documents (and of which), the code digests that stepped clean, passed index verification or gave Events that
+/// passed check_events (what promotion checks for), and the feeds whose samples are files on the user's disk.
+///
+/// Earlier versions kept these as explorer tags (`mcp-build-<build>`, `mcp-copy-of-<uuid>`,
+/// `mcp-stepped-<digest>`, ...). Tags are what people filter the explorer by, and those grew Stroom's tag list with
+/// every build and every change of code; only mcp-generated and mcp-managed (and mcp-kept-mapping on XSLTs) are
+/// tags now. Like the tags, the record is seen by every node and survives restarts. Two writing it at once lose
+/// nothing: Stroom refuses a save of a doc changed since it was read, and the change is made again on the newer
+/// doc. A build's old tags are folded into its record the first time it is read, then removed.
+///
+/// A record is `{"docs": {uuid: entry}}`, with `source_feeds` once a build works from existing feeds and
+/// `event_logging_version` (`version`, `how`) once the version its translation writes is settled; an entry may
+/// hold `type`, `name`, `copy_of`, `version_of`, `stepped`, `verified`, `validated` (lists of digests),
+/// `stepped_streams`, `indexed_streams` and `sample_files`.
+@Singleton
+public class BuildRecords {
+
+    /// In a working copy's entry: the version its original had when it was copied.
+    static final String COPY_OF_VERSION = "copy_of_version";
+    /// In a document's entry: true once a promotion of the build left it in the workspace (the user kept it), so it
+    /// doesn't hold the build open on its feed.
+    static final String KEPT_AT_PROMOTION = "kept_at_promotion";
+    /// In a kept document's entry: its version when the promotion kept it. Changed since (by the tools or by hand),
+    /// it is work in progress again, so holds the build open on its feed.
+    static final String KEPT_VERSION = "kept_version";
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildRecords.class);
+
+    /// The record's name in each build folder.
+    public static final String NAME = "Build record";
+    /// Clean steps (by the digest of the code that stepped clean).
+    public static final String STEPPED = "stepped";
+    /// Passed index verifications.
+    public static final String VERIFIED = "verified";
+    /// Events that passed check_events.
+    public static final String VALIDATED = "validated";
+    /// In an indexing pipeline's entry: the streams the last passed index verification searched (the Events it
+    /// indexed). Records made before it was kept have none.
+    public static final String INDEXED_STREAMS = "indexed_streams";
+    /// What the record keeps digests of.
+    public static final List<String> KINDS = List.of(STEPPED, VERIFIED, VALIDATED);
+    /// What a record holds the entry of each document in.
+    public static final String DOCS = "docs";
+    /// What a record holds the existing feeds a build works from in.
+    public static final String SOURCE_FEEDS = "source_feeds";
+    /// The record's key for the event-logging version chosen for the build's translation.
+    public static final String EVENT_LOGGING_VERSION = "event_logging_version";
+    /// The record's key for the indexing choices the user made in forms (`backend`, `naming`).
+    public static final String INDEXING_CHOICES = "indexing_choices";
+    /// The key of the roots the user chose for each role's documents at promotion.
+    public static final String PROMOTION_ROOTS = "promotion_roots";
+    /// The key of the roles whose root was recorded after it was checked to be a folder (a role recorded before
+    /// typed answers were checked has none).
+    public static final String PROMOTION_ROOTS_CHECKED = "promotion_roots_checked";
+    /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
+    /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
+    public static final String KIND = "kind";
+    /// The build-level key of how the build starts when a pipeline already translates what it is to (decided by the
+    /// user, 2026-11-24): `choice` (`existing` or `draft`), `pipeline` (`name`, `uuid`) and `at`.
+    public static final String START_FROM = "start_from";
+    /// The record's key for the feeds whose survey for the build read nothing, each with why
+    /// (catalogue_event_types then goes on without the survey, saying so).
+    public static final String UNREADABLE_SURVEYS = "unreadable_surveys";
+    /// The record's key of a copied translation XSLT rebuild_mapping couldn't read back ([#rememberReadBackFailed]).
+    public static final String READ_BACK_FAILED = "read_back_failed";
+    // The EventSource/System/Name and Environment the user gave for the build's translation.
+    private static final String SYSTEM = "system";
+    /// The record's key for the user's choice for JSON string values longer than Stroom's JSON parser keeps.
+    public static final String LONG_VALUES = "long_values";
+    /// The record's key for the zone the user said the source writes times with no zone or offset in.
+    public static final String TIME_ZONE = "time_zone";
+    /// The record's key for the other answers the user gave a draft of the build (where records with no time or
+    /// date take it from, how many lines of a stack trace to keep), by the draft's argument name.
+    public static final String DRAFT_CHOICES = "draft_choices";
+    /// The record's key for what the user confirmed of a build of several feeds (compare_feeds): `digest` (of the
+    /// differences shown), `feeds`, `confirmed` (its date), `time_zones` (each feed's zone, where they differ),
+    /// `agents` (each AGENTS conflict's `value` and `folder` chosen) and `index` ([#INDEX_PER_FEED] or
+    /// [#INDEX_SHARED]).
+    public static final String FEED_COMPARISON = "feed_comparison";
+    /// The [#FEED_COMPARISON] index choice: one index per feed.
+    public static final String INDEX_PER_FEED = "per_feed";
+    /// The [#FEED_COMPARISON] index choice: one index shared by every feed.
+    public static final String INDEX_SHARED = "shared";
+    /// The kinds of work a build may be started as.
+    public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference", "assessment");
+
+    static final Pattern FENCE = Pattern.compile("```json build-record\\n(.*?)\\n```", Pattern.DOTALL);
+    // The tags earlier versions kept these in, and the entry each one fills (null: the build, now the folder it is
+    // in).
+    private static final Map<String, String> LEGACY = legacy();
+    private static final int ATTEMPTS = 5;
+
+    private final Provider<WriteGuard> guardProvider;
+    private final DocumentAccess documentAccess;
+    private final DocumentWrites documentWrites;
+    private final Provider<ExplorerService> explorerServiceProvider;
+    private final PipelineShapes pipelineShapes;
+
+    /// @param guardProvider           Finds the build's documents and creates its record.
+    /// @param documentAccess          Reads the record, as the user.
+    /// @param documentWrites          Writes the record, as the user.
+    /// @param explorerServiceProvider Deletes a record once it holds nothing.
+    /// @param pipelineShapes          Reads the code a pipeline runs, for its fingerprint.
+    @Inject
+    public BuildRecords(final Provider<WriteGuard> guardProvider,
+                        final DocumentAccess documentAccess,
+                        final DocumentWrites documentWrites,
+                        final Provider<ExplorerService> explorerServiceProvider,
+                        final PipelineShapes pipelineShapes) {
+        this.guardProvider = guardProvider;
+        this.documentAccess = documentAccess;
+        this.documentWrites = documentWrites;
+        this.explorerServiceProvider = explorerServiceProvider;
+        this.pipelineShapes = pipelineShapes;
+    }
+
+    /// @param build A build's name.
+    /// @return The build's record, empty (`{"docs": {}}`) when it has none; old tags folded in first.
+    public Map<String, Object> load(final String build) {
+        final List<WriteGuard.BuildDoc> contents = guardProvider.get().folderContents(build, true);
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(contents);
+        final Map<WriteGuard.BuildDoc, List<String>> old = new LinkedHashMap<>();
+        contents.forEach(doc -> {
+            final List<String> legacy = legacyTags(doc.tags());
+            if (!legacy.isEmpty()) {
+                old.put(doc, legacy);
+            }
+        });
+        if (!old.isEmpty()) {
+            final Map<String, Object> state = save(build, found.orElse(null), record ->
+                    old.forEach((doc, tags) -> {
+                        final Map<String, Object> entry = entryOf(record, doc.docRef());
+                        tags.forEach(tag -> fold(entry, tag));
+                    }));
+            old.forEach((doc, tags) -> guardProvider.get().untag(List.of(doc.docRef()), new LinkedHashSet<>(tags)));
+            return state;
+        }
+        return found.map(doc -> parse(bodyText(read(doc.docRef()))))
+                .orElseGet(BuildRecords::empty);
+    }
+
+    /// @param documentAccess How documents are read.
+    /// @param doc            A document of a build.
+    /// @param entry          Its entry in the build's record ([#docs]), or null.
+    /// @return True for a document a promotion kept in the workspace and nothing has changed since: its version is
+    /// the one kept (a record from before versions were kept has none, and is taken as unchanged).
+    static boolean keptUnchanged(final DocumentAccess documentAccess,
+                                 final WriteGuard.BuildDoc doc,
+                                 final Object entry) {
+        if (!(entry instanceof final Map<?, ?> map) || !Boolean.TRUE.equals(map.get(KEPT_AT_PROMOTION))) {
+            return false;
+        }
+        final Object kept = map.get(KEPT_VERSION);
+        return kept == null || version(documentAccess, doc.docRef())
+                .map(version -> version.equals(String.valueOf(kept)))
+                .orElse(true);
+    }
+
+    /// @param documentAccess Reads the document, as the user.
+    /// @param ref            A document.
+    /// @return Its version: empty when it can't be read, or has none.
+    static Optional<String> version(final DocumentAccess documentAccess, final DocRef ref) {
+        try {
+            return documentAccess.read(ref)
+                    .filter(AbstractDoc.class::isInstance)
+                    .map(doc -> ((AbstractDoc) doc).getVersion());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No version read for {}: {}", ref, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    /// @param build A build's name, or null.
+    /// @param uuid  A document's UUID.
+    /// @return The document's entry in its build's record: empty when it has none, or `build` is null.
+    public Map<String, Object> entry(final String build, final String uuid) {
+        if (NullSafe.isBlankString(build)) {
+            return new LinkedHashMap<>();
+        }
+        return docs(load(build)).get(uuid) instanceof final Map<?, ?> found
+                ? asMap(found)
+                : new LinkedHashMap<>();
+    }
+
+    /// Changes one document's entry and saves the record (made if the build has none).
+    ///
+    /// @param build  A build's name.
+    /// @param doc    The document.
+    /// @param change Changes its entry in place.
+    /// @return The record as saved.
+    public Map<String, Object> update(final String build,
+                                      final DocRef doc,
+                                      final Consumer<Map<String, Object>> change) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> change.accept(entryOf(state, doc)));
+    }
+
+    /// Records existing feeds the build works from (start_build feeds=...): the build then builds on their data,
+    /// not on samples it uploads, and promotion's filters name them, not a test feed.
+    ///
+    /// @param build A build's name.
+    /// @param feeds The feeds' names.
+    /// @return The record as saved.
+    public Map<String, Object> addSourceFeeds(final String build, final List<String> feeds) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Set<String> all = new LinkedHashSet<>(JsonValues.strings(state.get(SOURCE_FEEDS)));
+            all.addAll(feeds);
+            state.put(SOURCE_FEEDS, new ArrayList<>(all));
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The event-logging version the user chose for the build's translation, and how it was settled
+    /// (`version` and `how`), or empty when none was recorded.
+    public Optional<Map<String, Object>> eventLoggingVersion(final String build) {
+        return load(build).get(EVENT_LOGGING_VERSION) instanceof final Map<?, ?> chosen
+                ? Optional.of(asMap(chosen))
+                : Optional.empty();
+    }
+
+    /// Records the event-logging version chosen for the build's translation, so a later call (in this session or
+    /// another) doesn't ask again what an earlier one asked.
+    ///
+    /// @param build   A build's name.
+    /// @param version The version.
+    /// @param how     How it was settled: `given`, `form` or `only`.
+    /// @return The record as saved.
+    public Map<String, Object> rememberEventLoggingVersion(final String build,
+                                                           final String version,
+                                                           final String how) {
+        return rememberEventLoggingVersion(build, version, how, null);
+    }
+
+    /// As [#rememberEventLoggingVersion(String, String, String)], with the XML schema document chosen where this
+    /// Stroom holds the version in more than one.
+    ///
+    /// @param build   A build's name.
+    /// @param version The version.
+    /// @param how     How it was settled: `given`, `form` or `only`.
+    /// @param uuid    The UUID of the document chosen (kept as `uuid`), or null.
+    /// @return The record as saved.
+    public Map<String, Object> rememberEventLoggingVersion(final String build,
+                                                           final String version,
+                                                           final String how,
+                                                           final String uuid) {
+        return rememberEventLoggingVersion(build, version, how, uuid, null);
+    }
+
+    /// As [#rememberEventLoggingVersion(String, String, String, String)], with the Events schema variant (its
+    /// namespace: event-logging's, or a fork's) the version is in, so a later call naming the namespace is given
+    /// the version chosen rather than asking again.
+    ///
+    /// @param build     A build's name.
+    /// @param version   The version.
+    /// @param how       How it was settled: `given`, `form` or `only`.
+    /// @param uuid      The UUID of the document chosen (kept as `uuid`), or null.
+    /// @param namespace The variant's namespace (kept as `namespace`), or null.
+    /// @return The record as saved.
+    public Map<String, Object> rememberEventLoggingVersion(final String build,
+                                                           final String version,
+                                                           final String how,
+                                                           final String uuid,
+                                                           final String namespace) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> chosen = new LinkedHashMap<>();
+            chosen.put("version", version);
+            chosen.put("how", how);
+            if (uuid != null) {
+                chosen.put("uuid", uuid);
+            }
+            if (namespace != null) {
+                chosen.put("namespace", namespace);
+            }
+            state.put(EVENT_LOGGING_VERSION, chosen);
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The indexing choices the user made in forms for the build: `backend` (`elasticsearch` or `lucene`)
+    /// and `naming` (`{convention: profile}` or `{like_index: uuid}`), each once made; empty when none was recorded.
+    public Map<String, Object> indexingChoices(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        return load(build).get(INDEXING_CHOICES) instanceof final Map<?, ?> chosen
+                ? asMap(chosen)
+                : Map.of();
+    }
+
+    /// Records an indexing choice the user made in a form, so a later call (after the agent's context was compacted,
+    /// or in another session) doesn't ask again. Seen in testing: the backend was asked twice in one build.
+    ///
+    /// @param build  A build's name.
+    /// @param key    `backend` or `naming`.
+    /// @param chosen What the user chose.
+    /// @return The record as saved.
+    public Map<String, Object> rememberIndexingChoice(final String build, final String key, final Object chosen) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> choices = state.get(INDEXING_CHOICES) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            choices.put(key, chosen);
+            state.put(INDEXING_CHOICES, choices);
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The root the user chose at promotion for each role's documents, by role (e.g. `Indexing`:
+    /// `System/Elastic Indices`); empty when none was recorded.
+    public Map<String, Object> promotionRoots(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        return load(build).get(PROMOTION_ROOTS) instanceof final Map<?, ?> chosen
+                ? asMap(chosen)
+                : Map.of();
+    }
+
+    /// Records where the user chose a role's documents go at promotion, so the approval (a later call) lays out what
+    /// they reviewed, and isn't asked again.
+    ///
+    /// @param build A build's name.
+    /// @param role  The role, e.g. `Indexing`.
+    /// @param root  The folder chosen, from System.
+    /// @return The record as saved.
+    public Map<String, Object> rememberPromotionRoot(final String build, final String role, final String root) {
+        return rememberPromotionRoot(build, role, root, true);
+    }
+
+    /// Records where a role's documents go at promotion.
+    ///
+    /// @param build   A build's name.
+    /// @param role    The role, e.g. `Indexing`.
+    /// @param root    The folder, from System.
+    /// @param checked True if it was checked to be a folder, as every root is now; false only for one recorded as
+    ///                before typed answers were checked.
+    /// @return The record as saved.
+    public Map<String, Object> rememberPromotionRoot(final String build,
+                                                     final String role,
+                                                     final String root,
+                                                     final boolean checked) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> roots = state.get(PROMOTION_ROOTS) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            roots.put(role, root);
+            state.put(PROMOTION_ROOTS, roots);
+            final Set<String> roles = checkedRoles(state);
+            if (checked) {
+                roles.add(role);
+            } else {
+                roles.remove(role);
+            }
+            state.put(PROMOTION_ROOTS_CHECKED, new ArrayList<>(roles));
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The roles whose root was recorded after it was checked to be a folder.
+    public Set<String> checkedPromotionRoots(final String build) {
+        return NullSafe.isBlankString(build)
+                ? Set.of()
+                : checkedRoles(load(build));
+    }
+
+    /// Forgets where a role's documents go at promotion: a location recorded that is no folder, to be asked again.
+    ///
+    /// @param build A build's name.
+    /// @param role  The role, e.g. `Indexing`.
+    /// @return The build's state as saved.
+    public Map<String, Object> forgetPromotionRoot(final String build, final String role) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            if (state.get(PROMOTION_ROOTS) instanceof final Map<?, ?> earlier) {
+                final Map<String, Object> roots = new LinkedHashMap<>(asMap(earlier));
+                roots.remove(role);
+                state.put(PROMOTION_ROOTS, roots);
+            }
+            final Set<String> roles = checkedRoles(state);
+            if (roles.remove(role)) {
+                state.put(PROMOTION_ROOTS_CHECKED, new ArrayList<>(roles));
+            }
+        });
+    }
+
+    // The roles a state records as checked.
+    private static Set<String> checkedRoles(final Map<String, Object> state) {
+        final Set<String> roles = new LinkedHashSet<>();
+        if (state.get(PROMOTION_ROOTS_CHECKED) instanceof final List<?> list) {
+            list.forEach(role -> roles.add(String.valueOf(role)));
+        }
+        return roles;
+    }
+
+    /// @param build A build's name.
+    /// @return The EventSource/System/Name and Environment the user gave for the build's translation (`system_name`,
+    /// as given: one name or a JSON object of each variant's; `environment`), or empty when none was recorded.
+    public Optional<Map<String, Object>> system(final String build) {
+        return load(build).get(SYSTEM) instanceof final Map<?, ?> given
+                ? Optional.of(asMap(given))
+                : Optional.empty();
+    }
+
+    /// Records the EventSource/System/Name and Environment the user gave for the build's translation, so a later
+    /// draft follows them, and one passed otherwise is caught (seen in chat 163: the user answered Test, and the
+    /// second draft was given Prod).
+    ///
+    /// @param build       A build's name.
+    /// @param systemName  The name, as given (one name, or a JSON object of each variant's), or null.
+    /// @param environment The environment, or null.
+    /// @return The record as saved.
+    public Map<String, Object> rememberSystem(final String build, final String systemName, final String environment) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> given = new LinkedHashMap<>();
+            if (systemName != null) {
+                given.put("system_name", systemName);
+            }
+            if (environment != null) {
+                given.put("environment", environment);
+            }
+            state.put(SYSTEM, given);
+        });
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The user's choice for JSON string values longer than Stroom's JSON parser keeps, as
+    /// [#rememberLongValues] kept it ([LongValues] reads it); empty when none was recorded (or `build` is null).
+    public Optional<Map<String, Object>> longValues(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(LONG_VALUES) instanceof final Map<?, ?> chosen
+                ? Optional.of(asMap(chosen))
+                : Optional.empty();
+    }
+
+    /// Records the user's choice for JSON string values longer than Stroom's JSON parser keeps (cut or kept whole),
+    /// so step_sample and processing follow it, and a later draft doesn't ask again (seen in user test chat 182: the
+    /// user said "Cut them" in the chat, nothing kept it, and every clean step was refused for the parser's
+    /// Warning).
+    ///
+    /// @param build  A build's name.
+    /// @param choice The choice, as [LongValues] writes it.
+    /// @return The record as saved.
+    public Map<String, Object> rememberLongValues(final String build, final Map<String, Object> choice) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(LONG_VALUES, new LinkedHashMap<>(choice)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The zone the user chose for the build's times with no zone or offset, as [#rememberTimeZone] kept it
+    /// ([TimeSources] reads it): `zone` (an IANA name, an offset, or `field:NAME` / `meta:NAME`), `how` and
+    /// `recorded` (its date); empty when none was recorded (or `build` is null).
+    public Optional<Map<String, Object>> timeZone(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(TIME_ZONE) instanceof final Map<?, ?> chosen
+                ? Optional.of(asMap(chosen))
+                : Optional.empty();
+    }
+
+    /// Records the zone the user chose for the build's times with no zone or offset, so a later draft of the build
+    /// reads them in it rather than asking again (seen in chats 185 and 186: a redraft asked the zone again, and the
+    /// user answered UTC both times).
+    ///
+    /// @param build  A build's name.
+    /// @param choice The choice, as [TimeSources] writes it.
+    /// @return The record as saved.
+    public Map<String, Object> rememberTimeZone(final String build, final Map<String, Object> choice) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(TIME_ZONE, new LinkedHashMap<>(choice)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return What the user confirmed of the build's several feeds ([#FEED_COMPARISON]); empty when nothing was
+    /// (or `build` is null).
+    public Map<String, Object> feedComparison(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        return load(build).get(FEED_COMPARISON) instanceof final Map<?, ?> kept
+                ? asMap(kept)
+                : Map.of();
+    }
+
+    /// Records what the user confirmed of the build's several feeds, the keys given replacing those kept.
+    ///
+    /// @param build   A build's name.
+    /// @param changes The keys of [#FEED_COMPARISON] to set.
+    /// @return The record as saved.
+    public Map<String, Object> rememberFeedComparison(final String build, final Map<String, Object> changes) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> kept = state.get(FEED_COMPARISON) instanceof final Map<?, ?> map
+                    ? new LinkedHashMap<>(asMap(map))
+                    : new LinkedHashMap<>();
+            kept.putAll(changes);
+            state.put(FEED_COMPARISON, kept);
+        });
+    }
+
+    /// @param build A build's name, or null.
+    /// @return Each feed's zone for times with none, where the user gave the build's feeds different zones; none
+    /// otherwise.
+    public Map<String, String> feedTimeZones(final String build) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        JsonValues.mapOrEmpty(feedComparison(build).get("time_zones"))
+                .forEach((feed, zone) -> out.put(feed, String.valueOf(zone)));
+        return out;
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The user's answer to each conflict between the AGENTS docs of the build's feeds' folders, by its key
+    /// ([AgentsConflicts]): `value` and `folder`; none when none was asked.
+    public Map<String, Map<String, Object>> agentsChoices(final String build) {
+        final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
+        JsonValues.mapOrEmpty(feedComparison(build).get("agents"))
+                .forEach((key, choice) -> out.put(key, JsonValues.mapOrEmpty(choice)));
+        return out;
+    }
+
+    /// @param build    A build's name, or null.
+    /// @param argument The draft's argument the answer stands for (e.g. `time_source`).
+    /// @return The answer the user gave a draft of the build, as [#rememberDraftChoice] kept it; empty when none
+    /// was kept (or `build` is null).
+    public Optional<Object> draftChoice(final String build, final String argument) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(DRAFT_CHOICES) instanceof final Map<?, ?> choices
+                ? Optional.ofNullable(choices.get(argument))
+                : Optional.empty();
+    }
+
+    /// Records an answer the user gave a draft of the build, so a later draft of the build uses it rather than
+    /// asking again, as the zone is ([#rememberTimeZone]).
+    ///
+    /// @param build    A build's name.
+    /// @param argument The draft's argument the answer stands for (e.g. `time_source`).
+    /// @param value    The answer, as the argument takes it.
+    /// @return The record as saved.
+    public Map<String, Object> rememberDraftChoice(final String build, final String argument, final Object value) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> choices = state.get(DRAFT_CHOICES) instanceof final Map<?, ?> kept
+                    ? new LinkedHashMap<>(asMap(kept))
+                    : new LinkedHashMap<>();
+            choices.put(argument, value);
+            state.put(DRAFT_CHOICES, choices);
+        });
+    }
+
+    /// @param build A build's name.
+    /// @return The kind of work the build was started as (one of [#BUILD_KINDS]), or empty when none was named.
+    public Optional<String> kind(final String build) {
+        return load(build).get(KIND) instanceof final String kind && BUILD_KINDS.contains(kind)
+                ? Optional.of(kind)
+                : Optional.empty();
+    }
+
+    /// Records the kind of work the build is, as start_build or start_onboarding was told: the plan's steps follow
+    /// it from the start, before the build holds what would tell it.
+    ///
+    /// @param build A build's name.
+    /// @param kind  One of [#BUILD_KINDS].
+    /// @return The record as saved.
+    public Map<String, Object> rememberKind(final String build, final String kind) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(KIND, kind));
+    }
+
+    /// @param build A build's name.
+    /// @return How the user chose to start the build, a pipeline already translating what it is to (`choice`,
+    /// `pipeline`), or empty when they haven't been asked.
+    public Optional<Map<String, Object>> startFrom(final String build) {
+        return load(build).get(START_FROM) instanceof final Map<?, ?> kept
+                ? Optional.of(JsonValues.mapOrEmpty(kept))
+                : Optional.empty();
+    }
+
+    /// Records how the user chose to start the build: from the pipeline already translating what it is to, or with a
+    /// new translation drafted.
+    ///
+    /// @param build    A build's name.
+    /// @param startFrom `choice` (`existing` or `draft`), `pipeline` (`name`, `uuid`) and `at`.
+    /// @return The record as saved.
+    public Map<String, Object> rememberStartFrom(final String build, final Map<String, Object> startFrom) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(START_FROM, new LinkedHashMap<>(startFrom)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The copied translation XSLT rebuild_mapping couldn't read back into a mapping, as
+    /// [#rememberReadBackFailed] kept it (`xslt`: `uuid` and `name`; `why`; `at`); empty when none was (or `build` is
+    /// null).
+    public Optional<Map<String, Object>> readBackFailed(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(READ_BACK_FAILED) instanceof final Map<?, ?> kept
+                ? Optional.of(asMap(kept))
+                : Optional.empty();
+    }
+
+    /// Records that rebuild_mapping couldn't read a build's copied translation XSLT back into a mapping (decided by
+    /// the user, 2026-11-25): the gate that holds the catalogue and saves for the read-back lifts, and the translation
+    /// may be drafted anew for the build, whichever node or session calls next.
+    ///
+    /// @param build  A build's name, or null (nothing is recorded).
+    /// @param failed `xslt` (`uuid`, `name`), `why` and `at`.
+    public void rememberReadBackFailed(final String build, final Map<String, Object> failed) {
+        if (NullSafe.isBlankString(build)) {
+            return;
+        }
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        save(build, found.orElse(null), state -> state.put(READ_BACK_FAILED, new LinkedHashMap<>(failed)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return Each feed whose survey for the build was refused because nothing in its streams could be read, with
+    /// why; empty when none was (or `build` is null).
+    public Map<String, String> unreadableSurveys(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        final Map<String, String> out = new LinkedHashMap<>();
+        if (load(build).get(UNREADABLE_SURVEYS) instanceof final Map<?, ?> kept) {
+            kept.forEach((feed, why) -> out.put(String.valueOf(feed), String.valueOf(why)));
+        }
+        return out;
+    }
+
+    /// Records that the build's survey of a feed was refused because nothing in its streams could be read, so
+    /// catalogue_event_types, which otherwise waits for the survey, can go on (saying why there was none), whichever
+    /// node or session calls it, and after a restart.
+    ///
+    /// @param build A build's name, or null (nothing is recorded).
+    /// @param feed  The feed surveyed.
+    /// @param why   Why nothing could be read.
+    public void rememberUnreadableSurvey(final String build, final String feed, final String why) {
+        if (NullSafe.isBlankString(build) || NullSafe.isBlankString(feed)) {
+            return;
+        }
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        save(build, found.orElse(null), state -> {
+            final Map<String, Object> kept = state.get(UNREADABLE_SURVEYS) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            kept.put(feed, why);
+            state.put(UNREADABLE_SURVEYS, kept);
+        });
+    }
+
+    /// Forgets that the build's survey of a feed read nothing, once a survey of it reads something: the build then
+    /// has its survey. The record is written only when it held such a note.
+    ///
+    /// @param build A build's name, or null (nothing is changed).
+    /// @param feed  The feed surveyed.
+    public void forgetUnreadableSurvey(final String build, final String feed) {
+        if (NullSafe.isBlankString(build) || !unreadableSurveys(build).containsKey(feed)) {
+            return;
+        }
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        save(build, found.orElse(null), state -> {
+            final Map<String, Object> kept = state.get(UNREADABLE_SURVEYS) instanceof final Map<?, ?> earlier
+                    ? new LinkedHashMap<>(asMap(earlier))
+                    : new LinkedHashMap<>();
+            kept.remove(feed);
+            if (kept.isEmpty()) {
+                state.remove(UNREADABLE_SURVEYS);
+            } else {
+                state.put(UNREADABLE_SURVEYS, kept);
+            }
+        });
+    }
+
+    /// Drops documents' entries (promoted out of the build); the record goes once it holds nothing.
+    ///
+    /// @param build A build's name.
+    /// @param uuids The documents' UUIDs.
+    public void forget(final String build, final Collection<String> uuids) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        if (found.isEmpty()) {
+            return;
+        }
+        final Map<String, Object> state = parse(bodyText(read(found.get().docRef())));
+        if (uuids.containsAll(docs(state).keySet())) {
+            documentAccess.node(found.get().docRef()).ifPresent(node ->
+                    explorerServiceProvider.get().delete(List.of(node)));
+            return;
+        }
+        save(build, found.get(), record -> uuids.forEach(docs(record)::remove));
+    }
+
+    /// Per element the pipeline sets its own code for, a hash of the code that runs: the draft where one is
+    /// given, else the saved XSLT or text converter. Not the version history, which isn't code: a draft stepped
+    /// clean is still clean once saved, its history added to it.
+    ///
+    /// @param pipelineUuid A pipeline.
+    /// @param draftCode    Draft code by element, or null.
+    /// @return Each element's code digest.
+    /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
+    public Map<String, String> codeFingerprint(final String pipelineUuid, final Map<String, String> draftCode) {
+        final Map<String, String> prints = new LinkedHashMap<>();
+        for (final TranslationDoc doc : pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid)) {
+            if (doc.inheritedFromTemplate()) {
+                continue;
+            }
+            String code = NullSafe.map(draftCode).get(doc.element());
+            if (code == null) {
+                code = documentAccess.read(doc.doc())
+                        .filter(HasData.class::isInstance)
+                        .map(found -> NullSafe.string(((HasData) found).getData()))
+                        .orElse("");
+            }
+            prints.put(doc.element(), XsltCode.sha256(XsltCode.strip(code)));
+        }
+        return prints;
+    }
+
+    /// @param prints Each element's code digest, from [#codeFingerprint].
+    /// @return The fingerprint's digest, as the record keeps it.
+    public static String fingerprintDigest(final Map<String, String> prints) {
+        return XsltCode.sha256(ToolJson.dumpsSortedKeys(prints)).substring(0, 16);
+    }
+
+    /// Records that the pipeline's code (or the draft stepped) passed. Only pipelines the tools manage (in a build)
+    /// are recorded: stepping anything else stays read-only. Each kind keeps only what can still matter: the new
+    /// record, and the one for the code saved now (a draft stepped clean is recorded beside it, for when it is
+    /// saved).
+    ///
+    /// @param pipeline  The pipeline.
+    /// @param kind      One of [#KINDS].
+    /// @param draftCode The draft code stepped, by element, or null for the saved code.
+    /// @param extra     More to put in its entry (e.g. `stepped_streams`), or null.
+    /// @return `recorded`; empty for a pipeline outside a build (never recorded); else why it couldn't be saved.
+    public Optional<String> recordPassed(final DocRef pipeline,
+                                         final String kind,
+                                         final Map<String, String> draftCode,
+                                         final Map<String, Object> extra) {
+        final WriteGuard guard = guardProvider.get();
+        try {
+            final WriteGuard.Placement placed = guard.placement(pipeline);
+            if (placed.failed()) {
+                // Logged by the guard: said here, so a later refusal for want of the record isn't a mystery.
+                return Optional.of("Passed, but the record of it couldn't be saved: whether the pipeline is in a "
+                                   + "build couldn't be looked up (" + shorten(placed.failure(), 160) + "). "
+                                   + "Promotion and processing will report it as not done; step it again once "
+                                   + "Stroom can be read.");
+            }
+            if (!placed.managed()) {
+                return Optional.empty();
+            }
+            final String build = Optional.ofNullable(placed.build()).orElseThrow(() -> new ToolRefusal(
+                    "it is managed by the server but not in a build folder (moved out of the workspace?)"));
+            final String saved = fingerprintDigest(codeFingerprint(pipeline.getUuid(), null));
+            final String digest = draftCode != null
+                    ? fingerprintDigest(codeFingerprint(pipeline.getUuid(), draftCode))
+                    : saved;
+            update(build, pipeline, entry -> {
+                final Set<String> kept = new TreeSet<>();
+                JsonValues.strings(entry.get(kind)).stream()
+                        .filter(saved::equals)
+                        .forEach(kept::add);
+                kept.add(digest);
+                entry.put(kind, new ArrayList<>(kept));
+                entry.putAll(NullSafe.map(extra));
+            });
+            return Optional.of("recorded");
+        } catch (final RuntimeException e) {
+            // The record is a convenience; never fail the step over it, but say so.
+            LOGGER.warn(() -> LogUtil.message(
+                    "Couldn't record {} on pipeline {}: {}",
+                    kind,
+                    pipeline.getUuid(),
+                    e.getMessage()));
+            return Optional.of("Passed, but the record of it couldn't be saved in the build's record ("
+                               + shorten(e.getMessage(), 160) + "): promotion will report it as not done.");
+        }
+    }
+
+    /// @param pipeline A pipeline.
+    /// @param kind     One of [#KINDS].
+    /// @return Whether the pipeline's saved code is code that passed (on any node).
+    public boolean passed(final DocRef pipeline, final String kind) {
+        return passedCheck(pipeline, kind).passed();
+    }
+
+    /// Whether the pipeline's saved code is code that passed, telling a lookup that failed (its build, its record or
+    /// its code couldn't be read) from a pipeline outside a build or whose code never passed: a failure is logged
+    /// (WARN, with its cause) and its reason kept, for a refusal to say why.
+    ///
+    /// @param pipeline A pipeline.
+    /// @param kind     One of [#KINDS].
+    /// @return Whether it passed, and why it couldn't be told if the lookup failed (then not passed).
+    public Passed passedCheck(final DocRef pipeline, final String kind) {
+        final WriteGuard.Placement placed = guardProvider.get().placement(pipeline);
+        if (placed.failed()) {
+            // Logged by the guard.
+            return new Passed(false, "its build couldn't be looked up: " + placed.failure());
+        }
+        if (placed.build() == null) {
+            return Passed.NOT;
+        }
+        try {
+            final List<String> mine = JsonValues.strings(entry(placed.build(), pipeline.getUuid()).get(kind));
+            if (mine.isEmpty()) {
+                return Passed.NOT;
+            }
+            return new Passed(mine.contains(fingerprintDigest(codeFingerprint(pipeline.getUuid(), null))), null);
+        } catch (final RuntimeException e) {
+            final String reason = NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName());
+            LOGGER.warn(() -> LogUtil.message("Unable to tell whether pipeline {} passed {}: {}", pipeline.getUuid(),
+                    kind, reason), e);
+            return new Passed(false, "its build record or code couldn't be read: " + reason);
+        }
+    }
+
+    /// @param pipeline A pipeline.
+    /// @return Whether its saved code has stepped clean.
+    public boolean steppedClean(final DocRef pipeline) {
+        return passed(pipeline, STEPPED);
+    }
+
+    /// @param pipeline A pipeline.
+    /// @return Whether its saved code has stepped clean, and why it couldn't be told if the lookup failed.
+    public Passed steppedCleanCheck(final DocRef pipeline) {
+        return passedCheck(pipeline, STEPPED);
+    }
+
+    /// @param pipeline An indexing pipeline.
+    /// @return Whether verify_index passed for its current code.
+    public boolean verified(final DocRef pipeline) {
+        return passed(pipeline, VERIFIED);
+    }
+
+    /// @param pipeline An indexing pipeline.
+    /// @return The streams its last passed index verification searched, as its build's record keeps them; empty
+    /// when none are kept (a record made before they were, or a pipeline outside a build).
+    public List<Long> indexedStreams(final DocRef pipeline) {
+        final Map<String, Object> entry = entry(guardProvider.get().buildOf(pipeline).orElse(null),
+                pipeline.getUuid());
+        return streamIds(entry.get(INDEXED_STREAMS));
+    }
+
+    /// @param pipeline One of a build's pipelines.
+    /// @return The names of the build's other pipelines that passed an index verification (any code), as its record
+    /// keeps them: an Events reprocess leaves their index without the new Events. Empty outside a build.
+    public List<String> verifiedIndexingBesides(final DocRef pipeline) {
+        final String build = guardProvider.get().buildOf(pipeline).orElse(null);
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        final List<String> names = new ArrayList<>();
+        docs(load(build)).forEach((uuid, value) -> {
+            if (!uuid.equals(pipeline.getUuid()) && value instanceof final Map<?, ?> entry
+                && !JsonValues.strings(entry.get(VERIFIED)).isEmpty()) {
+                names.add(NullSafe.nonBlankStringElse(NullSafe.get(entry.get("name"), String::valueOf), uuid));
+            }
+        });
+        return names;
+    }
+
+    /// @param value A list of stream ids read from a record (numbers, or text of numbers), or null.
+    /// @return The ids; any that aren't numbers are left out.
+    static List<Long> streamIds(final Object value) {
+        final List<Long> ids = new ArrayList<>();
+        for (final Object id : JsonValues.listOrEmpty(value)) {
+            if (id instanceof final Number number) {
+                ids.add(number.longValue());
+            } else if (id != null && String.valueOf(id).matches("\\d{1,18}")) {
+                ids.add(Long.parseLong(String.valueOf(id)));
+            }
+        }
+        return ids;
+    }
+
+    /// @param pipeline A pipeline.
+    /// @return Whether Events from its current code passed check_events.
+    public boolean validated(final DocRef pipeline) {
+        return passed(pipeline, VALIDATED);
+    }
+
+    /// @return An empty record.
+    public static Map<String, Object> empty() {
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put(DOCS, new LinkedHashMap<String, Object>());
+        return state;
+    }
+
+    /// @param text A record doc's text, or null.
+    /// @return The record its fenced JSON holds, or an empty one if it holds none (or one that doesn't parse).
+    public static Map<String, Object> parse(final String text) {
+        final Matcher matcher = FENCE.matcher(NullSafe.string(text));
+        if (!matcher.find()) {
+            return empty();
+        }
+        try {
+            final Object state = JsonUtil.readValue(matcher.group(1), Object.class);
+            if (state instanceof final Map<?, ?> map && map.get(DOCS) instanceof Map<?, ?>) {
+                return asMap(map);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("A build record that doesn't parse: {}", e.getMessage()));
+        }
+        return empty();
+    }
+
+    /// @param tags A document's tags.
+    /// @return Those an earlier version kept the record in.
+    public static List<String> legacyTags(final Collection<String> tags) {
+        return NullSafe.collection(tags).stream()
+                .filter(tag -> LEGACY.keySet().stream().anyMatch(tag::startsWith))
+                .toList();
+    }
+
+    /// Puts what an old tag recorded into the doc's entry.
+    ///
+    /// @param entry A document's entry.
+    /// @param tag   One of its [#legacyTags].
+    public static void fold(final Map<String, Object> entry, final String tag) {
+        final String prefix = LEGACY.keySet().stream()
+                .filter(tag::startsWith)
+                .findFirst()
+                .orElseThrow();
+        final String key = LEGACY.get(prefix);
+        if ("copy_of".equals(key)) {
+            entry.putIfAbsent("copy_of", tag.substring(prefix.length()));
+        } else if ("sample_files".equals(key)) {
+            entry.put("sample_files", true);
+        } else if (key != null && KINDS.contains(key)) {
+            // 'mcp-stepped-<digest>', or the older 'mcp-stepped-<UTC time>-<digest>'.
+            final String digest = tag.substring(tag.lastIndexOf('-') + 1);
+            final Set<String> digests = new TreeSet<>(JsonValues.strings(entry.get(key)));
+            digests.add(digest);
+            entry.put(key, new ArrayList<>(digests));
+        }
+    }
+
+    /// @param build A build's name.
+    /// @param state Its record.
+    /// @return The record doc's text: a table people can read, then the record as fenced JSON.
+    public static String render(final String build, final Map<String, Object> state) {
+        final List<String> lines = new ArrayList<>(List.of(
+                "# " + NAME + ": " + build, "",
+                "What the MCP server remembers about this build's documents: which are working copies of production "
+                + "documents, and the code (by digest) that stepped clean, passed index verification, or gave Events "
+                + "that passed check_events, which promotion checks for. The server writes it; don't edit it. Don't "
+                + "move or rename it or anything else in this folder either: the server finds a build's documents "
+                + "by the folder they are in. Promotion removes it.", "",
+                "| Document | Type | Working copy of | Stepped clean | Index verified | Events checked "
+                + "| Sample files |",
+                "| --- | --- | --- | --- | --- | --- | --- |"));
+        final List<Entry<String, Object>> entries = new ArrayList<>(docs(state).entrySet());
+        entries.sort(Comparator.comparing((Entry<String, Object> e) -> NullSafe.string(text(e, "type")))
+                .thenComparing(e -> NullSafe.string(text(e, "name"))));
+        for (final Entry<String, Object> e : entries) {
+            final Map<String, Object> entry = e.getValue() instanceof final Map<?, ?> map
+                    ? asMap(map)
+                    : Map.of();
+            lines.add("| " + NullSafe.nonBlankStringElse(text(e, "name"), e.getKey()) + " | "
+                      + NullSafe.string(text(e, "type")) + " | "
+                      + NullSafe.nonBlankStringElse(NullSafe.get(entry.get("copy_of"), String::valueOf), "-")
+                      + " | " + digests(entry, STEPPED) + " | " + digests(entry, VERIFIED) + " | "
+                      + digests(entry, VALIDATED) + " | " + (JsonValues.truthy(entry.get("sample_files"))
+                              ? "yes"
+                              : "-") + " |");
+        }
+        final List<String> sources = JsonValues.strings(state.get(SOURCE_FEEDS));
+        if (!sources.isEmpty()) {
+            lines.add("");
+            lines.add("Works from existing feeds: " + String.join(", ", sources) + ".");
+        }
+        lines.addAll(List.of("", "## Record", "", "Read by the server; do not edit.", "",
+                "```json build-record", ToolJson.dumpsSortedKeys(state, 1), "```", ""));
+        return String.join("\n", lines);
+    }
+
+    /// @param doc A Documentation doc.
+    /// @return Its text: its body (data), which the Stroom UI shows and edits, else its Documentation tab, where
+    /// earlier versions of the tools wrote it, and where people sometimes write.
+    public static String bodyText(final DocumentationDoc doc) {
+        if (doc == null) {
+            return "";
+        }
+        return NullSafe.isNonEmptyString(doc.getData())
+                ? doc.getData()
+                : documentationTab(doc);
+    }
+
+    /// @param doc  A Documentation doc.
+    /// @param text Its new body.
+    /// @return It with the body written. Text an earlier version put in the Documentation tab instead (the body
+    /// empty) is moved, not left behind as a stale copy.
+    public static DocumentationDoc withBodyText(final DocumentationDoc doc, final String text) {
+        final DocumentationDoc.Builder builder = doc.copy().data(text);
+        if (NullSafe.isEmptyString(doc.getData()) && NullSafe.isNonEmptyString(documentationTab(doc))) {
+            builder.documentation(null);
+        }
+        return builder.build();
+    }
+
+    // The doc's Documentation tab, which DocumentationDoc has no getter for: as Stroom serialises it.
+    private static String documentationTab(final DocumentationDoc doc) {
+        try {
+            final Object value = JsonUtil.readValue(JsonUtil.writeValueAsString(doc, false), Map.class)
+                    .get("documentation");
+            return value == null
+                    ? ""
+                    : String.valueOf(value);
+        } catch (final RuntimeException e) {
+            return "";
+        }
+    }
+
+    private Map<String, Object> save(final String build,
+                                     final WriteGuard.BuildDoc found,
+                                     final Consumer<Map<String, Object>> change) {
+        WriteGuard.BuildDoc current = found;
+        for (int attempt = 0; ; attempt++) {
+            try {
+                if (current == null) {
+                    return guardProvider.get().createFilled(DocumentationDoc.TYPE, NAME, build, ref -> {
+                        final Map<String, Object> state = empty();
+                        change.accept(state);
+                        documentWrites.write(withBodyText(read(ref), render(build, state)));
+                        return state;
+                    }, true, null);
+                }
+                final DocumentationDoc doc = read(current.docRef());
+                final Map<String, Object> state = parse(bodyText(doc));
+                change.accept(state);
+                documentWrites.write(withBodyText(doc, render(build, state)));
+                return state;
+            } catch (final RuntimeException e) {
+                // Another node saved or created it since it was read: do the change again on what it saved.
+                final String message = NullSafe.string(e.getMessage());
+                if (attempt == ATTEMPTS - 1 || !(message.contains("modified by another user")
+                                                 || message.contains("already in build"))) {
+                    throw e;
+                }
+                LOGGER.info(() -> LogUtil.message(
+                        "Build record of {} changed while writing it ({}); again",
+                        build,
+                        shorten(message, 120)));
+                current = recordDoc(guardProvider.get().folderContents(build, true)).orElse(null);
+            }
+        }
+    }
+
+    private DocumentationDoc read(final DocRef ref) {
+        return documentAccess.read(ref, DocumentationDoc.class)
+                .orElseThrow(() -> new ToolRefusal("The build record " + ref.getUuid() + " can't be read"));
+    }
+
+    private static Optional<WriteGuard.BuildDoc> recordDoc(final List<WriteGuard.BuildDoc> contents) {
+        return contents.stream()
+                .filter(doc -> DocumentationDoc.TYPE.equals(doc.type()) && NAME.equals(doc.name()))
+                .findFirst();
+    }
+
+    /// @param state A build record's state, which gains an empty map of documents if it has none.
+    /// @return The record's documents, by UUID, as a map that changes the state when it is changed.
+    @SuppressWarnings("unchecked")
+    static Map<String, Object> docs(final Map<String, Object> state) {
+        final Object docs = state.get(DOCS);
+        if (docs instanceof final Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        final Map<String, Object> made = new LinkedHashMap<>();
+        state.put(DOCS, made);
+        return made;
+    }
+
+    private static Map<String, Object> entryOf(final Map<String, Object> state, final DocRef doc) {
+        final Map<String, Object> docs = docs(state);
+        final Map<String, Object> entry = docs.get(doc.getUuid()) instanceof final Map<?, ?> map
+                ? asMap(map)
+                : new LinkedHashMap<>();
+        docs.put(doc.getUuid(), entry);
+        if (NullSafe.isNonEmptyString(doc.getType())) {
+            entry.put("type", doc.getType());
+        }
+        if (NullSafe.isNonEmptyString(doc.getName())) {
+            entry.put("name", doc.getName());
+        }
+        return entry;
+    }
+
+    /// @param map A map read from JSON (or made here).
+    /// @return A copy of it that can be changed, its nested maps and lists too.
+    @SuppressWarnings("unchecked")
+    static Map<String, Object> asMap(final Map<?, ?> map) {
+        final Map<String, Object> copy = new LinkedHashMap<>();
+        map.forEach((key, value) -> copy.put(String.valueOf(key), value instanceof final Map<?, ?> nested
+                ? asMap(nested)
+                : value instanceof final List<?> list
+                        ? new ArrayList<>((List<Object>) list)
+                        : value));
+        return copy;
+    }
+
+    private static String text(final Entry<String, Object> entry, final String key) {
+        return entry.getValue() instanceof final Map<?, ?> map && map.get(key) != null
+                ? String.valueOf(map.get(key))
+                : null;
+    }
+
+    private static String digests(final Map<String, Object> entry, final String kind) {
+        final List<String> digests = JsonValues.strings(entry.get(kind)).stream()
+                .map(digest -> digest.substring(0, Math.min(8, digest.length())))
+                .toList();
+        return digests.isEmpty()
+                ? "-"
+                : String.join(", ", digests);
+    }
+
+    private static String shorten(final String text, final int max) {
+        final String value = NullSafe.string(text);
+        return value.length() > max
+                ? value.substring(0, max)
+                : value;
+    }
+
+    private static Map<String, String> legacy() {
+        final Map<String, String> map = new LinkedHashMap<>();
+        map.put("mcp-copy-of-", "copy_of");
+        map.put("mcp-stepped-", STEPPED);
+        map.put("mcp-verified-", VERIFIED);
+        map.put("mcp-validated-", VALIDATED);
+        map.put("mcp-sample-files", "sample_files");
+        map.put("mcp-build-", null);
+        return Collections.unmodifiableMap(map);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Whether a pipeline's saved code passed a check ([#passedCheck]).
+    ///
+    /// @param passed  True if it passed.
+    /// @param failure Why it couldn't be told (then not passed), or null when the lookup didn't fail.
+    public record Passed(boolean passed, String failure) {
+
+        /// Not passed, nothing failing: outside a build, or no passing record of its code.
+        public static final Passed NOT = new Passed(false, null);
+
+        /// @return The refusal's addition when the lookup failed (` The record couldn't be checked: ...`), else "".
+        public String said() {
+            return failure == null
+                    ? ""
+                    : " (The record couldn't be checked, so this is refused rather than assumed: " + failure + ".)";
+        }
+    }
+}

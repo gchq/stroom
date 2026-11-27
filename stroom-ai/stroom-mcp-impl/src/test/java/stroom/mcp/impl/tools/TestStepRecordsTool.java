@@ -1,0 +1,297 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+
+/// step_records, the tool.
+class TestStepRecordsTool {
+
+    private static final String AN_EVENT = "<Events xmlns=\"event-logging:3\"><Event/></Events>";
+
+    private final SteppingWorld world = new SteppingWorld();
+
+    @Test
+    void nothingSteppedIsNeverClean() {
+        // An XSLT that doesn't compile: Stroom finds no record and reports the error on the element.
+        world.stepper = (stream, at) -> SteppingWorld.none("XsltPool - Variable user has not been declared");
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "[{\"stream\": 7, \"record\": 0}]}");
+
+        assertThat(List.of(result.get("records_stepped"), result.get("verdict"))).containsExactly(0, "blocking");
+        assertThat(TestStepSampleTool.groups(result)).isNotEmpty();
+        assertThat(result.get("records_not_found")).isEqualTo(List.of("7:0"));
+    }
+
+    @Test
+    void outputNoSchemaFilterChecksBlocksWhenItFailsItsSchema() {
+        world.withoutSchemaFilter();
+        world.records(1, "<records xmlns=\"records:2\"><record><entry/></record></records>");
+        world.outputFailsItsSchema();
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "[{\"stream\": 7, \"record\": 0}]}");
+
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(TestStepSampleTool.firstMessage(TestStepSampleTool.groups(result).getFirst()))
+                .contains(UnvalidatedOutput.NOT_CHECKED);
+    }
+
+    @Test
+    void aRecordPastTheStreamsEndIsNotFoundWithoutSpoilingTheVerdict() {
+        // Seen in testing: record 12,000 of a stream of 10,000 turned a clean verdict into review, on stepping's
+        // own complaint that it had nothing to replay.
+        world.stepper = (stream, at) -> at.getRecordIndex() < 10
+                ? SteppingWorld.step(stream, 0, at.getRecordIndex(), AN_EVENT)
+                : SteppingWorld.none("Reprocess of stream 7 has no replayable SAX output for feed dsParser");
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "[{\"stream\": 7, \"record\": 0}, "
+                                                       + "{\"stream\": 7, \"record\": 12000}]}");
+
+        assertThat(List.of(result.get("records_stepped"), result.get("verdict"))).containsExactly(1, "clean");
+        assertThat(result.get("records_not_found")).isEqualTo(List.of("7:12000"));
+        assertThat(TestStepSampleTool.groups(result)).isEmpty();
+        assertThat(String.valueOf(result.get("records"))).contains("no replayable SAX output");
+    }
+
+    @Test
+    void unknownFromAnXsltSavedWithoutAMappingBlocks() {
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), "<Events "
+                + "xmlns=\"event-logging:3\"><Event><EventDetail><TypeId>TRAFFIC</TypeId><Unknown/></EventDetail>"
+                + "</Event></Events>");
+        Mockito.when(world.guard.tags(any())).thenReturn(Set.of(WriteGuard.MANAGED));
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "[{\"stream\": 7, \"record\": 0}]}");
+
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(String.valueOf(TestStepSampleTool.groups(result).getFirst().get("reason")))
+                .contains("EventDetail/Unknown");
+    }
+
+    @Test
+    void theLocationsOfASurveySavedToTheWorkspaceAreSteppedFromIt(@TempDir final Path dir) throws IOException {
+        // A survey too large for a client outside Stroom is saved whole, its locations only counted in the result
+        // (seen in eval cases 56 and 65 on Haiku: 83 and 169 locations, past the client's limit).
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, at.getPartIndex(), at.getRecordIndex(), AN_EVENT);
+        final Path file = dir.resolve("eval-65.json");
+        Files.writeString(file, "{\"feed\": \"EVAL-65\", \"locations\": [{\"stream\": 7, \"part\": 0, "
+                                + "\"record\": 0, \"shape\": \"a\", \"source_types\": [\"x\"]}, {\"stream\": 8, "
+                                + "\"record\": 5, \"shape\": \"b\"}]}");
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.localFile(1, WorkspacePath.parse("/outputs/survey_feed/eval-65.json"))).thenReturn(file);
+        final ToolCallContext context = world.contextBuilder().workspace(new SessionWorkspace(chats, 1)).build();
+
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations_from\": "
+                                      + "\"/outputs/survey_feed/eval-65.json\"}"), context);
+
+        assertThat(result.isError()).as(result.text()).isFalse();
+        assertThat(BuildToolCalls.json(result.text()).get("records_stepped")).isEqualTo(2);
+        assertThat(world.steps).containsExactly("REFRESH 0:0", "REFRESH 0:5");
+
+        final ToolResult missing = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations_from\": \"/outputs/x.json\"}"),
+                context);
+        assertThat(missing.isError()).isTrue();
+        assertThat(missing.text()).contains("locations_from='/outputs/x.json'");
+    }
+
+    @Test
+    void locationsInARowFromOneStreamShareASession() {
+        // Stroom captures the stream once for them.
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, at.getPartIndex(), at.getRecordIndex(), AN_EVENT);
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": ["
+                                                       + "{\"stream\": 7, \"record\": 0}, "
+                                                       + "{\"stream\": 7, \"part\": 1, \"record\": 2}, "
+                                                       + "{\"stream\": 8, \"record\": 5}]}");
+
+        assertThat(world.opened).extracting(Map.Entry::getKey).containsExactly(7L, 8L);
+        assertThat(world.steps).containsExactly("REFRESH 0:0", "REFRESH 1:2", "REFRESH 0:5");
+        assertThat(result.get("records_stepped")).isEqualTo(3);
+        assertThat(result.get("verdict")).isEqualTo("clean");
+        Mockito.verify(world.buildRecords).recordPassed(SteppingWorld.REF, BuildRecords.STEPPED, null,
+                Map.of("stepped_streams", List.of(7L, 8L)));
+    }
+
+    @Test
+    void aRecordThatGivesNoEventIsFlaggedAndItsShapeIsNotClean() {
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), at.getRecordIndex() == 0
+                ? AN_EVENT
+                : "<Events xmlns=\"event-logging:3\"/>");
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": ["
+                                                       + "{\"stream\": 7, \"record\": 0, \"shape\": \"a\"}, "
+                                                       + "{\"stream\": 7, \"record\": 1, \"shape\": \"b\"}]}");
+
+        assertThat(result.get("shapes_not_clean")).isEqualTo(List.of("b"));
+        assertThat(TestStepSampleTool.firstMessage(TestStepSampleTool.groups(result).getFirst()))
+                .isEqualTo("The record produced no Event");
+        // Not every shape is clean: not recorded.
+        Mockito.verify(world.buildRecords, Mockito.never()).recordPassed(any(), anyString(), any(), any());
+    }
+
+    @Test
+    void aKindLeftUntranslatedCountsAsCleanWhenItGivesNoEvent() {
+        // survey_feed's set_shape_handling: the user chose to leave a kind untranslated, so no Event is right, and
+        // an empty output isn't the no-elements error.
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), at.getRecordIndex() == 0
+                ? ""
+                : AN_EVENT);
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": ["
+                                                       + "{\"stream\": 7, \"record\": 0, \"shape\": \"noise\", "
+                                                       + "\"expect\": \"none\"}, "
+                                                       + "{\"stream\": 7, \"record\": 1, \"shape\": \"noise\", "
+                                                       + "\"expect\": \"none\"}]}");
+
+        assertThat(result.get("left_untranslated_as_intended")).isEqualTo(1);
+        assertThat(result.get("shapes_not_clean")).isEqualTo(List.of("noise"));
+        assertThat(TestStepSampleTool.firstMessage(TestStepSampleTool.groups(result).getFirst()))
+                .isEqualTo("The record produced 1 Event(s), but its kind is left untranslated");
+    }
+
+    @Test
+    void locationsGivenAsJsonTextAreRead() {
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), AN_EVENT);
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "\"[{\\\"stream\\\": 7, \\\"record\\\": 3}]\"}");
+
+        assertThat(world.steps).containsExactly("REFRESH 0:3");
+        assertThat(result.get("records_stepped")).isEqualTo(1);
+    }
+
+    @Test
+    void aLocationWithoutARecordIsRefused() {
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations\": [{\"stream\": 7}]}"),
+                world.context());
+
+        assertThat(result.isError()).isTrue();
+        assertThat(result.text()).startsWith("locations[0] needs stream and record");
+    }
+
+    @Test
+    void aGroupsPipelineStepsOnlyItsOwnSourceTypesLocationsOfASurvey(@TempDir final Path dir) throws IOException {
+        // Decided by the user 2026-11-23: seen in chat 189, step_records over the survey's locations stepped records
+        // of every source type, four of them (holding NUL and ESC) said to produce no Event, and the agent spent ten
+        // calls finding they were passed over.
+        world.keepsAGroupMapping();
+        world.stepper = (stream, at) -> at.getRecordIndex() == 0
+                ? SteppingWorld.step(stream, 0, 0, AN_EVENT)
+                : SteppingWorld.passedOver(stream, 0, at.getRecordIndex(), SteppingWorld.azureRecord("SharePoint"));
+        final Path file = dir.resolve("survey.json");
+        Files.writeString(file, "{\"feed\": \"AZ\", \"locations\": [{\"stream\": 7, \"record\": 0, \"shape\": "
+                                + "\"mail\", \"source_types\": [\"ExchangeOnline\"]}, {\"stream\": 7, \"record\": 1, "
+                                + "\"shape\": \"file\", \"source_types\": [\"SharePoint\"]}, {\"stream\": 7, "
+                                + "\"record\": 2, \"shape\": \"file2\", \"source_types\": [\"SharePoint\"]}]}");
+        final ChatWorkspace chats = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chats.localFile(1, WorkspacePath.parse("/outputs/survey_feed/az.json"))).thenReturn(file);
+        final ToolCallContext context = world.contextBuilder().workspace(new SessionWorkspace(chats, 1)).build();
+
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations_from\": "
+                                      + "\"/outputs/survey_feed/az.json\"}"), context);
+
+        assertThat(result.isError()).as(result.text()).isFalse();
+        final Map<String, Object> said = BuildToolCalls.json(result.text());
+        assertThat(world.steps).containsExactly("REFRESH 0:0");
+        assertThat(said.get("records_stepped")).isEqualTo(1);
+        assertThat(said.get("locations_left_out")).isEqualTo(Map.of("SharePoint", 2));
+        assertThat(String.valueOf(said.get("locations_left_out_note"))).contains("SharePoint 2", "not stepped");
+        assertThat(said.get("shapes_not_clean")).isEqualTo(List.of());
+
+        // Given explicitly, another source type's record is stepped, said passed over as its source type's.
+        final Map<String, Object> given = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": [{\"stream\": 7, "
+                                                      + "\"record\": 1, \"shape\": \"file\", \"source_types\": "
+                                                      + "[\"SharePoint\"]}]}");
+        assertThat(records(given).getFirst()).containsEntry(StepRecordsTool.PASSED_OVER, true)
+                .containsEntry("passed_over_source_type", "SharePoint");
+        assertThat(given.get("shapes_not_clean")).isEqualTo(List.of());
+    }
+
+    @Test
+    void aRecordAGroupsPipelinePassesOverHasNoErrorAndLeavesItsShapeClean() {
+        // A group's pipeline passes over the feed's other source types: no "produced no Event" warning, no error,
+        // and the shape (another source type's) said apart rather than left not clean.
+        world.keepsAGroupMapping();
+        world.stepper = (stream, at) -> at.getRecordIndex() == 3
+                ? SteppingWorld.passedOver(stream, 0, 3, SteppingWorld.azureRecord("SharePoint"))
+                : SteppingWorld.step(stream, 0, at.getRecordIndex(), AN_EVENT);
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": ["
+                                                       + "{\"stream\": 7, \"record\": 1, \"shape\": \"s1\"},"
+                                                       + "{\"stream\": 7, \"record\": 3, \"shape\": \"s2\"}]}");
+
+        assertThat(List.of(result.get("records_with_errors"), result.get("verdict"), result.get("shapes_not_clean")))
+                .containsExactly(0, "clean", List.of());
+        assertThat(result.get("shapes_passed_over")).isEqualTo(List.of("s2"));
+        assertThat(result.get(PassedOverRecords.BY_SOURCE_TYPE)).isEqualTo(Map.of("SharePoint", 1));
+        assertThat(records(result).get(1)).containsEntry(StepRecordsTool.PASSED_OVER, true)
+                .containsEntry("errors", 0);
+    }
+
+    @Test
+    void aRecordsContextIsSteppedInPlaceOfItsDataWhenAsked() {
+        // A context loader's record writes a reference, not an Event: no "produced no Event" warning.
+        world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), "<referenceData "
+                + "xmlns=\"reference-data:2\"><reference><map>ctx</map><key>k</key><value>v</value></reference>"
+                + "</referenceData>");
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"child_type\": "
+                                                       + "\"Context\", \"locations\": [{\"stream\": 7, "
+                                                       + "\"record\": 0}]}");
+
+        assertThat(world.openedChildTypes).containsExactly("Context");
+        assertThat(List.of(result.get("records_with_errors"), result.get("verdict"))).containsExactly(0, "clean");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> records(final Map<String, Object> result) {
+        return (List<Map<String, Object>>) result.get("records");
+    }
+
+    private Map<String, Object> stepRecords(final String arguments) {
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
+                StepRecordsTool.NAME, arguments), world.context());
+        assertThat(result.isError()).as(result.text()).isFalse();
+        return BuildToolCalls.json(result.text());
+    }
+}

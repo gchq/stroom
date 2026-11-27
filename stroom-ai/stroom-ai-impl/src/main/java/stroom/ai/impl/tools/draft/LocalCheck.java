@@ -1,0 +1,2267 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.draft;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.generation.Condition;
+import stroom.ai.impl.tools.generation.DropRule;
+import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.EventRule;
+import stroom.ai.impl.tools.generation.Extraction;
+import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.generation.ItemSource;
+import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.ZoneSource;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
+import stroom.ai.impl.tools.sample.Placeholders;
+import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.SplitterDryRun;
+import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.TimePatterns;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.sample.XmlTree;
+import stroom.ai.impl.tools.validation.CloseMatches;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.workspace.SafePattern;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+
+/// A translation mapping checked against the sample it is for, before anything is created or stepped.
+///
+/// The sample is read locally into records the way the pipeline's parser would (JSON keys with dots, Data Splitter
+/// names through the splitter spec's dry run, XML paths by local name), and the mapping's inputs are looked up in
+/// them: a field no record has (a typo, or a name from a different variant of the source) and a time_format the
+/// sample's values do not fit are the two mistakes that otherwise only show at stepping, one record at a time.
+///
+/// A record is a map of field name to value (data_splitter and json inputs), or an [XmlTree.Element] (xml
+/// inputs). Regular expressions written for the mapping (a condition's `matches`, an extraction's regex) are run
+/// with Java's regex engine, as Stroom's XSLT runs them in its own.
+public final class LocalCheck {
+
+    /// The characters of a string Stroom's JSONParser keeps by default (its `stringTruncateLength`).
+    public static final int JSON_PARSER_CUT = 10_000;
+    // How [#ruleOf] names a drop rule: this, then its reason.
+    static final String DROP = "drop: ";
+
+    private static final Pattern STEP = ToolText.re("^(?:@(?<attr>[\\w.-]+)|(?<name>[\\w.-]+|\\*)(?:\\[@(?<pattr>"
+                                                  + "[\\w.-]+)=(?<q>['\"])(?<pval>.*?)\\k<q>\\])?)$");
+    private static final Pattern TOKEN = ToolText.re("^[A-Za-z][\\w.:-]{0,39}$");
+    private static final Pattern WORD = ToolText.re("[A-Za-z_][\\w.-]*");
+    private static final String NAME = "Name";
+    // An element that holds a user's id, e.g. EventSource/User/Id, EventDetail/Authenticate/User/Id: without the
+    // schema, by its name.
+    private static final Pattern USER_ID = Pattern.compile("(^|/)User/Id$");
+    // The schema's type of a user (User, RunAs, Approver, Requestor, an email's From).
+    private static final String USER_TYPE = "UserComplexType";
+    // Users of that type that are an email's addressees: their Ids are email addresses, the domain part of them.
+    private static final Set<String> EMAIL_USERS = Set.of("From", "To", "Cc", "Bcc");
+    // The XSD base types that take any text.
+    private static final Set<String> TEXT_BASE_TYPES = Set.of("string", "normalizedString", "token");
+    // DOMAIN\\user or user@domain: one name, then a domain.
+    private static final Pattern DOMAIN_QUALIFIED = Pattern.compile(
+            "[^\\\\\\s@]+\\\\[^\\\\\\s@]+|[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
+    private static final int CACHED_PATTERNS = 512;
+    // The most sample values a warning names.
+    private static final int MAX_VALUES_SHOWN = 8;
+    private static final Map<String, Optional<Pattern>> PATTERNS = new ConcurrentHashMap<>();
+
+    private LocalCheck() {
+        // Static only.
+    }
+
+    private static Map<String, Object> dict(final Object... keysAndValues) {
+        return JsonValues.dict(keysAndValues);
+    }
+
+    /// The text a simple relative path selects in a record, matching by local name: `System/Computer`,
+    /// `System/TimeCreated/@SystemTime`, `EventData/Data[@Name='IpAddress']`. Anything beyond this shape
+    /// (functions, unions) is not evaluated.
+    ///
+    /// @param record An XML record.
+    /// @param path   The path.
+    /// @return The text, or null when it selects nothing.
+    public static String xmlValue(final XmlTree.Element record, final String path) {
+        List<XmlTree.Element> nodes = List.of(record);
+        for (final String segment : segments(path)) {
+            if (".".equals(segment)) {
+                continue;
+            }
+            final Matcher m = STEP.matcher(segment);
+            if (!m.matches()) {
+                return null;
+            }
+            if (m.group("attr") != null) {
+                return nodes.stream()
+                        .map(node -> node.get(m.group("attr")))
+                        .filter(value -> value != null)
+                        .findFirst()
+                        .orElse(null);
+            }
+            nodes = children(nodes, m);
+            if (nodes.isEmpty()) {
+                return null;
+            }
+        }
+        return ToolText.strip(String.join("", nodes.getFirst().itertext()));
+    }
+
+    private static List<String> segments(final String path) {
+        final List<String> out = new ArrayList<>();
+        for (final String segment : ToolText.strip(path, "/").split("/", -1)) {
+            if (!segment.isEmpty()) {
+                out.add(segment);
+            }
+        }
+        return out;
+    }
+
+    private static List<XmlTree.Element> children(final List<XmlTree.Element> nodes, final Matcher step) {
+        final String name = step.group("name");
+        final List<XmlTree.Element> found = new ArrayList<>();
+        for (final XmlTree.Element node : nodes) {
+            for (final XmlTree.Element child : node.elements()) {
+                if ("*".equals(name) || child.localName().equals(name)) {
+                    if (step.group("pattr") != null && !step.group("pval").equals(child.get(step.group("pattr")))) {
+                        continue;
+                    }
+                    found.add(child);
+                }
+            }
+        }
+        return found;
+    }
+
+    /// An XML record as path to value, the paths as [#xmlValue(XmlTree.Element, String)] reads them: each leaf
+    /// element's text and each attribute, a Windows EventData Data by its Name
+    /// (`EventData/Data[@Name='TargetUserName']`), not the last one standing for all.
+    ///
+    /// @param record An XML record.
+    /// @return Its values by path.
+    public static Map<String, String> xmlFlat(final XmlTree.Element record) {
+        final Map<String, String> flat = new LinkedHashMap<>();
+        for (final XmlTree.Element node : record.iter()) {
+            final String here = node == record
+                    ? ""
+                    : ToolText.strip(ancestorPath(node, record) + "/" + node.localName(), "/");
+            node.attrib().forEach((attribute, value) -> flat.put((here.isEmpty()
+                    ? ""
+                    : here + "/") + "@" + attribute, value));
+            if (node != record && node.isLeaf() && !ToolText.strip(node.text()).isEmpty()) {
+                final String named = node.get(NAME);
+                flat.put(named != null && !named.isEmpty()
+                        ? here + "[@Name='" + named + "']"
+                        : here, ToolText.strip(node.text()));
+            }
+        }
+        return flat;
+    }
+
+    // The local names of a node's ancestors from the top, the record and the element it is in left out.
+    private static String ancestorPath(final XmlTree.Element node, final XmlTree.Element record) {
+        final List<String> names = new ArrayList<>();
+        for (XmlTree.Element at = node.parent(); at != null; at = at.parent()) {
+            if (at != record && at != record.parent()) {
+                names.addFirst(at.localName());
+            }
+        }
+        return String.join("/", names);
+    }
+
+    /// Records with the keys of the JSON their json_fields hold added as `<field>.<key>`, as the XSLT reads them.
+    ///
+    /// @param records    The records (changed in place).
+    /// @param jsonFields The fields holding JSON text.
+    /// @return The records.
+    @SuppressWarnings("unchecked")
+    public static List<Object> withJsonFields(final List<Object> records, final List<String> jsonFields) {
+        if (jsonFields == null || jsonFields.isEmpty()) {
+            return records;
+        }
+        for (final Object item : records) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            final Map<String, Object> record = (Map<String, Object>) item;
+            for (final String field : jsonFields) {
+                final Object held = parsedJson(record.get(field));
+                if (held instanceof Map) {
+                    SampleProfiler.flatten(held).forEach((key, value) ->
+                            record.putIfAbsent(JsonFieldNames.join(field, key), JsonValues.jsonText(value)));
+                }
+            }
+        }
+        return records;
+    }
+
+    private static Object parsedJson(final Object value) {
+        if (value != null && !(value instanceof String)) {
+            return null;
+        }
+        try {
+            // JSON encoded twice (a JSON string holding it) read again, as the XSLT's mcp:json-to-xml does; read as
+            // json-to-xml() reads it: numbers as written, a repeated key's first value written.
+            final String text = value == null
+                    ? ""
+                    : (String) value;
+            final String inner = SampleProfiler.decodedString(text);
+            return ToolJson.loadsAsWritten(inner == null
+                    ? text
+                    : inner);
+        } catch (final ToolJson.JsonDecodeException e) {
+            return null;
+        }
+    }
+
+    /// Records with the elements and attributes of the XML their xml_fields hold added as `<field>/<path>` from
+    /// the root and `<field>//<name>` for anywhere below, by local name, as the XSLT reads them (the first value).
+    ///
+    /// @param records   The records (changed in place).
+    /// @param xmlFields The fields holding XML text.
+    /// @return The records.
+    @SuppressWarnings("unchecked")
+    public static List<Object> withXmlFields(final List<Object> records, final List<String> xmlFields) {
+        if (xmlFields == null || xmlFields.isEmpty()) {
+            return records;
+        }
+        for (final Object item : records) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            final Map<String, Object> record = (Map<String, Object>) item;
+            for (final String field : xmlFields) {
+                final XmlTree.Element root = parsedXml(record.get(field));
+                if (root != null) {
+                    addXmlFields(record, field, root);
+                }
+            }
+        }
+        return records;
+    }
+
+    private static XmlTree.Element parsedXml(final Object value) {
+        if (!(value instanceof final String held)) {
+            return null;
+        }
+        final String text = ToolText.strip(held);
+        if (!text.startsWith("<")) {
+            return null;
+        }
+        try {
+            return XmlTree.parse(text);
+        } catch (final XmlTree.XmlException e) {
+            return null;
+        }
+    }
+
+    private static void addXmlFields(final Map<String, Object> record, final String field,
+                                     final XmlTree.Element root) {
+        for (final XmlTree.Element node : root.iter()) {
+            final List<String> steps = new ArrayList<>();
+            for (XmlTree.Element at = node; at != null; at = at.parent()) {
+                steps.addFirst(at.localName());
+            }
+            final String path = String.join("/", steps);
+            final String value = ToolText.strip(node.text());
+            for (final String name : List.of(field + "/" + path, field + "//" + node.localName())) {
+                if (!value.isEmpty() || node.isLeaf()) {
+                    record.putIfAbsent(name, value);
+                }
+            }
+            node.attrib().forEach((attribute, attributeValue) -> {
+                final String local = localName(attribute);
+                for (final String name : List.of(field + "/" + path + "/@" + local,
+                        field + "//" + node.localName() + "/@" + local, field + "//@" + local)) {
+                    record.putIfAbsent(name, attributeValue);
+                }
+            });
+        }
+    }
+
+    private static String localName(final String clarkName) {
+        return clarkName.startsWith("{")
+                ? clarkName.substring(clarkName.indexOf('}') + 1)
+                : clarkName;
+    }
+
+    /// The sample's records as the mapping's input reads them, with the fields json_fields and xml_fields hold.
+    /// Several sample files are read one by one (each with its own header line).
+    ///
+    /// @param mapping  The mapping.
+    /// @param sample   The sample's text, or a list of texts (one a file).
+    /// @param splitter The Data Splitter spec a data_splitter input is read with, or null.
+    /// @return The records (maps for data_splitter and json inputs, elements for xml inputs), and a note saying
+    /// why nothing could be read, or null.
+    public static SampleRecords sampleRecords(final TranslationMapping mapping, final Object sample,
+                                              final SplitterSpec splitter) {
+        return sampleRecords(mapping, sample, splitter, 0);
+    }
+
+    /// [#sampleRecords(TranslationMapping, Object, SplitterSpec)] as processing reads them: a JSON input's string
+    /// values longer than Stroom's JSONParser keeps (its `stringTruncateLength`) cut before anything reads them, a
+    /// held JSON string among them, as the JSONParser cuts them (logging a warning): its first that many characters
+    /// (UTF-16 units, as Java counts them). Other inputs are read as they are.
+    ///
+    /// @param mapping              The mapping.
+    /// @param sample               The sample's text, or a list of texts (one a file).
+    /// @param splitter             The Data Splitter spec a data_splitter input is read with, or null.
+    /// @param stringTruncateLength The JSONParser's stringTruncateLength ([#JSON_PARSER_CUT] by default); 0 or less
+    ///                             to read every string whole.
+    /// @return The records, read as processing reads them, and a note saying why nothing could be read, or null.
+    public static SampleRecords sampleRecords(final TranslationMapping mapping, final Object sample,
+                                              final SplitterSpec splitter, final int stringTruncateLength) {
+        final SampleRecords found = rawRecords(mapping, sample, splitter, stringTruncateLength);
+        final List<Object> records = withXmlFields(withJsonFields(found.records(), mapping.jsonFields()),
+                mapping.xmlFields());
+        return new SampleRecords(withExtractedXml(mapping, records), found.note());
+    }
+
+    // The fields of XML an extract reads out of a text (a syslog line's message, XML after words of its own): read
+    // from the extracted value, as the XSLT reads them.
+    @SuppressWarnings("unchecked")
+    private static List<Object> withExtractedXml(final TranslationMapping mapping, final List<Object> records) {
+        if (mapping.xmlFields() == null || mapping.xmlFields().isEmpty() || mapping.extract().isEmpty()) {
+            return records;
+        }
+        final Set<String> extracted = new HashSet<>();
+        mapping.extract().forEach(ex -> extracted.addAll(ex.names()));
+        final List<String> fields = mapping.xmlFields().stream().filter(extracted::contains).toList();
+        if (fields.isEmpty()) {
+            return records;
+        }
+        for (final Object item : records) {
+            if (!(item instanceof Map)) {
+                continue;
+            }
+            final Map<String, Object> record = (Map<String, Object>) item;
+            final Map<String, String> values = extractedValues(mapping, record);
+            if (values == null) {
+                continue;
+            }
+            for (final String field : fields) {
+                final XmlTree.Element root = record.containsKey(field)
+                        ? null
+                        : parsedXml(values.get(field));
+                if (root != null) {
+                    addXmlFields(record, field, root);
+                }
+            }
+        }
+        return records;
+    }
+
+    private static SampleRecords rawRecords(final TranslationMapping mapping, final Object sample,
+                                            final SplitterSpec splitter, final int cut) {
+        if (sample instanceof final List<?> texts) {
+            final List<Object> records = new ArrayList<>();
+            final List<String> notes = new ArrayList<>();
+            for (final Object text : texts) {
+                final SampleRecords found = rawRecords(mapping, text, splitter, cut);
+                records.addAll(found.records());
+                if (found.note() != null && !notes.contains(found.note())) {
+                    notes.add(found.note());
+                }
+            }
+            return new SampleRecords(records, notes.isEmpty()
+                    ? null
+                    : String.join("; ", notes));
+        }
+        final String text = ToolText.strip((String) sample, "﻿\r\n ");
+        if ("data_splitter".equals(mapping.input())) {
+            if (splitter == null) {
+                return new SampleRecords(new ArrayList<>(), "no splitter spec: the sample's fields are not known "
+                                                            + "here (give splitter, from build_data_splitter)");
+            }
+            final List<Object> records = new ArrayList<>();
+            // Every record, as the draft reads them: a rule's Data a few records hold is in the sample. A name the
+            // heading gives twice holds each cell's value (ToolJson.Repeated), as Stroom writes a data element for
+            // each: a condition holds on any, a value written is the first.
+            final SplitterDryRun.DryRun run = SplitterDryRun.dryRunEvery(splitter, text);
+            for (int n = 0; n < run.records().size(); n++) {
+                final Map<String, Object> record = new LinkedHashMap<>(run.records().get(n));
+                run.repeatsOf(n).forEach((name, values) -> record.put(name,
+                        new ToolJson.Repeated(new ArrayList<>(values))));
+                records.add(record);
+            }
+            return new SampleRecords(records, SplitterDryRun.quotesInsideNote(splitter, text));
+        }
+        if ("json".equals(mapping.input())) {
+            return jsonRecords(text, cut);
+        }
+        return xmlRecords(mapping, text);
+    }
+
+    // The records read as Stroom's JSONParser presents them (ToolJson.loadsAsWritten): numbers as written, a key
+    // given twice kept twice. A record holding NaN or Infinity, which json.loads reads and the JSONParser refuses
+    // (failing the stream), is named in the note, with no records read.
+    private static SampleRecords jsonRecords(final String text, final int cut) {
+        final List<Object> values = new ArrayList<>();
+        if (text.startsWith("{") && !jsonLines(text) && SampleProfiler.wrappedRecords(text) != null) {
+            // One object wrapping the records (CloudTrail): the parser's one record; for_each reads its items.
+            try {
+                values.add(ToolJson.loadsAsWritten(text));
+            } catch (final ToolJson.JsonDecodeException e) {
+                if (!parsesLeniently(text)) {
+                    throw e;
+                }
+                return new SampleRecords(new ArrayList<>(), nonJsonNumbers("the sample's record"));
+            }
+        } else if (text.startsWith("[")) {
+            try {
+                if (ToolJson.loadsAsWritten(text) instanceof final List<?> list) {
+                    list.stream().filter(Map.class::isInstance).forEach(values::add);
+                }
+            } catch (final ToolJson.JsonDecodeException e) {
+                return new SampleRecords(new ArrayList<>(), arrayNote(text));
+            }
+        } else {
+            int n = 0;
+            for (final String line : ToolText.splitlines(text)) {
+                if (ToolText.isBlank(line)) {
+                    continue;
+                }
+                n++;
+                final Object value;
+                try {
+                    value = ToolJson.loadsAsWritten(line);
+                } catch (final ToolJson.JsonDecodeException e) {
+                    return new SampleRecords(new ArrayList<>(), parsesLeniently(line)
+                            ? nonJsonNumbers("record " + n + " (" + shown(line) + ")")
+                            : "the sample is neither a JSON array nor JSON lines");
+                }
+                if (value instanceof Map) {
+                    values.add(value);
+                }
+            }
+        }
+        final List<Object> records = new ArrayList<>();
+        values.forEach(value -> records.add(SampleProfiler.flatten(cut > 0
+                ? cutStrings(value, cut)
+                : value)));
+        return new SampleRecords(records, null);
+    }
+
+    // The note for a JSON array that isn't JSON itself: the first record holding NaN or Infinity named, where that is
+    // why.
+    private static String arrayNote(final String text) {
+        try {
+            if (ToolJson.loads(text) instanceof final List<?> list) {
+                for (int n = 0; n < list.size(); n++) {
+                    if (nonFinite(list.get(n))) {
+                        return nonJsonNumbers("record " + (n + 1) + " (" + shown(ToolJson.dumps(list.get(n))) + ")");
+                    }
+                }
+            }
+        } catch (final ToolJson.JsonDecodeException e) {
+            // Not JSON to json.loads either.
+        }
+        return "the sample is not a JSON array";
+    }
+
+    // A record's text as a note shows it: its start, quoted.
+    private static String shown(final String text) {
+        final String head = ToolText.head(text, 80);
+        return ToolText.repr(head.length() < text.length()
+                ? head + "..."
+                : head);
+    }
+
+    private static String nonJsonNumbers(final String record) {
+        return record + " holds NaN or Infinity, which isn't JSON: Stroom's JSONParser refuses it, failing the "
+               + "stream";
+    }
+
+    // Whether a text is JSON to json.loads, which reads NaN and Infinity.
+    private static boolean parsesLeniently(final String text) {
+        try {
+            ToolJson.loads(text);
+            return true;
+        } catch (final ToolJson.JsonDecodeException e) {
+            return false;
+        }
+    }
+
+    // Whether a value read by json.loads holds NaN or an infinity.
+    private static boolean nonFinite(final Object value) {
+        return switch (value) {
+            case final Double number -> number.isNaN() || number.isInfinite();
+            case final Map<?, ?> map -> map.values().stream().anyMatch(LocalCheck::nonFinite);
+            case final List<?> list -> list.stream().anyMatch(LocalCheck::nonFinite);
+            case null, default -> false;
+        };
+    }
+
+    // Whether a text is JSON lines: its first line is a whole JSON object and another line follows. Its lines are
+    // read as records even where one holds an array of objects, which a single object wrapping the records (written
+    // on one line, or over several) would.
+    private static boolean jsonLines(final String text) {
+        final int newLine = text.indexOf('\n');
+        if (newLine < 0 || ToolText.isBlank(text.substring(newLine + 1))) {
+            return false;
+        }
+        try {
+            return ToolJson.loads(text.substring(0, newLine)) instanceof Map;
+        } catch (final ToolJson.JsonDecodeException e) {
+            return false;
+        }
+    }
+
+    /// @param value A JSON value (a record as the draft reads it, say).
+    /// @param cut   The JSONParser's stringTruncateLength.
+    /// @return It with each string longer than the cut cut to it, as Stroom's JSONParser cuts them.
+    static Object cutStrings(final Object value, final int cut) {
+        if (value instanceof final Map<?, ?> map) {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            map.forEach((key, inner) -> out.put(String.valueOf(key), cutStrings(inner, cut)));
+            return out;
+        }
+        if (value instanceof final List<?> list) {
+            final List<Object> out = new ArrayList<>();
+            list.forEach(inner -> out.add(cutStrings(inner, cut)));
+            return out;
+        }
+        if (value instanceof final ToolJson.Repeated repeated) {
+            final List<Object> out = new ArrayList<>();
+            repeated.values().forEach(inner -> out.add(cutStrings(inner, cut)));
+            return new ToolJson.Repeated(out);
+        }
+        return value instanceof final String text && text.length() > cut
+                ? text.substring(0, cut)
+                : value;
+    }
+
+    private static SampleRecords xmlRecords(final TranslationMapping mapping, final String text) {
+        XmlTree.Element root = null;
+        List<XmlTree.Element> cut = null;
+        if ("xml".equals(mapping.input())) {
+            try {
+                root = XmlTree.parse(XmlTree.withoutDeclaration(text));
+            } catch (final XmlTree.XmlException e) {
+                // A big document read only to here: its complete records.
+                final XmlTree.Pull pull = SampleProfiler.cutDocument(text);
+                if (pull != null) {
+                    root = pull.root();
+                    cut = pull.records();
+                }
+            }
+        }
+        if ("xml_fragments".equals(mapping.input()) || root == null) {
+            final List<XmlTree.Element> fragments = SampleProfiler.xmlFragments(text);
+            if (fragments == null || fragments.isEmpty()) {
+                return new SampleRecords(new ArrayList<>(), "the sample is not XML a parser could read");
+            }
+            final String record = mapping.record() != null && !mapping.record().isEmpty()
+                    ? mapping.record()
+                    : fragments.getFirst().localName();
+            return new SampleRecords(new ArrayList<>(fragments.stream()
+                    .filter(fragment -> fragment.localName().equals(record))
+                    .toList()), null);
+        }
+        final List<XmlTree.Element> all = new ArrayList<>();
+        if (cut == null) {
+            all.addAll(root.iter());
+        } else {
+            // The root as far as the cut, holding only its complete records.
+            all.add(root);
+            cut.forEach(record -> all.addAll(record.iter()));
+        }
+        final String record = mapping.record();
+        return new SampleRecords(new ArrayList<>(all.stream()
+                .filter(element -> element.localName().equals(record))
+                .toList()), null);
+    }
+
+    /// @param record A record (a map, or an XML element).
+    /// @param field  A field: a map's key, or an XML path.
+    /// @return The field's value as text (a value read from JSON as JSON), or null if the record has none.
+    public static String valueOf(final Object record, final String field) {
+        if (record instanceof final Map<?, ?> map) {
+            final Object value = map.get(field);
+            return value == null
+                    ? null
+                    : JsonValues.jsonText(value);
+        }
+        return record instanceof final XmlTree.Element element
+                ? xmlValue(element, field)
+                : null;
+    }
+
+    /// @param record A record.
+    /// @param path   A for_each path.
+    /// @return The items the record holds under the path: a JSON array's objects (flattened), or the XML elements
+    /// the path selects.
+    public static List<Object> itemsOf(final Object record, final String path) {
+        final List<Object> items = new ArrayList<>();
+        if (record instanceof final Map<?, ?> map) {
+            if (map.get(path) instanceof final List<?> list) {
+                list.stream().filter(Map.class::isInstance).forEach(v -> items.add(SampleProfiler.flatten(v)));
+            }
+            return items;
+        }
+        if (!(record instanceof final XmlTree.Element element)) {
+            return items;
+        }
+        List<XmlTree.Element> nodes = List.of(element);
+        for (final String segment : segments(path)) {
+            final Matcher m = STEP.matcher(segment);
+            if (!m.matches() || m.group("attr") != null) {
+                return items;
+            }
+            final List<XmlTree.Element> found = new ArrayList<>();
+            for (final XmlTree.Element node : nodes) {
+                for (final XmlTree.Element child : node.elements()) {
+                    if ("*".equals(m.group("name")) || child.localName().equals(m.group("name"))) {
+                        found.add(child);
+                    }
+                }
+            }
+            nodes = found;
+        }
+        items.addAll(nodes);
+        return items;
+    }
+
+    /// Whether a condition holds for a record exactly as the generated XSLT tests it: the one evaluator of the
+    /// conditions, every operator, field spelling and value case as processing reads them.
+    ///
+    /// @param mapping   The mapping the condition is of (its input, held fields and nil values).
+    /// @param c         The condition.
+    /// @param record    A record, as [#sampleRecords(TranslationMapping, Object, SplitterSpec)] reads them.
+    /// @param extracted The values its extractions give it ([#extractedValues(TranslationMapping, Object)]), or
+    ///                  null.
+    /// @return Whether it holds; null when it can't be told here (an xpath, a dictionary, a record-scope field, or a
+    /// field an extraction produces when its values aren't given).
+    public static Boolean holds(final TranslationMapping mapping,
+                                final Condition c,
+                                final Object record,
+                                final Map<String, String> extracted) {
+        return MappingConditions.of(mapping).holds(c, record, extracted);
+    }
+
+    /// The values a condition's field has in a record, exactly as [#holds] reads them before testing them: so a
+    /// check of many conditions over few fields (the event type catalogue's) reads each field once a record and
+    /// tests each distinct value once ([#holdsOver]).
+    ///
+    /// @param mapping   The mapping (its input, held fields and extractions).
+    /// @param field     A condition's field.
+    /// @param record    A record, as [#sampleRecords(TranslationMapping, Object, SplitterSpec)] reads them.
+    /// @param extracted The values its extractions give it ([#extractedValues(TranslationMapping, Object)]), or
+    ///                  null.
+    /// @return The field's values in the record (none when it has none); null when they can't be told here (a field
+    /// an extraction produces, its values not given).
+    public static List<String> conditionValues(final TranslationMapping mapping,
+                                               final String field,
+                                               final Object record,
+                                               final Map<String, String> extracted) {
+        return MappingConditions.of(mapping).conditionValues(field, record, extracted);
+    }
+
+    /// Whether a condition holds over its field's values in a record ([#conditionValues]), exactly as [#holds]
+    /// tests them.
+    ///
+    /// @param mapping The mapping (its nil values).
+    /// @param c       The condition.
+    /// @param values  Its field's values in a record.
+    /// @return Whether it holds; null when it can't be told here (an xpath, a dictionary, a record-scope field, or a
+    /// regex that can't be run).
+    public static Boolean holdsOver(final TranslationMapping mapping, final Condition c, final List<String> values) {
+        return MappingConditions.of(mapping).holdsOver(c, values);
+    }
+
+    /// @param c A condition.
+    /// @return True if it can be told here from its field's values: not an xpath, a dictionary or a record-scope
+    /// field.
+    public static boolean evaluable(final Condition c) {
+        return c.xpath() == null && c.inDictionary() == null && !"record".equals(c.scope());
+    }
+
+    // A regex compiled, or null if it can't be.
+    private static Pattern compiled(final String regex, final int flags) {
+        if (regex == null) {
+            return null;
+        }
+        if (PATTERNS.size() > CACHED_PATTERNS) {
+            PATTERNS.clear();
+        }
+        return PATTERNS.computeIfAbsent(flags + ":" + regex, key -> {
+            try {
+                return Optional.of(SafePattern.compile(regex, ToolText.FLAGS | flags));
+            } catch (final PatternSyntaxException e) {
+                return Optional.empty();
+            }
+        }).orElse(null);
+    }
+
+    /// The values the mapping's extractions give a record (the first match's groups, "" where it doesn't match),
+    /// as the XSLT's analyze-string does.
+    ///
+    /// @param mapping The mapping.
+    /// @param record  A record.
+    /// @return The values by name, or null when one can't be run here (an xpath source, a regex that doesn't
+    /// compile).
+    public static Map<String, String> extractedValues(final TranslationMapping mapping, final Object record) {
+        return extractedValues(mapping.extract(), record, PairMatches.none());
+    }
+
+    /// [#extractedValues(TranslationMapping, Object)] from the extractions alone, so a mapping still being drafted
+    /// (its time not chosen, its rules unfilled) can have them run, with the matches its call has already found.
+    ///
+    /// @param extractions The extract entries, in order.
+    /// @param record      A record.
+    /// @param matches     The call's regex matches ([PairMatches#none] to keep none).
+    /// @return The values by name, or null when one can't be run here (an xpath source, an invalid regex).
+    public static Map<String, String> extractedValues(final List<Extraction> extractions, final Object record,
+                                                      final PairMatches matches) {
+        final Map<String, String> values = new LinkedHashMap<>();
+        for (final Extraction ex : extractions) {
+            if (ex.xpath() != null || ex.field() == null || ex.field().isEmpty()) {
+                return null;
+            }
+            final String text = values.containsKey(ex.field())
+                    ? values.get(ex.field())
+                    : valueOf(record, ex.field());
+            final Pattern pattern = compiled(ex.regex(), regexFlags(ex.flags()));
+            if (pattern == null) {
+                return null;
+            }
+            final String[] found = matches.firstMatch(pattern, text == null
+                    ? ""
+                    : text, true);
+            for (int i = 1; i <= ex.names().size(); i++) {
+                final String name = ex.names().get(i - 1);
+                if (name != null && !name.isEmpty()) {
+                    values.put(name, found != null && i <= found.length
+                            ? nonNull(found[i - 1])
+                            : "");
+                }
+            }
+        }
+        return values;
+    }
+
+    private static String nonNull(final String text) {
+        return text == null
+                ? ""
+                : text;
+    }
+
+    private static int regexFlags(final String flags) {
+        int out = 0;
+        for (final char flag : flags.toCharArray()) {
+            out |= switch (flag) {
+                case 'i' -> Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+                case 'm' -> Pattern.MULTILINE;
+                case 's' -> Pattern.DOTALL;
+                case 'x' -> Pattern.COMMENTS;
+                default -> 0;
+            };
+        }
+        return out;
+    }
+
+    // Each record's rule, in order.
+    private static List<String> rulesOf(final CheckedRecords checked) {
+        final List<String> rules = new ArrayList<>(checked.size());
+        for (int n = 0; n < checked.size(); n++) {
+            rules.add(checked.ruleOf(n));
+        }
+        return rules;
+    }
+
+    // Each record's extracted values, in order (null each without extract entries).
+    private static List<Map<String, String>> extractedOf(final CheckedRecords checked) {
+        final List<Map<String, String>> extracted = new ArrayList<>(checked.size());
+        for (int n = 0; n < checked.size(); n++) {
+            extracted.add(checked.extracted(n));
+        }
+        return extracted;
+    }
+
+    private static Set<String> derived(final TranslationMapping mapping) {
+        final Set<String> derived = new HashSet<>();
+        mapping.extract().forEach(ex -> ex.names().stream()
+                .filter(n -> n != null && !n.isEmpty())
+                .forEach(derived::add));
+        return derived;
+    }
+
+    /// The rules with conditions that none of the sample's records reach. Seen in testing: a sample of mostly one
+    /// kind of event checked clean, and the rules it never reached failed only in processing.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return Their names, in the mapping's order; none when there are no records, or the mapping reads for_each.
+    public static List<String> rulesUnreached(final TranslationMapping mapping, final List<Object> records) {
+        return rulesUnreached(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#rulesUnreached(TranslationMapping, List)], over records whose rules are worked out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The rules' names.
+    public static List<String> rulesUnreached(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        if (hasText(mapping.forEach()) || checked.size() == 0) {
+            return List.of();
+        }
+        final Set<String> reached = new HashSet<>();
+        for (int n = 0; n < checked.size(); n++) {
+            final String name = checked.ruleOf(n);
+            if (name != null) {
+                reached.add(name);
+            }
+        }
+        return mapping.events().stream()
+                .filter(rule -> !rule.when().isEmpty() && !rule.drop())
+                .map(EventRule::name)
+                .filter(name -> !reached.contains(name))
+                .toList();
+    }
+
+    /// The rule a record falls into.
+    ///
+    /// @param mapping   The mapping.
+    /// @param record    A record.
+    /// @param extracted The values its extractions give it ([#extractedValues(TranslationMapping, Object)]), or
+    ///                  null.
+    /// @return A drop rule (`drop: <reason>`), an event rule's name, "" when none matches, or null when a
+    /// condition on the way cannot be told here.
+    public static String ruleOf(final TranslationMapping mapping, final Object record,
+                                final Map<String, String> extracted) {
+        return MappingConditions.of(mapping).ruleOf(record, extracted);
+    }
+
+    /// What a set of records holds, for a person to judge: each field's distinct short, word-like values (kinds,
+    /// actions, levels, users), then an example of the first free-text field. Times, addresses and numbers are
+    /// left out.
+    ///
+    /// @param records The records.
+    /// @return The line.
+    public static String traits(final List<?> records) {
+        final Map<String, List<String>> fields = new LinkedHashMap<>();
+        String[] text = null;
+        for (final Map<String, Object> record : JsonValues.maps(records)) {
+            for (final Map.Entry<String, Object> entry : record.entrySet()) {
+                if (!(entry.getValue() instanceof final String value) || ToolText.isBlank(value)) {
+                    continue;
+                }
+                if (ToolText.match(TOKEN, value)) {
+                    final List<String> seen = fields.computeIfAbsent(entry.getKey(), k -> new ArrayList<>());
+                    if (!seen.contains(value)) {
+                        seen.add(value);
+                    }
+                } else if (text == null && ToolText.split(value).size() > 2) {
+                    text = new String[]{entry.getKey(), ToolText.head(value, 80)};
+                }
+            }
+        }
+        final List<String> parts = new ArrayList<>();
+        fields.entrySet().stream().limit(6).forEach(entry -> {
+            final List<String> values = entry.getValue();
+            parts.add(entry.getKey() + ": " + String.join(", ", values.subList(0, Math.min(8, values.size())))
+                      + (values.size() > 8
+                    ? " ..."
+                    : ""));
+        });
+        if (text != null) {
+            parts.add("e.g. " + text[0] + ": \"" + text[1] + "\"");
+        }
+        return String.join("; ", parts);
+    }
+
+    /// The sample records that rules writing EventDetail/Unknown catch. A rule without allow_unknown that catches
+    /// any is a problem naming what the records hold (the conditions' rule is refused by the generator too; the
+    /// rule for the rest is refused here); a rule with it is reported for the user to confirm.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return The problems, and the rules kept as Unknown (`rule`, `reason`, `records`, `sample`, and
+    /// `suggested` and `against_suggestion` where the values show an action).
+    public static Coverage unknownCoverage(final TranslationMapping mapping, final List<Object> records) {
+        return unknownCoverage(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#unknownCoverage(TranslationMapping, List)], over records whose extracted values and rules are worked
+    /// out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The problems, and the rules kept as Unknown.
+    public static Coverage unknownCoverage(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
+        if (hasText(mapping.forEach()) || records.isEmpty()) {
+            return new Coverage(List.of(), List.of());
+        }
+        final Map<String, EventRule> writesUnknown = new LinkedHashMap<>();
+        mapping.events().stream()
+                .filter(rule -> MappingFacts.writesUnknown(mapping, rule))
+                .forEach(rule -> writesUnknown.put(rule.name(), rule));
+        final Map<String, List<Object>> caught = new LinkedHashMap<>();
+        for (int n = 0; n < records.size(); n++) {
+            final Map<String, String> values = checked.extracted(n);
+            final String name = checked.ruleOf(n);
+            if (name != null && writesUnknown.containsKey(name)) {
+                // An XML record as its paths, and what extract finds in it, so what it holds is shown and its
+                // actions found as a flat record's are.
+                caught.computeIfAbsent(name, k -> new ArrayList<>()).add(caughtRecord(records.get(n), values));
+            }
+        }
+        final List<String> problems = new ArrayList<>();
+        final List<Map<String, Object>> kept = new ArrayList<>();
+        final Map<String, String> common = new LinkedHashMap<>();
+        mapping.common().stream()
+                .filter(entry -> hasText(entry.field()))
+                .forEach(entry -> common.put(entry.strippedPath(), entry.field()));
+        caught.forEach((name, found) -> coverageOf(writesUnknown.get(name), name, found, records.size(), common,
+                problems, kept));
+        return new Coverage(problems, kept);
+    }
+
+    private static Object caughtRecord(final Object record, final Map<String, String> values) {
+        final Object flat = record instanceof final XmlTree.Element element
+                ? new LinkedHashMap<String, Object>(xmlFlat(element))
+                : record;
+        if (!(flat instanceof final Map<?, ?> map) || values == null || values.isEmpty()) {
+            return flat;
+        }
+        final Map<String, Object> merged = new LinkedHashMap<>();
+        map.forEach((k, v) -> merged.put((String) k, v));
+        values.forEach((k, v) -> {
+            if (!v.isEmpty()) {
+                merged.put(k, v);
+            }
+        });
+        return merged;
+    }
+
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    private static void coverageOf(final EventRule rule,
+                                   final String name,
+                                   final List<Object> found,
+                                   final int total,
+                                   final Map<String, String> common,
+                                   final List<String> problems,
+                                   final List<Map<String, Object>> kept) {
+        final String held = traits(found);
+        // Values that show the action (ALLOW/DENY between addresses, LOGIN/LOGOUT, CONFIG_CHANGE) get the rules
+        // for it.
+        final Set<String> names = new LinkedHashSet<>();
+        JsonValues.maps(found).forEach(r -> names.addAll(r.keySet()));
+        final List<Map<String, Object>> base = new ArrayList<>();
+        final Set<String> skip = new HashSet<>();
+        for (final Condition c : rule.when()) {
+            base.add(c.toJson(DumpMode.WITHOUT_NONE));
+            if (hasText(c.field())) {
+                skip.add(c.field());
+            }
+        }
+        final ActionRules.Found shown = ActionRules.actionRules(found, new ArrayList<>(names), base, name,
+                common.get("EventSource/User/Id"), common.get("EventDetail/Description"), skip, null);
+        final String use = shown.rules().isEmpty()
+                ? ""
+                : " Their values show the action: " + ActionRules.described(shown.rules()) + ". Add these rules "
+                  + "before '" + name + "' (they validate as they are; add Data entries as you like)"
+                  + (shown.left().isEmpty()
+                        ? ""
+                        : ", leaving " + shown.split() + " " + ToolText.repr(shown.left()) + " to it")
+                  + ": " + ToolJson.dumps(shown.rules());
+        // Connections allowed or denied, and logons, are never unknown; a configuration change is the user's call.
+        final List<Map<String, Object>> plain = shown.rules().stream()
+                .filter(r -> JsonValues.maps(r.get("fields")).stream().anyMatch(f -> {
+                    final String path = (String) f.get("path");
+                    return path.startsWith("EventDetail/Network/") || path.startsWith("EventDetail/Authenticate/");
+                }))
+                .toList();
+        // Every record it catches has a rule from its own values (an alert, a service starting, a configuration
+        // saved): seen, an agent folded the draft's rules into 'other' as Unknown and the user had to decline the
+        // form.
+        final boolean covered = !shown.rules().isEmpty() && shown.left().isEmpty();
+        final boolean allowed = hasText(rule.allowUnknown());
+        if (allowed && (!plain.isEmpty() || covered) && !rule.keepUnknown()) {
+            final Set<String> values = new HashSet<>();
+            (covered
+                    ? shown.rules()
+                    : plain).forEach(r -> values.addAll(ActionRules.conditionValues(
+                    JsonValues.maps(r.get("when")).getLast())));
+            final long known = JsonValues.maps(found).stream()
+                    .filter(r -> r.get(shown.split()) instanceof final String v && values.contains(v))
+                    .count();
+            problems.add("[" + name + "] can't be kept as Unknown: " + known + " of its " + found.size()
+                         + " sample records are not unknown events. Only if the user, shown the rules below, still "
+                         + "wants them Unknown (they can say so in the chat): keep_unknown: true on the rule with "
+                         + "allow_unknown, and they confirm it in the form." + use);
+        } else if (allowed) {
+            // keep_unknown: the user chose Unknown over the action elements the values suggest; the form shows them.
+            final Map<String, Object> entry = dict("rule", name, "reason", rule.allowUnknown(), "records",
+                    found.size(), "sample", held);
+            if (!shown.rules().isEmpty()) {
+                entry.put("suggested", ActionRules.described(shown.rules()) + " (rather than Unknown)");
+                if (rule.keepUnknown()) {
+                    entry.put("against_suggestion", true);
+                }
+            }
+            kept.add(entry);
+        } else if (!rule.when().isEmpty()) {
+            problems.add("[" + name + "] keeps EventDetail/Unknown for " + found.size() + " of the " + total
+                         + " sample records: " + held + ". Give them the action element these values describe, a "
+                         + "rule per kind if they differ (split on the field that tells them apart)." + use);
+        } else {
+            problems.add("[" + name + "] (the rule for records no other rule matches) writes EventDetail/Unknown "
+                         + "for " + found.size() + " of the " + total + " sample records: " + held + ". Give them "
+                         + "rules with the action elements these values describe; only if none fits, set "
+                         + "allow_unknown on this rule to the reason, which the user confirms.");
+        }
+    }
+
+    /// A TypeId read from one field for every rule that, in the sample, is the same for records of different
+    /// rules: events of different kinds share it. Seen: TypeId the SecretServer category ('User') for logons,
+    /// logoffs and role changes alike. Told from the sample, not the mapping's shape: a TypeId field whose values
+    /// already differ per kind (a firewall's action, FortiGate's logid) is fine though the rules test other fields
+    /// as well. A TypeId joining fields (join) is told the same way, from its joined values.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return The problem, or an empty list.
+    public static List<String> sharedTypeIds(final TranslationMapping mapping, final List<Object> records) {
+        return sharedTypeIds(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#sharedTypeIds(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The problem, or an empty list.
+    public static List<String> sharedTypeIds(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
+        final FieldMapping typeId = mapping.common().stream()
+                .filter(e -> "EventDetail/TypeId".equals(e.strippedPath()))
+                .findFirst()
+                .orElse(null);
+        if (typeId == null || (!hasText(typeId.field()) && typeId.join() == null) || hasText(mapping.forEach())) {
+            return List.of();
+        }
+        final Set<String> own = new HashSet<>();
+        mapping.events().stream()
+                .filter(r -> r.fields().stream().anyMatch(f -> "EventDetail/TypeId".equals(f.strippedPath())))
+                .forEach(r -> own.add(r.name()));
+        final Set<String> derived = derived(mapping);
+        final Map<String, Map<String, Integer>> byValue = new LinkedHashMap<>();
+        for (int n = 0; n < records.size(); n++) {
+            final Map<String, String> values = mapping.extract().isEmpty()
+                    ? Map.of()
+                    : checked.extracted(n);
+            final String name = checked.ruleOf(n);
+            if (name == null || name.isEmpty() || name.startsWith("drop: ") || own.contains(name)) {
+                continue;
+            }
+            final Object record = records.get(n);
+            final Function<String, String> read = field -> derived.contains(field)
+                    ? (values == null
+                            ? null
+                            : values.get(field))
+                    : valueOf(record, field);
+            final String value = typeId.join() == null
+                    ? read.apply(typeId.field())
+                    : typeId.join().stream()
+                            .map(read)
+                            .filter(LocalCheck::hasText)
+                            .collect(Collectors.joining(typeId.joinSeparator()));
+            if (value != null && !value.isEmpty()) {
+                byValue.computeIfAbsent(value, k -> new LinkedHashMap<>()).merge(name, 1, Integer::sum);
+            }
+        }
+        final List<String> examples = new ArrayList<>();
+        byValue.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .limit(3)
+                .forEach(entry -> examples.add("'" + entry.getKey() + "' for rules "
+                                               + String.join(", ", entry.getValue().keySet().stream()
+                        .sorted(ToolText::compare)
+                        .toList())));
+        if (examples.isEmpty()) {
+            return List.of();
+        }
+        // A problem, not a warning (seen in testing, as a warning: two runs that left TypeId the category alone,
+        // 'User' for logons, logoffs and lockouts, the warning one among many).
+        return List.of("EventDetail/TypeId reads " + (typeId.join() == null
+                ? "'" + typeId.field() + "'"
+                : "join " + ToolText.list(typeId.join())) + ", which in the sample is the same for events of different "
+                       + "kinds (" + String.join("; ", examples) + "). TypeId names the kind of event, so each "
+                       + "kind needs its own: write it in the format the standing instructions (AGENTS docs) set "
+                       + "for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. "
+                       + "{\"path\": \"EventDetail/TypeId\", \"join\": [\"" + (typeId.join() == null
+                ? typeId.field()
+                : typeId.join().getFirst()) + "\", \"<the field telling them apart, e.g. action>\"]} (separator, "
+                       + "default '-'), or give each rule its own value.");
+    }
+
+    /// Required elements a rule writes only when their inputs have a value, whose inputs are empty in sample records
+    /// the rule takes: those events fail the schema, which reports the element written after the one left out
+    /// (seen: "Invalid content was found starting with element '{Data}'. One of '{Command}' is expected", read as
+    /// Data put in the wrong place, two rounds of stepping before the Command entry was given a default). Only
+    /// entries read from fields are counted (an xpath's value isn't known here).
+    ///
+    /// @param mapping         The mapping.
+    /// @param records         The sample's records.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value, by rule.
+    /// @return The warnings.
+    public static List<String> requiredLeftEmpty(final TranslationMapping mapping,
+                                                 final List<Object> records,
+                                                 final Map<String, List<String>> requiredOnInput) {
+        return requiredLeftEmpty(CheckedRecords.of(mapping, records), requiredOnInput);
+    }
+
+    /// As [#requiredLeftEmpty(TranslationMapping, List, Map)], over records whose extracted values and rules are
+    /// worked out once for the check.
+    ///
+    /// @param checked         The sample's records, as the mapping reads them.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value, by rule.
+    /// @return The warnings.
+    public static List<String> requiredLeftEmpty(final CheckedRecords checked,
+                                                 final Map<String, List<String>> requiredOnInput) {
+        return requiredCounts(checked, requiredOnInput).stream()
+                .filter(count -> count.empty() > 0)
+                .map(count -> "[" + count.rule() + "] " + count.path() + " is required by the schema, but its input ("
+                              + count.fields().stream().map(f -> "'" + f + "'").collect(Collectors.joining(", "))
+                              + ") is empty in " + count.empty() + " of the " + count.taken() + " sample records "
+                              + "this rule takes: those events fail the schema, which reports the element written "
+                              + "after it (often Data) as unexpected. Give the entry a default, or any_of with a "
+                              + "field that is filled.")
+                .toList();
+    }
+
+    /// The required elements written only when their inputs have a value that every sample record of their rule
+    /// fills, by rule: the warning that they may be left out says nothing more once the sample has been counted
+    /// (seen in chat 185: kept beside a check that found none empty, the agent asked the user about them all and put
+    /// 'Unknown' in each). Only entries read from fields are counted, as in [#requiredLeftEmpty(CheckedRecords, Map)],
+    /// and only rules that took a sample record.
+    ///
+    /// @param checked         The sample's records, as the mapping reads them.
+    /// @param requiredOnInput Each rule's required elements written only when their inputs have a value, by rule.
+    /// @return The elements filled in every sample record, by rule.
+    public static Map<String, Set<String>> requiredFilled(final CheckedRecords checked,
+                                                         final Map<String, List<String>> requiredOnInput) {
+        final Map<String, Set<String>> filled = new LinkedHashMap<>();
+        requiredCounts(checked, requiredOnInput).stream()
+                .filter(count -> count.taken() > 0 && count.empty() == 0)
+                .forEach(count -> filled.computeIfAbsent(count.rule(), ignored -> new LinkedHashSet<>())
+                        .add(count.path()));
+        return filled;
+    }
+
+    // Each rule's required elements read only from fields, with how many sample records the rule takes and how many
+    // of those leave the element's inputs empty.
+    private static List<RequiredCount> requiredCounts(final CheckedRecords checked,
+                                                      final Map<String, List<String>> requiredOnInput) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
+        if (hasText(mapping.forEach()) || requiredOnInput.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> derived = derived(mapping);
+        final List<String> rules = rulesOf(checked);
+        final List<Map<String, String>> extracted = extractedOf(checked);
+        final List<RequiredCount> out = new ArrayList<>();
+        for (final EventRule rule : mapping.events()) {
+            for (final String path : requiredOnInput.getOrDefault(rule.name(), List.of())) {
+                final List<FieldMapping> entries = new ArrayList<>(mapping.common());
+                entries.addAll(rule.fields());
+                entries.removeIf(e -> !e.strippedPath().equals(path) && !e.strippedPath().startsWith(path + "/"));
+                final List<String> fields = new ArrayList<>();
+                boolean readable = !entries.isEmpty();
+                for (final FieldMapping entry : entries) {
+                    final List<String> inputs = new ArrayList<>();
+                    if (hasText(entry.field())) {
+                        inputs.add(entry.field());
+                    }
+                    inputs.addAll(Objects.requireNonNullElse(entry.anyOf(), List.of()));
+                    readable = readable && !inputs.isEmpty() && entry.value() == null && !hasText(entry.xpath())
+                               && entry.defaultValue() == null && entry.lookup() == null
+                               && !hasText(entry.dictionary());
+                    fields.addAll(inputs);
+                }
+                if (!readable) {
+                    continue;
+                }
+                int taken = 0;
+                int empty = 0;
+                for (int n = 0; n < records.size(); n++) {
+                    if (!rule.name().equals(rules.get(n))) {
+                        continue;
+                    }
+                    taken++;
+                    final Object record = records.get(n);
+                    final Map<String, String> values = extracted.get(n);
+                    // A value the mapping's nil_values leaves out is empty too (seen: '-' counted as a value).
+                    if (fields.stream().allMatch(field -> {
+                        final String value = derived.contains(field)
+                                ? (values == null
+                                        ? null
+                                        : values.get(field))
+                                : valueOf(record, field);
+                        return !hasText(value) || mapping.nilValues().contains(value.strip());
+                    })) {
+                        empty++;
+                    }
+                }
+                out.add(new RequiredCount(rule.name(), path, List.copyOf(fields), taken, empty));
+            }
+        }
+        return out;
+    }
+
+    /// Data entries reading fields that none of the sample records their rule takes holds: Data the kind doesn't
+    /// carry, which the documentation then lists as "(not in the sample)". A warning, as the sample may lack them
+    /// while other records have them. Seen in testing: a SecretServer launch rule's rpc_account, target and
+    /// duration_ms, in none of its records.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return The warnings.
+    public static List<String> dataNotHeld(final TranslationMapping mapping, final List<Object> records) {
+        return dataNotHeld(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#dataNotHeld(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The warnings.
+    public static List<String> dataNotHeld(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
+        if (hasText(mapping.forEach())) {
+            return List.of();
+        }
+        final Set<String> derived = derived(mapping);
+        final List<String> rules = rulesOf(checked);
+        final List<Map<String, String>> extracted = extractedOf(checked);
+        final List<String> out = new ArrayList<>();
+        for (final EventRule rule : mapping.events()) {
+            final List<Integer> taken = new ArrayList<>();
+            for (int n = 0; n < records.size(); n++) {
+                if (rule.name().equals(rules.get(n))) {
+                    taken.add(n);
+                }
+            }
+            if (taken.isEmpty()) {
+                continue;
+            }
+            final List<String> unheld = new ArrayList<>();
+            final List<String> heldElsewhere = new ArrayList<>();
+            for (final FieldMapping entry : rule.fields()) {
+                final List<String> inputs = new ArrayList<>();
+                if (hasText(entry.field())) {
+                    inputs.add(entry.field());
+                }
+                inputs.addAll(Objects.requireNonNullElse(entry.anyOf(), List.of()));
+                if (!hasText(entry.dataName()) || inputs.isEmpty() || entry.defaultValue() != null) {
+                    continue;
+                }
+                final IntPredicate holds = n -> inputs.stream().anyMatch(field -> hasText(derived.contains(field)
+                        ? (extracted.get(n) == null
+                                ? null
+                                : extracted.get(n).get(field))
+                        : valueOf(records.get(n), field)));
+                if (taken.stream().noneMatch(holds::test)) {
+                    unheld.add("'" + entry.dataKey() + "'");
+                    final String held = heldBy(String.join(" or ", inputs.stream().map(ToolText::repr).toList()),
+                            rules, records.size(), holds);
+                    if (held != null) {
+                        heldElsewhere.add(held);
+                    }
+                }
+            }
+            if (!unheld.isEmpty()) {
+                // Chat 194: said with no word of which records hold the field, while step_sample said it was in 59
+                // records no rule reads, the agent took the two for a contradiction: the rules whose records hold it
+                // are named.
+                out.add("[" + rule.name() + "] Data " + String.join(", ", unheld) + " read" + (unheld.size() == 1
+                        ? "s a field"
+                        : " fields") + " none of the " + taken.size() + " sample records this rule takes holds"
+                        + (heldElsewhere.isEmpty()
+                        ? ""
+                        : " (" + String.join("; ", heldElsewhere) + ")") + ": remove " + (unheld.size() == 1
+                        ? "it"
+                        : "them") + ", unless other records will have " + (unheld.size() == 1
+                        ? "it"
+                        : "them") + ".");
+            }
+        }
+        return out;
+    }
+
+    // The rules whose sample records hold an input, with how many: e.g. `'app' is in the records of focus_window
+    // (33), unfocus_window (26)`; null when no sample record does (the sample check's own warning says so).
+    private static String heldBy(final String input,
+                                 final List<String> rules,
+                                 final int records,
+                                 final IntPredicate holds) {
+        final Map<String, Integer> byRule = new LinkedHashMap<>();
+        for (int n = 0; n < records; n++) {
+            if (holds.test(n)) {
+                byRule.merge(Objects.requireNonNullElse(rules.get(n), "no rule"), 1, Integer::sum);
+            }
+        }
+        if (byRule.isEmpty()) {
+            return null;
+        }
+        final List<String> of = new ArrayList<>();
+        byRule.forEach((rule, count) -> of.add(rule + " (" + count + ")"));
+        return input + " is in the records of " + String.join(", ", of);
+    }
+
+    /// Value maps none of whose keys is a value the sample records give them: every record gets the default (or
+    /// nothing). Seen in testing: iptables' `PROTO=TCP` mapped by protocol number (6, 17, 1), so every dropped
+    /// packet's TransportProtocol was Other, and no check said so.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample records, as the mapping reads them.
+    /// @return A warning for each such entry, naming its keys and the values the sample has.
+    public static List<String> mapKeysNotHeld(final TranslationMapping mapping, final List<Object> records) {
+        return mapKeysNotHeld(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#mapKeysNotHeld(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return The warnings.
+    public static List<String> mapKeysNotHeld(final CheckedRecords checked) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<Object> records = checked.records();
+        if (hasText(mapping.forEach()) || records.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> derived = derived(mapping);
+        final List<String> rules = rulesOf(checked);
+        final List<Map<String, String>> extracted = extractedOf(checked);
+        final List<String> out = new ArrayList<>();
+        final List<Integer> all = new ArrayList<>();
+        for (int n = 0; n < records.size(); n++) {
+            if (rules.get(n) != null) {
+                all.add(n);
+            }
+        }
+        mapping.common().forEach(entry -> mapKeysNotHeld("common", entry, all, records, extracted, derived)
+                .ifPresent(out::add));
+        for (final EventRule rule : mapping.events()) {
+            final List<Integer> taken = new ArrayList<>();
+            for (int n = 0; n < records.size(); n++) {
+                if (rule.name().equals(rules.get(n))) {
+                    taken.add(n);
+                }
+            }
+            rule.fields().forEach(entry -> mapKeysNotHeld("rule '" + rule.name() + "'", entry, taken, records,
+                    extracted, derived).ifPresent(out::add));
+        }
+        return out;
+    }
+
+    // One entry's map, over the records it is written for.
+    private static Optional<String> mapKeysNotHeld(final String where,
+                                                   final FieldMapping entry,
+                                                   final List<Integer> taken,
+                                                   final List<Object> records,
+                                                   final List<Map<String, String>> extracted,
+                                                   final Set<String> derived) {
+        // One input field read as it is: a transform changes the value matched, so it isn't told here.
+        if (!entry.hasMap() || !hasText(entry.field()) || entry.transform() != null || taken.isEmpty()) {
+            return Optional.empty();
+        }
+        final String field = entry.field();
+        final Set<String> values = new TreeSet<>();
+        for (final int n : taken) {
+            final String value = derived.contains(field)
+                    ? (extracted.get(n) == null
+                            ? null
+                            : extracted.get(n).get(field))
+                    : valueOf(records.get(n), field);
+            if (hasText(value)) {
+                values.add(value);
+            }
+        }
+        if (values.isEmpty() || values.stream().anyMatch(entry.map()::containsKey)) {
+            return Optional.empty();
+        }
+        final List<String> shown = values.stream().limit(MAX_VALUES_SHOWN).toList();
+        return Optional.of("[" + where + "] '" + entry.strippedPath() + "' maps field '" + field + "' by the keys "
+                           + String.join(", ", entry.map().keySet()) + ", but none of the values the "
+                           + taken.size() + " sample records give it is one of them (they are "
+                           + String.join(", ", shown) + (values.size() > shown.size()
+                ? ", ..."
+                : "") + "): every record gets " + (entry.defaultValue() != null
+                ? "the default '" + entry.defaultValue() + "'"
+                : "no value") + ". Key the map by the values the source writes.");
+    }
+
+    /// Fields mapped as they are into a user's Id whose sample values are domain-qualified (`DOMAIN\\user`,
+    /// `user@domain`): an Id is usually the account name alone, which `strip_domain` gives (seen in eval cases 35,
+    /// 36 and 43, with nothing said: the domain kept in every Id).
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param schema  The event-logging schema, which says which elements are users; null to go by the name User.
+    /// @return The warnings.
+    public static List<String> domainQualifiedUserIds(final TranslationMapping mapping,
+                                                      final List<Object> records,
+                                                      final EventSchema schema) {
+        return domainQualifiedWarnings(domainQualifiedIds(CheckedRecords.of(mapping, records), schema));
+    }
+
+    /// @param qualified The fields whose values going into users' Ids carry a domain
+    ///                  ([#domainQualifiedIds(TranslationMapping, List)]).
+    /// @return A warning for each Id they go into.
+    public static List<String> domainQualifiedWarnings(final List<QualifiedIds> qualified) {
+        final List<String> out = new ArrayList<>();
+        for (final QualifiedIds found : qualified) {
+            for (final String path : found.paths()) {
+                final String said = path + " takes field '" + found.field() + "', whose values are "
+                                    + "domain-qualified (" + ToolText.repr(found.examples()) + "): an Id is usually "
+                                    + "the account name alone. If so, give the entry transform: strip_domain";
+                if (!out.contains(said)) {
+                    out.add(said);
+                }
+            }
+        }
+        return out;
+    }
+
+    /// The fields mapped as they are into users' Ids whose sample values are domain-qualified (`DOMAIN\\user`,
+    /// `user@domain`), read from the record or from what the mapping's extractions give it (seen: SecretServer's
+    /// `By User`, read from its message's key/value pairs, never checked, and the domain kept in every Id). The Ids
+    /// are those of the schema's users (User, RunAs, Approver, Requestor, wherever they are: Send/Destination/User,
+    /// say), not an email's addressees (From, To, Cc, Bcc), whose Ids are email addresses.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param schema  The event-logging schema, which says which elements are users; null to go by the name User.
+    /// @return Each field, in the mapping's order, with the Id paths it is mapped into as it is and up to three of
+    /// its domain-qualified values.
+    public static List<QualifiedIds> domainQualifiedIds(final TranslationMapping mapping,
+                                                        final List<Object> records,
+                                                        final EventSchema schema) {
+        return domainQualifiedIds(CheckedRecords.of(mapping, records), schema);
+    }
+
+    /// As [#domainQualifiedIds(TranslationMapping, List, EventSchema)], over records whose extracted values are
+    /// worked out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @param schema  The event-logging schema, which says which elements are users; null to go by the name User.
+    /// @return Each field, with the Id paths it is mapped into as it is and up to three of its values.
+    public static List<QualifiedIds> domainQualifiedIds(final CheckedRecords checked, final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
+        final FieldValues values = new FieldValues(checked);
+        final Map<String, List<String>> paths = new LinkedHashMap<>();
+        final Map<String, Set<String>> qualified = new LinkedHashMap<>();
+        for (final FieldMapping entry : mapping.allEntries()) {
+            if (!hasText(entry.field()) || !isUserId(entry.path(), schema) || entry.hasMap()
+                || hasText(entry.transform()) || hasText(entry.xpath()) || entry.value() != null) {
+                continue;
+            }
+            final Set<String> found = new LinkedHashSet<>();
+            for (final String value : eachValue(entry, values.of(entry))) {
+                if (value != null && DOMAIN_QUALIFIED.matcher(ToolText.strip(value)).matches()) {
+                    found.add(ToolText.strip(value));
+                }
+            }
+            if (!found.isEmpty()) {
+                final List<String> into = paths.computeIfAbsent(entry.field(), field -> new ArrayList<>());
+                if (!into.contains(entry.path())) {
+                    into.add(entry.path());
+                }
+                qualified.computeIfAbsent(entry.field(), field -> new LinkedHashSet<>()).addAll(found);
+            }
+        }
+        final List<QualifiedIds> out = new ArrayList<>();
+        paths.forEach((field, into) -> out.add(new QualifiedIds(field, List.copyOf(into),
+                qualified.get(field).stream().limit(3).toList())));
+        return out;
+    }
+
+    // A repeat entry's values one by one, a JSON array's text read as its values (seen, chat 183: recipients held
+    // in an array, read whole as its text, so two recipients were never found as domain-qualified); any other
+    // entry's values as they are.
+    private static List<String> eachValue(final FieldMapping entry, final List<String> values) {
+        if (!entry.repeat()) {
+            return values;
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String value : values) {
+            final Object parsed = value != null && value.startsWith("[")
+                    ? parsedOrNull(value)
+                    : null;
+            if (parsed instanceof final List<?> list) {
+                list.forEach(item -> out.add(item == null
+                        ? null
+                        : JsonValues.jsonText(item)));
+            } else {
+                out.add(value);
+            }
+        }
+        return out;
+    }
+
+    private static Object parsedOrNull(final String text) {
+        try {
+            return ToolJson.loads(text);
+        } catch (final ToolJson.JsonDecodeException e) {
+            return null;
+        }
+    }
+
+    /// Values the sample's records hold in the fields the mapping writes, that look like stand-ins for none (`-`,
+    /// `N/A`, ...; see [Placeholders]), for the user to say whether to leave them out. Asked for by the user (seen:
+    /// W3C logs' `-` for a missing address went on into an Elasticsearch ip field). A value that only misfits its
+    /// field's other values is asked only where the schema would refuse it: in a field every entry writes into a
+    /// string element without a pattern or a list of values, or into a Data element's Value, it is data.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param schema  The event-logging schema, or null: then no field's destination is known to take text.
+    /// @return The stand-ins found, those the mapping's nil_values already leave out aside.
+    public static List<Placeholders.Found> placeholders(final TranslationMapping mapping,
+                                                        final List<Object> records,
+                                                        final EventSchema schema) {
+        return placeholders(CheckedRecords.of(mapping, records), schema);
+    }
+
+    /// As [#placeholders(TranslationMapping, List, EventSchema)], over records whose extracted values are worked
+    /// out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @param schema  The event-logging schema, or null.
+    /// @return The stand-ins found, those the mapping's nil_values already leave out aside.
+    public static List<Placeholders.Found> placeholders(final CheckedRecords checked, final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
+        final FieldValues values = new FieldValues(checked);
+        final Map<String, List<String>> byField = new LinkedHashMap<>();
+        final Map<String, Boolean> takesText = new LinkedHashMap<>();
+        for (final FieldMapping entry : mapping.allEntries()) {
+            // Only fields written as they are: a value map, lookup or dictionary says what each value becomes.
+            if (!hasText(entry.field()) || entry.value() != null || entry.hasMap() || entry.lookup() != null
+                || hasText(entry.dictionary()) || hasText(entry.xpath())) {
+                continue;
+            }
+            takesText.merge(entry.field(), takesText(entry, schema), Boolean::logicalAnd);
+            byField.putIfAbsent(entry.field(), values.of(entry));
+        }
+        final Set<String> textFields = new LinkedHashSet<>();
+        takesText.forEach((field, text) -> {
+            if (text) {
+                textFields.add(field);
+            }
+        });
+        return Placeholders.find(byField, mapping.nilValues() == null
+                ? Set.of()
+                : Set.copyOf(mapping.nilValues()), textFields);
+    }
+
+    // Whether the entry's element takes any text: a Data element's Value, or a string leaf the schema gives no
+    // pattern or list of values. False when unknown (no schema, a path it lacks).
+    private static boolean takesText(final FieldMapping entry, final EventSchema schema) {
+        if (schema == null || !hasText(entry.path())) {
+            return false;
+        }
+        if (entry.dataName() != null || entry.path().endsWith("Data")) {
+            return true;
+        }
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve(entry.path());
+        } catch (final RuntimeException e) {
+            return false;
+        }
+        if (chain.isEmpty()) {
+            return false;
+        }
+        final EventSchema.Child leaf = chain.getLast();
+        return schema.isLeaf(leaf.decl()) && TEXT_BASE_TYPES.contains(schema.baseType(leaf.decl()))
+               && schema.patterns(leaf.decl()).isEmpty() && schema.enumeration(leaf.decl()) == null;
+    }
+
+    // An Id of one of the schema's users, not an email's addressee; without the schema, an Id of an element named
+    // User.
+    private static boolean isUserId(final String path, final EventSchema schema) {
+        if (schema == null) {
+            return USER_ID.matcher(path).find();
+        }
+        if (!path.endsWith("/Id")) {
+            return false;
+        }
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve(path);
+        } catch (final RuntimeException e) {
+            return false;
+        }
+        if (chain.size() < 2) {
+            return false;
+        }
+        final EventSchema.Child user = chain.get(chain.size() - 2);
+        return USER_TYPE.equals(schema.typeName(user.decl())) && !EMAIL_USERS.contains(user.name());
+    }
+
+    /// Fields mapped as they are into an element whose schema type has a pattern (an address, a port, a MAC),
+    /// whose sample values don't fit it: Stroom's schema check refuses such events. Seen in eval case 40:
+    /// CloudTrail's sourceIPAddress is an AWS service's name for calls a service made, and the step failed on
+    /// 'cloudformation.amazonaws.com' in EventSource/Client/IPAddress, which nothing had checked before.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @param schema  The event-logging schema.
+    /// @return The problems.
+    public static List<String> checkSchemaValues(final TranslationMapping mapping, final List<Object> records,
+                                                 final EventSchema schema) {
+        return checkSchemaValues(CheckedRecords.of(mapping, records), schema);
+    }
+
+    /// As [#checkSchemaValues(TranslationMapping, List, EventSchema)], over records whose extracted values are
+    /// worked out once for the check.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @param schema  The event-logging schema.
+    /// @return The problems.
+    public static List<String> checkSchemaValues(final CheckedRecords checked, final EventSchema schema) {
+        final TranslationMapping mapping = checked.mapping();
+        final List<String> out = new ArrayList<>();
+        // Read from the record or from what the mapping's extractions give it (seen: SecretServer's fields, read
+        // from its message's key/value pairs, never checked when the record's own fields alone were read).
+        final FieldValues fieldValues = new FieldValues(checked);
+        final Set<String> nil = new HashSet<>(mapping.nilValues() == null
+                ? List.of()
+                : mapping.nilValues());
+        for (final FieldMapping entry : mapping.allEntries()) {
+            if (!hasText(entry.field()) || entry.hasMap() || hasText(entry.transform()) || hasText(entry.timeFormat())
+                || entry.lookup() != null || hasText(entry.dictionary()) || hasText(entry.xpath())
+                || entry.value() != null) {
+                continue;
+            }
+            final List<Pattern> patterns = schemaPatterns(schema, entry.path());
+            if (patterns.isEmpty()) {
+                continue;
+            }
+            final List<String> values = new ArrayList<>();
+            for (final String value : fieldValues.of(entry)) {
+                if (value != null && !ToolText.isBlank(value) && !nil.contains(ToolText.strip(value))) {
+                    values.add(value);
+                }
+            }
+            final Set<String> bad = new LinkedHashSet<>();
+            for (final String value : values) {
+                if (patterns.stream().noneMatch(p -> p.matcher(ToolText.strip(value)).matches())) {
+                    bad.add(value);
+                }
+            }
+            if (!bad.isEmpty()) {
+                final long count = values.stream().filter(bad::contains).count();
+                final String caseTransform = caseTransform(bad, patterns);
+                final String said = entry.path() + " takes values of a set form (the schema's pattern), but field '"
+                                    + entry.field() + "' has " + ToolText.repr(bad.stream().limit(3).toList())
+                                    + " in " + count + " of the " + values.size() + " sample records: Stroom's "
+                                    + "schema check refuses those events. " + (caseTransform != null
+                        ? "They fit once " + caseTransform + "-cased: give the entry transform: " + caseTransform
+                        : "Map only the values that fit (an extract whose regex matches only them gives an empty "
+                          + "field otherwise), or map the field elsewhere (a name to a HostName, say)");
+                if (!out.contains(said)) {
+                    out.add(said);
+                }
+            }
+        }
+        return out;
+    }
+
+    // "lower" or "upper" if every value fits one of the patterns once so cased, else null.
+    private static String caseTransform(final Set<String> values, final List<Pattern> patterns) {
+        for (final String transform : List.of("lower", "upper")) {
+            final boolean fits = values.stream()
+                    .map(value -> "lower".equals(transform)
+                            ? ToolText.strip(value).toLowerCase(Locale.ROOT)
+                            : ToolText.strip(value).toUpperCase(Locale.ROOT))
+                    .allMatch(value -> patterns.stream().anyMatch(p -> p.matcher(value).matches()));
+            if (fits) {
+                return transform;
+            }
+        }
+        return null;
+    }
+
+    /// @param schema The event-logging schema.
+    /// @param path   A leaf's path below Event.
+    /// @return The schema's patterns for its value, compiled as the checks run them (any one must match); empty when
+    /// it has none, or the schema doesn't know the path.
+    public static List<Pattern> schemaPatterns(final EventSchema schema, final String path) {
+        final List<EventSchema.Child> chain;
+        try {
+            chain = schema.resolve(path);
+        } catch (final RuntimeException e) {
+            return List.of();
+        }
+        final List<Pattern> patterns = new ArrayList<>();
+        if (!chain.isEmpty()) {
+            for (final String pattern : schema.patterns(chain.getLast().decl())) {
+                // An XSD-only construct: not checked here.
+                final Pattern compiled = compiled(pattern, 0);
+                if (compiled != null) {
+                    patterns.add(compiled);
+                }
+            }
+        }
+        return patterns;
+    }
+
+    private static List<Object> forEachItems(final TranslationMapping mapping, final List<Object> records) {
+        final List<Object> items = new ArrayList<>();
+        if (hasText(mapping.forEach())) {
+            records.forEach(record -> items.addAll(itemsOf(record, mapping.forEach())));
+        }
+        return items;
+    }
+
+    /// Fields the mapping names that no sample record has (with close matches), and time formats the sample's
+    /// values do not fit. Fields an extraction produces are known, not looked for.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records ([#sampleRecords(TranslationMapping, Object, SplitterSpec)]).
+    /// @return `records`, `problems`, `warnings`, `fields_seen`, and `not_checked` and `kept_unknown` when there
+    /// are any.
+    /// @throws stroom.ai.impl.workspace.PatternTimeoutException if the mapping's regexes (its extractions' and
+    ///                                                          conditions') take too long to match.
+    public static Map<String, Object> checkMapping(final TranslationMapping mapping, final List<Object> records) {
+        return checkMapping(CheckedRecords.of(mapping, records));
+    }
+
+    /// As [#checkMapping(TranslationMapping, List)], over records whose extracted values and rules are worked out
+    /// once for the check, and shared with its other parts.
+    ///
+    /// @param checked The sample's records, as the mapping reads them.
+    /// @return As the other.
+    /// @throws stroom.ai.impl.workspace.PatternTimeoutException if the mapping's regexes take too long to match.
+    public static Map<String, Object> checkMapping(final CheckedRecords checked) {
+        return SafePattern.limited(null, () -> new MappingCheck(checked).check());
+    }
+
+    /// @param text A text, or null.
+    /// @return True if it is neither null nor empty.
+    static boolean hasText(final String text) {
+        return text != null && !text.isEmpty();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The sample's records as a mapping reads them.
+    ///
+    /// @param records The records: maps for data_splitter and json inputs, [XmlTree.Element]s for xml inputs.
+    /// @param note    Why nothing could be read, or null.
+    public record SampleRecords(List<Object> records, String note) {
+
+    }
+
+    /// What [#unknownCoverage(TranslationMapping, List, List)] found.
+    ///
+    /// @param problems The rules writing Unknown that must not.
+    /// @param kept     The rules kept as Unknown, for the user to confirm.
+    public record Coverage(List<String> problems, List<Map<String, Object>> kept) {
+
+    }
+
+    // A field the mapping reads, with the scope it reads it in.
+    // Each record's value of an entry's field (or each item's, for an entry for_each repeats): the record's own,
+    // or what the mapping's extractions give it, worked out once for all the entries.
+    private static final class FieldValues {
+
+        private final CheckedRecords checked;
+        private final TranslationMapping mapping;
+        private final List<Object> records;
+        private final List<Object> items;
+        private final Set<String> derived;
+        private List<Map<String, String>> itemsExtracted;
+
+        private FieldValues(final CheckedRecords checked) {
+            this.checked = checked;
+            this.mapping = checked.mapping();
+            this.records = checked.records();
+            this.items = forEachItems(mapping, records);
+            this.derived = derived(mapping);
+        }
+
+        // Null where a record has no value, or its extractions can't be run here.
+        private List<String> of(final FieldMapping entry) {
+            final List<Object> pool = hasText(mapping.forEach()) && !"record".equals(entry.scope())
+                    ? items
+                    : records;
+            final String field = entry.field();
+            if (!derived.contains(field)) {
+                return pool.stream().map(record -> valueOf(record, field)).toList();
+            }
+            final List<Map<String, String>> given = pool == records
+                    ? extractedOf(checked)
+                    : itemsExtracted();
+            final List<String> out = new ArrayList<>();
+            given.forEach(values -> out.add(values == null
+                    ? null
+                    : values.get(field)));
+            return out;
+        }
+
+        // Each for_each item's extracted values, worked out once for all the entries.
+        private List<Map<String, String>> itemsExtracted() {
+            if (itemsExtracted == null) {
+                itemsExtracted = items.stream().map(item -> extractedValues(mapping, item)).toList();
+            }
+            return itemsExtracted;
+        }
+    }
+
+    /// A field mapped as it is into users' Ids, whose sample values are domain-qualified.
+    ///
+    /// @param field    The field.
+    /// @param paths    The Id paths it is mapped into as it is, e.g. `EventSource/User/Id`.
+    /// @param examples Up to three of its domain-qualified values.
+    public record QualifiedIds(String field, List<String> paths, List<String> examples) {
+
+    }
+
+    private record Wanted(String name, String scope) {
+
+    }
+
+    // One mapping checked against its sample's records.
+    private static final class MappingCheck {
+
+        private final CheckedRecords checked;
+        private final TranslationMapping mapping;
+        private final List<Object> records;
+        private final List<String> problems = new ArrayList<>();
+        private final List<String> warnings = new ArrayList<>();
+        private final List<String> notChecked = new ArrayList<>();
+        private final Set<String> derived;
+        private final List<Object> items;
+        private final boolean xml;
+
+        /// @param checked The sample's records, as the mapping reads them.
+        MappingCheck(final CheckedRecords checked) {
+            this.checked = checked;
+            this.mapping = checked.mapping();
+            this.records = checked.records();
+            this.derived = derived(mapping);
+            this.items = forEachItems(mapping, records);
+            this.xml = records.stream().noneMatch(Map.class::isInstance);
+        }
+
+        private List<Object> where(final String scope) {
+            return hasText(mapping.forEach()) && !"record".equals(scope)
+                    ? items
+                    : records;
+        }
+
+        /// @return What [LocalCheck#checkMapping(TranslationMapping, List)] returns.
+        Map<String, Object> check() {
+            if (records.isEmpty()) {
+                return dict("records", 0, "problems", problems, "warnings", warnings, "fields_seen", List.of());
+            }
+            final List<String> seen = seenFields();
+            final Map<Wanted, List<String>> wanted = wanted();
+            final Set<String> suggested = lookedUp(wanted, seen);
+            checkTimeFormats();
+            checkZoneSources();
+            checkItemFields();
+            unread(wanted, seen, suggested);
+            // Once a record, not once a check: seen, 60 extract entries over 8,600 records took 9 s, three times
+            // over. Worked out here, within the check's time limit for regexes.
+            checked.extracted();
+            problems.addAll(sharedTypeIds(checked));
+            final Coverage coverage = unknownCoverage(checked);
+            problems.addAll(coverage.problems());
+            if (!hasText(mapping.forEach())) {
+                untold();
+            }
+            final Map<String, Object> out = dict("records", records.size(), "problems", problems, "warnings",
+                    warnings, "fields_seen", seen.subList(0, Math.min(60, seen.size())));
+            if (!notChecked.isEmpty()) {
+                out.put("not_checked", notChecked);
+            }
+            if (!coverage.kept().isEmpty()) {
+                out.put("kept_unknown", coverage.kept());
+            }
+            return out;
+        }
+
+        private List<String> seenFields() {
+            final Set<String> seen = new LinkedHashSet<>();
+            for (final Object record : records) {
+                // An XML record's paths too: seen, fields_seen [] and no word on unread fields for a whole XML
+                // sample.
+                if (record instanceof final Map<?, ?> map) {
+                    map.keySet().forEach(k -> seen.add((String) k));
+                } else if (record instanceof final XmlTree.Element element) {
+                    seen.addAll(xmlFlat(element).keySet());
+                }
+            }
+            if (hasText(mapping.forEach()) && items.isEmpty()) {
+                warnings.add("for_each '" + mapping.forEach() + "' selects no items in any of the " + records.size()
+                             + " sample records");
+            }
+            for (final Object item : items) {
+                if (item instanceof final Map<?, ?> map) {
+                    map.keySet().forEach(k -> seen.add((String) k));
+                }
+            }
+            return new ArrayList<>(seen);
+        }
+
+        private Map<Wanted, List<String>> wanted() {
+            final Map<Wanted, List<String>> wanted = new LinkedHashMap<>();
+            for (final FieldMapping entry : mapping.allEntries()) {
+                final List<String> names = new ArrayList<>();
+                if (hasText(entry.field())) {
+                    names.add(entry.field());
+                }
+                if (entry.anyOf() != null) {
+                    names.addAll(entry.anyOf());
+                }
+                if (entry.join() != null) {
+                    names.addAll(entry.join());
+                }
+                if (entry.lookup() != null) {
+                    entry.lookup().keyFieldNames().stream().filter(LocalCheck::hasText).forEach(names::add);
+                }
+                names.forEach(name -> want(wanted, name, entry.scope(), entry.path()));
+            }
+            for (final EventRule rule : mapping.events()) {
+                rule.when().stream().filter(c -> hasText(c.field()))
+                        .forEach(c -> want(wanted, c.field(), c.scope(), "[" + rule.name() + "] when"));
+            }
+            for (final DropRule drop : mapping.dropWhen()) {
+                drop.when().stream().filter(c -> hasText(c.field()))
+                        .forEach(c -> want(wanted, c.field(), c.scope(), "drop: " + drop.reason()));
+            }
+            mapping.extract().stream().filter(ex -> hasText(ex.field()))
+                    .forEach(ex -> want(wanted, ex.field(), ex.scope(), "extract"));
+            return wanted;
+        }
+
+        private static void want(final Map<Wanted, List<String>> wanted, final String name, final String scope,
+                                 final String use) {
+            wanted.computeIfAbsent(new Wanted(name, scope), k -> new ArrayList<>()).add(use);
+        }
+
+        // The fields looked up in the sample; those it doesn't have are problems (near misses) or warnings.
+        // Returns the fields offered as 'did you mean': not said again as unread.
+        private Set<String> lookedUp(final Map<Wanted, List<String>> wanted, final List<String> seen) {
+            final Set<String> suggested = new HashSet<>();
+            final List<String> unreadPaths = new ArrayList<>();
+            wanted.forEach((key, used) -> {
+                final String name = key.name();
+                if (derived.contains(name)) {
+                    return;
+                }
+                if (xml && !segments(name).stream().filter(s -> !".".equals(s))
+                        .allMatch(s -> STEP.matcher(s).matches())) {
+                    // A path xml_value can't follow (*:Name, a function): not looked up here.
+                    unreadPaths.add(name);
+                    return;
+                }
+                final List<Object> pool = where(key.scope());
+                if (pool.stream().anyMatch(r -> valueOf(r, name) != null)) {
+                    return;
+                }
+                final String what = pool == items && hasText(mapping.forEach())
+                        ? "sample items"
+                        : "sample records";
+                if (seen.contains(name)) {
+                    // The sample has the field, empty (null) in every record: not a slip to correct (seen: "did you
+                    // mean ['AppAccessContext.IssuedAtTime']" said of that very field), its element left out.
+                    warnings.add("field '" + name + "' (used for " + used.getFirst() + (used.size() > 1
+                            ? " and more"
+                            : "") + ") is empty in all " + pool.size() + " " + what + ": its element is left out "
+                                 + "of every event of the sample");
+                    return;
+                }
+                final List<String> close = seen.isEmpty()
+                        ? List.of()
+                        : CloseMatches.closeMatches(name, seen, 3, 0.6);
+                suggested.addAll(close);
+                final String message = "field '" + name + "' (used for " + used.getFirst() + (used.size() > 1
+                        ? " and more"
+                        : "") + ") is in none of the " + pool.size() + " " + what
+                                       + (close.isEmpty()
+                        ? ""
+                        : "; did you mean " + ToolText.repr(close) + "?")
+                                       + (!seen.isEmpty() && close.isEmpty()
+                        ? ". Fields seen: " + ToolText.repr(seen.subList(0, Math.min(30, seen.size())))
+                        : "");
+                // A near miss of a field the sample has is a slip (srcip for src_ip, or names recalled from
+                // another source's logs), and its element would be empty in every event; with nothing close, the
+                // field may be one other data carries.
+                if (close.isEmpty()) {
+                    warnings.add(message);
+                } else {
+                    problems.add(message + " Use the sample's field names; a field only other data carries needs "
+                                 + "a sample that has it.");
+                }
+            });
+            if (!unreadPaths.isEmpty()) {
+                notChecked.add("fields " + ToolText.repr(unreadPaths.subList(0, Math.min(5, unreadPaths.size())))
+                               + " were not looked up in the sample (only plain paths are here)");
+            }
+            return suggested;
+        }
+
+        private void checkTimeFormats() {
+            for (final FieldMapping entry : mapping.allEntries()) {
+                if (!hasText(entry.timeFormat()) || !hasText(entry.field()) || derived.contains(entry.field())) {
+                    continue;
+                }
+                final List<String> values = new ArrayList<>();
+                for (final Object record : where(entry.scope())) {
+                    final String value = valueOf(record, entry.field());
+                    if (value != null && !value.isEmpty()) {
+                        values.add(value);
+                    }
+                }
+                if (values.isEmpty()) {
+                    continue;
+                }
+                final String message = TimePatterns.checkTimeFormat(entry.timeFormat(), values);
+                if (message != null) {
+                    final long misfits = values.stream()
+                            .filter(v -> TimePatterns.checkTimeFormat(entry.timeFormat(), List.of(v)) != null)
+                            .count();
+                    if (values.size() - misfits == 0) {
+                        problems.add(entry.path() + ": " + message);
+                    } else {
+                        warnings.add(entry.path() + ": " + message + otherLayouts(entry, values));
+                    }
+                }
+            }
+        }
+
+        // A typed entry (not Data, not a group) reading a field whose values are items with fields of their own
+        // (objects): each item would be written as its fields' text run together. Seen in chat 183: an array of
+        // {Name, Value} written to Configuration/Name as "NameFW to personal". A warning: the catalogue's check
+        // refuses such a placement.
+        private void checkItemFields() {
+            for (final FieldMapping entry : mapping.allEntries()) {
+                if (entry.group() != null) {
+                    checkGroupItems(entry);
+                    continue;
+                }
+                if (!hasText(entry.field()) || hasText(entry.dataName()) || derived.contains(entry.field())) {
+                    continue;
+                }
+                final List<String> keys = itemKeys(entry.field(), entry.scope());
+                if (!keys.isEmpty()) {
+                    warnings.add(entry.path() + ": field '" + entry.field() + "' holds items with fields of their "
+                                 + "own (" + String.join(", ", keys.stream().limit(6).toList()) + "): each item is "
+                                 + "written as its fields' text run together; read them with a for_each group with "
+                                 + "fields, or an xpath picking one item");
+                }
+            }
+        }
+
+        // A group over a record's array whose field reads the item whole (item: true) where the items are objects
+        // with fields of their own: each is written as its fields' text run together. Seen in chat 184:
+        // {path: 'Configuration', for_each: {array: 'event.Parameters'}, fields: [{path: 'Name', item: true}]}
+        // wrote each {Name, Value} item to Configuration/Name as "NameFW to personal".
+        private void checkGroupItems(final FieldMapping entry) {
+            final ItemSource source = entry.group().forEach();
+            if (source == null || !hasText(source.array()) || source.item() != null
+                || derived.contains(source.array())) {
+                return;
+            }
+            for (final FieldMapping field : entry.group().fields()) {
+                if (!"".equals(field.item()) || hasText(field.field()) || field.group() != null
+                    || hasText(field.dataName())) {
+                    continue;
+                }
+                final List<String> keys = itemKeys(source.array(), entry.scope());
+                if (keys.isEmpty()) {
+                    return;
+                }
+                final String leaf = field.strippedPath();
+                final String name = leaf.substring(leaf.lastIndexOf('/') + 1);
+                final String key = keys.stream()
+                        .filter(each -> each.equalsIgnoreCase(name))
+                        .findFirst()
+                        .orElse(keys.getFirst());
+                warnings.add(entry.path() + "/" + leaf + ": the items of '" + source.array() + "' have fields of "
+                             + "their own (" + String.join(", ", keys.stream().limit(6).toList()) + "), and item: "
+                             + "true writes each whole, its fields' text run together; read a key of the item "
+                             + "instead, e.g. {\"path\": \"" + leaf + "\", \"field\": \"" + key + "\"}");
+            }
+        }
+
+        // The keys of a field's items where most of the records (or items) holding it hold objects, each once in the
+        // order first seen; none where they don't.
+        private List<String> itemKeys(final String field, final String scope) {
+            int held = 0;
+            int objects = 0;
+            final Set<String> keys = new LinkedHashSet<>();
+            for (final Object record : where(scope)) {
+                if (!(record instanceof final Map<?, ?> map) || map.get(field) == null) {
+                    continue;
+                }
+                held++;
+                final Object value = map.get(field);
+                final List<?> items = value instanceof final List<?> list
+                        ? list
+                        : List.of(value);
+                if (items.stream().anyMatch(Map.class::isInstance)) {
+                    objects++;
+                    items.stream().filter(Map.class::isInstance)
+                            .forEach(item -> ((Map<?, ?>) item).keySet().forEach(k -> keys.add(String.valueOf(k))));
+                }
+            }
+            return objects > 0 && objects * 2 > held
+                    ? List.copyOf(keys)
+                    : List.of();
+        }
+
+        // A time whose zone a field gives (asked for by the user): the sample's zones Stroom wouldn't read, mapped
+        // and normalised, are named, as Stroom would read each such record's time as UTC with only a warning.
+        private void checkZoneSources() {
+            for (final FieldMapping entry : mapping.allEntries()) {
+                final ZoneSource source = entry.zoneSource();
+                if (source == null) {
+                    continue;
+                }
+                if (source.field() == null) {
+                    notChecked.add(entry.path() + "'s zones (stream meta '" + source.meta() + "') were not checked "
+                                   + "against the sample");
+                    continue;
+                }
+                if (derived.contains(source.field())) {
+                    continue;
+                }
+                final List<String> values = new ArrayList<>();
+                for (final Object record : where(entry.scope())) {
+                    values.add(valueOf(record, source.field()));
+                }
+                final List<String> unreadable = source.unreadable(values);
+                if (!unreadable.isEmpty()) {
+                    problems.add(entry.path() + ": the zones in '" + source.field() + "' include "
+                                 + ToolText.repr(unreadable.subList(0, Math.min(10, unreadable.size())))
+                                 + ", which Stroom doesn't read as zones (it would read each such record's time as "
+                                 + "UTC, with only a warning). Ask the user which zone each is and give them in the "
+                                 + "timezone's map, e.g. {\"field\": \"" + source.field() + "\", \"map\": {\""
+                                 + unreadable.getFirst() + "\": \"<IANA name or offset>\"}, \"default\": \""
+                                 + source.defaultZone() + "\"}; an abbreviation can name more than one zone (IST, "
+                                 + "CST), so don't guess.");
+                }
+            }
+        }
+
+        // The layouts of the values the time format doesn't read, each with an example, and what to do about them:
+        // seen, a stream's times in several layouts, each record of the others written with no time.
+        private static String otherLayouts(final FieldMapping entry, final List<String> values) {
+            final Map<String, String> layouts = new LinkedHashMap<>();
+            for (final String value : values) {
+                if (TimePatterns.checkTimeFormat(entry.timeFormat(), List.of(value)) != null) {
+                    final String layout = TimePatterns.inferTimePattern(value);
+                    layouts.putIfAbsent(layout == null
+                            ? "(not a time)"
+                            : layout, value);
+                }
+                if (layouts.size() == 3) {
+                    break;
+                }
+            }
+            if (layouts.isEmpty()) {
+                return "";
+            }
+            final List<String> said = new ArrayList<>();
+            layouts.forEach((layout, example) -> said.add(layout + " (e.g. " + ToolText.repr(example) + ")"));
+            return ". Values in other layouts: " + String.join(", ", said) + ". Read each layout (a part each in the "
+                   + "splitter, or a rule each with its own time_format); for records whose time still won't parse, "
+                   + "ask the user whether to write the stream's received time instead (time_fallback: "
+                   + "'ReceivedTime'), else they have no time";
+        }
+
+        private void unread(final Map<Wanted, List<String>> wanted, final List<String> seen,
+                            final Set<String> suggested) {
+            final Set<String> readWords = new HashSet<>();
+            if (xml) {
+                // XML is often read through xpaths (.//*:EventData/*:Data): a path counts as read when the mapping
+                // names every step of it somewhere.
+                final List<String> texts = new ArrayList<>(MappingFacts.mappingXpaths(mapping));
+                wanted.keySet().forEach(key -> texts.add(key.name()));
+                texts.forEach(text -> readWords.addAll(ToolText.findall(WORD, text)));
+            }
+            final List<String> unread = seen.stream()
+                    // The array for_each reads item by item is read: seen, said to be read by nothing.
+                    .filter(k -> !k.equals(mapping.forEach()))
+                    .filter(k -> !derived.contains(k) && !suggested.contains(k) && !MappingFacts.readsInput(mapping, k))
+                    .filter(k -> !(xml && readWords.containsAll(ToolText.findall(WORD, k))))
+                    // Left out on purpose: not read by nothing (seen in eval case 105 on Haiku, src_ip listed in
+                    // ignored_fields and still warned of).
+                    .filter(k -> !mapping.ignoredFields().contains(k))
+                    .toList();
+            if (!unread.isEmpty()) {
+                // A parsed field no output reads is lost from every event: often one the request asked for (a
+                // source address). Every one is listed: seen, a list cut at 12 cost about 20 calls working out the
+                // rest from the field inventory and the mapping.
+                warnings.add("fields in the sample that nothing reads (" + unread.size() + " of " + seen.size()
+                             + "): " + ToolText.repr(unread)
+                             + ": map each to the element that means it (a Data entry if nothing else fits), or "
+                             + "leave it out on purpose.");
+            }
+        }
+
+        private void untold() {
+            int untold = 0;
+            for (int n = 0; n < records.size(); n++) {
+                if (checked.ruleOf(n) == null) {
+                    untold++;
+                }
+            }
+            if (untold > 0) {
+                // Said, not passed over in silence: seen, a clean check of 1000 XML records whose every rule
+                // tested a field extracted from an xpath, so no record was checked against its rule.
+                notChecked.add("the rule " + untold + " of the " + records.size() + " sample records fall to can't "
+                               + "be told here (a condition on an xpath, or on a field extracted from one): Unknown "
+                               + "and TypeId were not checked for them; step_sample shows what they become");
+            }
+        }
+    }
+
+    private record RequiredCount(String rule, String path, List<String> fields, int taken, int empty) {
+
+    }
+}

@@ -1,0 +1,46 @@
+name: Files exported by department, a Lucene index joined to an HR Data Connection (a question, nothing built)
+kind: question
+capabilities: [stroomql, join, data_connection, aggregation]
+# A question that needs two data sources: 85 staff activity events (questions/staff-activity.csv) in the Lucene index
+# "Staff activity", which names each user but not their department, and the HR Data Connection "HR"
+# (questions/hr-users.csv), user to department. The answer is one StroomQL query: the events joined to HR on the
+# user (a join or a left join: every user who exported is in HR), the exports of the week kept, grouped by
+# department and summed. The traps: the week left out (the previous week's 300 and 500 file exports would put Sales
+# and Marketing on top); the join done by hand, users' exports totalled and their departments looked up apart; the
+# events counted rather than their files summed. Worked out by brute force over the two files (TestEvalCases).
+lucene_index:
+  name: Staff activity
+  events: questions/staff-activity.csv
+  fields: {EventTime: date, UserId: text, Action: text, Files: long}
+data_connections:
+  - name: HR
+    csv: questions/hr-users.csv
+    columns: {Username: text, Department: text, Status: text}
+request: >
+  Which departments exported the most files in the week starting Monday 5 January 2026? The "Staff activity" index
+  has our staff's activity and the "HR" Data Connection says which department each user is in. Give each department
+  with the total number of files it exported that week, most first.
+user_knows: >
+  UserId in "Staff activity" is the Username in "HR". An export is Action Export, and Files is how many files it
+  exported. The week is 5 January 2026 00:00 UTC up to, not including, 12 January 2026.
+expected:
+  tools_used: [run_stroomql]
+  answer:
+    tool: run_stroomql
+    ordered: true
+    query: '\bjoin\b'
+    rows:
+      - [Engineering, 182]
+      - [Sales, 97]
+      - [Finance, 64]
+      - [Legal, 23]
+reference:
+  run_stroomql:
+    query: >-
+      from "Staff activity"
+      join "HR" as hr on UserId = hr.Username
+      where Action = Export and EventTime >= 2026-01-05T00:00:00.000Z and EventTime < 2026-01-12T00:00:00.000Z
+      eval TotalFiles = sum(Files)
+      group by hr.Department
+      sort by TotalFiles desc
+      select hr.Department, TotalFiles

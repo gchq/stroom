@@ -1,0 +1,43 @@
+name: Changing the user field an AGENTS doc gives
+kind: instructions
+capabilities: [check_instructions, propose_instructions]
+# The AGENTS doc in /Endpoint gives the user as actor.login and the host as host.name. The user says the user is now
+# in user.name. Scored on the proposal: a change to the doc in /Endpoint whose ## Fields gives the user as user.name
+# (first, so the tools use it), the host line and the doc's other text kept, and check_instructions finding no
+# problems in it.
+lucene_index:
+  name: Endpoint
+  folder: /Endpoint
+  events: questions/agents-endpoint.csv
+  recent: true
+  fields: {EventTime: date, actor.login: text, user.name: text, host.name: text, Action: text}
+agents_docs:
+  - folder: /Endpoint
+    text: |
+      # Standing instructions
+
+      Times are UTC.
+
+      ## Fields
+      - user: actor.login
+      - host: host.name
+request: In /Endpoint the user is in user.name now, not actor.login. Change the standing instructions.
+user_knows: >
+  user.name holds the user in every index under /Endpoint from now on; actor.login is no longer used for it. Keep
+  everything else in the doc.
+expected:
+  tools_used: [propose_instructions]
+  instructions:
+    folder: /Endpoint
+    fields: {user: user.name, host: host.name}
+    keeps: [Times are UTC.]
+    check_problems: 0
+reference:
+  calls:
+    - tool: propose_instructions
+      arguments:
+        folder: /Endpoint
+        summary: The user is in user.name now, as you said.
+        edits:
+          - {oldText: "- user: actor.login", newText: "- user: user.name"}
+  answer: I've proposed changing the user field in /Endpoint's AGENTS doc to user.name; review and apply it.

@@ -59,7 +59,7 @@ class TestTableSummariser {
     /**
      * Two rows to a batch, so a handful of rows is several batches.
      */
-    private final TableAnalysisConfig config = new TableAnalysisConfig(100, 2, 2, null, null, null);
+    private final TableAnalysisConfig config = new TableAnalysisConfig(100, 2, 2, null, null, null, null);
 
     private final TableSummariserImpl summariser = new TableSummariserImpl(new ExecutorProvider() {
         @Override
@@ -88,6 +88,56 @@ class TestTableSummariser {
         assertThat(batches.get(0)).contains("row1").contains("row2").doesNotContain("row3");
         assertThat(batches.get(1)).contains("row3").contains("row4").doesNotContain("row5");
         assertThat(batches.get(2)).contains("row5");
+    }
+
+    @Test
+    void wideRows_areSplitToFitTheModelsContextWindow() {
+        final TableAnalysisConfig manyRows = TableAnalysisConfig.builder().maxRowsPerBatch(1_000).build();
+        final String wide = "x".repeat(900);
+        final Path file = write("| Name | Count |\n| --- | --- |\n"
+                                + ("| " + wide + " | 1 |\n").repeat(5));
+
+        // About 2,000 characters a batch: two rows, with the header.
+        final List<String> batches = summariser.buildBatchesFromMarkdown(file, manyRows, 2_000);
+
+        assertThat(batches).hasSize(3);
+        assertThat(batches).allSatisfy(batch -> assertThat(batch.length()).isLessThanOrEqualTo(2_000));
+        // A row too big for any batch still gets one of its own.
+        assertThat(summariser.buildBatchesFromMarkdown(file, manyRows, 100)).hasSize(5);
+    }
+
+    @Test
+    void onlySoManyRowsArePutInBatches_andTheModelIsTold() {
+        final TableAnalysisConfig fewRows = TableAnalysisConfig.builder()
+                .maxRowsPerBatch(2)
+                .maxRowsWithoutTools(3)
+                .build();
+        final TableSummariserImpl.Batches batches = summariser.buildBatches(table(5), fewRows, Integer.MAX_VALUE, 3);
+
+        assertThat(batches.capped()).isTrue();
+        assertThat(String.join("", batches.batches())).contains("row3").doesNotContain("row4");
+        assertThat(summariser.buildBatches(table(3), fewRows, Integer.MAX_VALUE, 3).capped()).isFalse();
+
+        final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
+        final TableSummaryResult result = summariser.summarise(TableSummaryRequest.builder()
+                .source(new TableSource("t", table(5), false))
+                .chatModel(chatModel(prompt -> {
+                    prompts.add(prompt);
+                    return "a finding";
+                }))
+                .config(fewRows)
+                .query("What is going on?")
+                .build());
+        assertThat(prompts.getFirst()).contains("only the first 3 rows of a larger table are given");
+        // And so is the reader, whatever the model made of it.
+        assertThat(result.text()).contains("This answer covers only the first 3 rows of a larger table");
+    }
+
+    @Test
+    void batchSizeFollowsTheContextWindow() {
+        assertThat(TableSummariserImpl.maxBatchChars(0)).isEqualTo(Integer.MAX_VALUE);
+        assertThat(TableSummariserImpl.maxBatchChars(128_000)).isEqualTo(256_000);
+        assertThat(TableSummariserImpl.maxBatchChars(100)).isEqualTo(TableSummariserImpl.MIN_BATCH_CHARS);
     }
 
     @Test
@@ -124,6 +174,22 @@ class TestTableSummariser {
     }
 
     @Test
+    void batchesSayWhichTableTheyAreFrom_andTheMergeAnswersTheQuestion() {
+        final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
+
+        summariser.summarise(request(new TableSource("Firewall events", table(3), false), prompt -> {
+            prompts.add(prompt);
+            return "a finding";
+        }).build());
+
+        // Two batches, then the merge.
+        assertThat(prompts.subList(0, 2)).allSatisfy(prompt -> assertThat(prompt).contains("Table: Firewall events"));
+        assertThat(prompts.getLast())
+                .contains("USER QUESTION:\nWhat is going on?")
+                .contains("PARTIAL ANSWERS:");
+    }
+
+    @Test
     void everyBatch_isPutToTheModel() {
         final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
 
@@ -157,15 +223,22 @@ class TestTableSummariser {
     }
 
     @Test
-    void truncatedSource_tellsTheModelThatThereWasMoreData() {
+    void truncatedSource_tellsTheModelAndTheReaderThatThereWasMoreData() {
         final List<String> prompts = Collections.synchronizedList(new ArrayList<>());
 
-        summariser.summarise(request(new TableSource("truncated", table(2), true), prompt -> {
-            prompts.add(prompt);
-            return "answer";
-        }).build());
+        final TableSummaryResult result = summariser.summarise(request(new TableSource("truncated", table(2), true),
+                prompt -> {
+                    prompts.add(prompt);
+                    return "answer";
+                }).build());
 
-        assertThat(prompts.getFirst()).contains("truncated to the first 100 rows of a larger result set");
+        assertThat(prompts.getFirst()).contains("only the first 100 rows of a larger table are given");
+        assertThat(result.text()).isEqualTo("answer\n\n---\n*Note: This answer covers only the first 100 rows of a "
+                                            + "larger table.*");
+
+        // A table given whole has no such note.
+        assertThat(summariser.summarise(request(new TableSource("whole", table(2), false), prompt -> "answer")
+                .build()).text()).isEqualTo("answer");
     }
 
     @Test

@@ -1,0 +1,84 @@
+name: Undoing the last change to a skill
+kind: skill
+capabilities: [skills, propose_skill, check_skill]
+# Earlier in the chat (the scripted turn) the skill "Failed logons by host" was changed to look back 14 days, and the
+# user applied and saved it. Now they ask to undo that. Scored on the proposal: propose_skill's undo (the reverse
+# of the change applied in this chat, not a hand-made edit), days back to 7, only its Parameters changed, the history
+# entry saying it undid the version, and check_skill finding no problems.
+lucene_index:
+  - name: Logons
+    events: questions/skill-logons.csv
+    recent: true
+    fields: {EventTime: date, UserId: text, Outcome: text, Host: text}
+skills_docs:
+  - folder: /Hunts
+    skills:
+      - |
+        # Failed logons by host
+
+        Counts a user's failed logons over a period, by host, from the Logons index.
+
+        ## When to use
+        - "how many failed logons did jsmith have?"
+        - "failed logons by host for a user this week"
+
+        ## Parameters
+        - user (required): the account name, as the Logons index holds it (UserId).
+        - days (default 7): how many days back from now.
+
+        ## Steps
+        1. Count the user's failed logons by host:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each host and its count of failed logons.
+chat:
+  - ask: Make the "Failed logons by host" skill look back 14 days by default.
+    calls:
+      - {tool: activate_skills, arguments: {}}
+      - tool: propose_skill
+        arguments:
+          folder: /Hunts
+          change: Looks back 14 days by default
+          markdown: |
+            # Failed logons by host
+
+            Counts a user's failed logons over a period, by host, from the Logons index.
+
+            ## When to use
+            - "how many failed logons did jsmith have?"
+            - "failed logons by host for a user this week"
+
+            ## Parameters
+            - user (required): the account name, as the Logons index holds it (UserId).
+            - days (default 14): how many days back from now.
+
+            ## Steps
+            1. Count the user's failed logons by host:
+               ```json
+               {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+               ```
+
+            ## Output
+            A table in the chat: each host and its count of failed logons.
+    answer: I've proposed the change; review and apply it.
+    apply: true
+request: Undo that last change to the skill.
+user_knows: The change to undo is the 14-day default made earlier in this chat, which I applied and saved.
+expected:
+  tools_used: [propose_skill]
+  calls_with:
+    - {tool: propose_skill, contains: [undo]}
+  proposal:
+    folder: /Hunts
+    skill: Failed logons by host
+    changed_sections: [parameters]
+    defaults: {days: 7}
+    history_change_contains: Undid version
+    check_problems: 0
+reference:
+  calls:
+    - {tool: propose_skill, arguments: {action: undo}}
+  answer: I've proposed undoing it (days back to 7); review and apply it.

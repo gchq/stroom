@@ -1,0 +1,107 @@
+# tool-approval-approved
+
+A call to an untrusted server's tool waits for the user's approval: the run stops with an APPROVAL_REQUEST card, and once the user approves, the next run makes the call and carries on.
+
+== What happened ==
+The user asks: Create the ACME feed.
+Run 1: stopped to wait for the user (1 tool call(s) in chat 7 need approval)
+The user approves the tool calls: ANSWERED
+Run 2: answered: The ACME feed is created.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Create the ACME feed.
+#2 INTERIM_RESPONSE (turn 1)
+    Creating the feed.
+#3 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "create_feed",
+      "arguments" : "{\"name\":\"ACME\"}",
+      "rationale" : "Creating the feed."
+    }
+#4 APPROVAL_REQUEST (turn 1)
+    {
+      "kind" : "TOOL",
+      "status" : "ANSWERED",
+      "calls" : [ {
+        "callId" : "call-1",
+        "tool" : "create_feed",
+        "serverKey" : "other",
+        "serverTool" : "create_feed",
+        "arguments" : "{\"name\":\"ACME\"}",
+        "risks" : [ "untrusted server", "can modify" ],
+        "toolHash" : "8e52227d6753e5a18379d16ce72df3361682293215167784cd7fc95b14215525",
+        "serverHash" : "924f838d49f223a6699a32ff7294c96c1029837e2a983e87dfc87f49164df9f0",
+        "decision" : "ALLOWED",
+        "description" : "Does create feed."
+      } ],
+      "allowForChat" : true,
+      "allowServerReadOnly" : false
+    }
+  First stored as APPROVAL_REQUEST:
+    {
+      "kind" : "TOOL",
+      "status" : "PENDING",
+      "calls" : [ {
+        "callId" : "call-1",
+        "tool" : "create_feed",
+        "serverKey" : "other",
+        "serverTool" : "create_feed",
+        "arguments" : "{\"name\":\"ACME\"}",
+        "risks" : [ "untrusted server", "can modify" ],
+        "toolHash" : "8e52227d6753e5a18379d16ce72df3361682293215167784cd7fc95b14215525",
+        "serverHash" : "924f838d49f223a6699a32ff7294c96c1029837e2a983e87dfc87f49164df9f0",
+        "description" : "Does create feed."
+      } ],
+      "allowForChat" : true,
+      "allowServerReadOnly" : false
+    }
+#5 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "create_feed",
+      "error" : false,
+      "text" : "Feed ACME created.",
+      "chars" : 18,
+      "durationMs" : "<time>"
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: true
+
+== MCP tools offered ==
+create_feed
+    Description: Does create feed.
+    Parameters: {
+      "type" : "object",
+      "properties" : {
+        "query" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ ]
+    }
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn, create_feed
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Create the ACME feed.
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn, create_feed
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Create the ACME feed.
+[2] AI
+    Calls create_feed as call-1 with {"name":"ACME"}
+[3] TOOL RESULT for call-1 (create_feed)
+    Feed ACME created.

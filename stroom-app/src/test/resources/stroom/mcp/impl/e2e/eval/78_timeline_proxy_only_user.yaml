@@ -1,0 +1,45 @@
+name: A timeline of a user seen only in web proxy events (a question, nothing built)
+kind: question
+capabilities: [timeline, elasticsearch]
+# Chat 190: a user seen only in web proxy logs got no session at all, as sessions began only at a window focus, which
+# only endpoint logs have. Two days of events in one Elasticsearch index (aggregated/activity-timeline/any-source.csv,
+# made by aggregated-feeds-generator.py, which also writes the activity periods it planted): pnguyen's web requests
+# alone, in browsing blocks of one site each, at least 45 minutes apart; beside them mlee's endpoint, proxy and VPN
+# events. The index holds the user as its pipeline normalised it (pnguyen) and the EventDetail element (Element);
+# XmlUser is how the source wrote the user (CORP\PNGUYEN), which is never the timeline's. With no roles given, the
+# events are classified by the index's element field (the Events XML isn't in Stroom here) and the user's requests,
+# close in time, become activity periods by host and site: active time by site the answer's rows. The traps: building
+# roles for a focus no source has, the XmlUser column, and the other user's events. Skipped without an Elasticsearch
+# node.
+elastic_index:
+  name: Any source activity
+  events: aggregated/activity-timeline/any-source.csv
+  fields: {EventTime: date, Source: text, UserName: text, XmlUser: text, Host: text, Element: text, Action: text,
+           TypeId: text, KeyPath: text, KeyValue: text}
+request: >
+  Build a timeline of pnguyen's activity on 16 and 17 November 2026 from the "Any source activity" Elasticsearch index.
+  When were they active, and where?
+user_knows: >
+  UserName is the user as Stroom's indexing wrote it; XmlUser is how the source wrote it. Host is the host, Element the
+  event-logging element each event was written as, KeyValue the URL a web request fetched. The period is 16 November
+  2026 00:00 UTC up to, not including, 18 November 2026.
+expected:
+  tools_used: [activity_timeline]
+  answer:
+    tool: activity_timeline
+    ordered: false
+    tolerance: 0.01
+    result: {entity: pnguyen, session_count: 0, unattached_actions: 0}
+    rows:
+      - [lt-pnguyen, intranet.example.local, 2, 56.0]
+      - [lt-pnguyen, supplier.example.net, 2, 44.0]
+      - [lt-pnguyen, research.example.org, 2, 39.0]
+      - [lt-pnguyen, news.example.com, 2, 32.0]
+reference:
+  activity_timeline:
+    entity: pnguyen
+    timeFrom: '2026-11-16T00:00:00.000Z'
+    timeTo: '2026-11-18T00:00:00.000Z'
+    timeZone: UTC
+    sources:
+      - {index: Any source activity, user: UserName, host: Host, object: KeyValue}

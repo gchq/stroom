@@ -19,9 +19,17 @@ package stroom.editor.client.view;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
+import stroom.util.shared.diff.LineDiff;
+import stroom.util.shared.diff.LineReplacement;
+import stroom.util.shared.diff.TextEdit;
+import stroom.util.shared.diff.TextEdits;
+import stroom.util.shared.diff.TextPosition;
 import stroom.widget.util.client.Rect;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasKeyUpHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -37,7 +45,9 @@ import com.google.gwt.user.client.ui.Composite;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditor;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+import edu.ycp.cs.dh.acegwt.client.ace.AceSelection;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -89,6 +99,10 @@ public class Editor extends Composite implements
     private boolean useSnippetsDirty;
     private boolean addChangeHandler;
     private boolean addedChangeHandler;
+    private final List<Runnable> scrollListeners = new ArrayList<>();
+    private boolean addedScrollHandler;
+    private List<String> lineNumberLabels;
+    private boolean lineNumberLabelsDirty;
     private boolean started;
 
     public Editor() {
@@ -144,6 +158,8 @@ public class Editor extends Composite implements
                 updateUseVimBindings();
                 updateUseWrapMode();
                 updateShowIndentGuides();
+                updateScrollHandler();
+                updateLineNumberLabels();
             }
         });
 
@@ -195,6 +211,146 @@ public class Editor extends Composite implements
             this.text = editor.getText();
         }
     }
+
+    /// Replaces ranges of whole lines with new lines, keeping the editor's undo history, so the user
+    /// can undo the change with Ctrl+Z (Ace may record one undo step per range).
+    ///
+    /// The text is not set as a whole, which would reset the undo history. Instead, working from the
+    /// last range to the first so earlier line numbers stay valid, each range is selected and the
+    /// selection replaced. The user's cursor and selection are then put back, moved to allow for any
+    /// lines added or removed above them, and the scroll position is kept.
+    ///
+    /// @param replacements The line replacements, with line numbers relative to the current text.
+    /// @return False if the editor has not started yet (it isn't attached), so nothing was changed.
+    /// @throws IllegalArgumentException If a replacement is outside the text or two of them overlap.
+    public boolean applyLineReplacements(final List<LineReplacement> replacements) {
+        if (!started) {
+            return false;
+        }
+        if (replacements == null || replacements.isEmpty()) {
+            return true;
+        }
+
+        final List<String> lines = LineDiff.splitLines(editor.getText());
+        final List<TextEdit> edits = TextEdits.fromLineReplacements(lines, replacements);
+
+        final AceSelection selection = editor.getSelection();
+        final AceEditorCursorPosition anchor = selection.getSelectionAnchor();
+        final AceEditorCursorPosition lead = selection.getSelectionLead();
+        final int scrollTop = editor.getScrollTop();
+
+        for (int i = edits.size() - 1; i >= 0; i--) {
+            final TextEdit edit = edits.get(i);
+            selection.select(
+                    edit.getFrom().getRow(),
+                    edit.getFrom().getColumn(),
+                    edit.getTo().getRow(),
+                    edit.getTo().getColumn());
+            editor.replaceSelectedText(edit.getText());
+        }
+        this.text = editor.getText();
+
+        final TextPosition newAnchor = TextEdits.adjustPosition(
+                lines, edits, new TextPosition(anchor.getRow(), anchor.getColumn()));
+        final TextPosition newLead = TextEdits.adjustPosition(
+                lines, edits, new TextPosition(lead.getRow(), lead.getColumn()));
+        selection.select(newAnchor.getRow(), newAnchor.getColumn(), newLead.getRow(), newLead.getColumn());
+        editor.setScrollTop(scrollTop);
+        return true;
+    }
+
+    /// Adds a listener that is called whenever the editor's vertical scroll position changes, whether
+    /// by the user or by [#setScrollTop(int)].
+    ///
+    /// @param listener The listener.
+    public void addScrollListener(final Runnable listener) {
+        scrollListeners.add(listener);
+        updateScrollHandler();
+    }
+
+    private void updateScrollHandler() {
+        if (started && !addedScrollHandler && !scrollListeners.isEmpty()) {
+            final JavaScriptObject aceEditor = getAceEditor(editor.getElement());
+            if (aceEditor != null) {
+                addedScrollHandler = true;
+                addNativeScrollHandler(aceEditor, this::fireScrolled);
+            }
+        }
+    }
+
+    private void fireScrolled() {
+        for (final Runnable listener : scrollListeners) {
+            listener.run();
+        }
+    }
+
+    /// Shows the given labels in the gutter in place of line numbers, one per row, e.g. to number only
+    /// some rows when blank filler rows have been added to line up a side by side diff.
+    ///
+    /// @param labels The label for each row (rows beyond the list have none), or null to go back to
+    ///               showing line numbers.
+    public void setLineNumberLabels(final List<String> labels) {
+        this.lineNumberLabels = labels;
+        this.lineNumberLabelsDirty = true;
+        updateLineNumberLabels();
+    }
+
+    private void updateLineNumberLabels() {
+        if (started && lineNumberLabelsDirty) {
+            final JavaScriptObject aceEditor = getAceEditor(editor.getElement());
+            if (aceEditor != null) {
+                if (lineNumberLabels == null) {
+                    setNativeGutterLabels(aceEditor, null, 0);
+                } else {
+                    final JsArrayString array = JavaScriptObject.createArray().cast();
+                    int maxLength = 1;
+                    for (final String label : lineNumberLabels) {
+                        final String safeLabel = label == null
+                                ? ""
+                                : label;
+                        array.push(safeLabel);
+                        maxLength = Math.max(maxLength, safeLabel.length());
+                    }
+                    setNativeGutterLabels(aceEditor, array, maxLength);
+                }
+                lineNumberLabelsDirty = false;
+            }
+        }
+    }
+
+    // Ace keeps a reference to the editor on its container element (see ace.edit()), which lets this
+    // class reach the editor without changing the AceEditor wrapper.
+    private static native JavaScriptObject getAceEditor(Element element) /*-{
+        if (element && element.env && element.env.editor) {
+            return element.env.editor;
+        }
+        return null;
+    }-*/;
+
+    private static native void addNativeScrollHandler(JavaScriptObject aceEditor, Runnable runnable) /*-{
+        aceEditor.getSession().on("changeScrollTop", $entry(function () {
+            runnable.@java.lang.Runnable::run()();
+        }));
+    }-*/;
+
+    private static native void setNativeGutterLabels(JavaScriptObject aceEditor,
+                                                     JsArrayString labels,
+                                                     int maxLength) /*-{
+        var session = aceEditor.getSession();
+        if (labels) {
+            session.gutterRenderer = {
+                getWidth: function (session, lastLineNumber, config) {
+                    return maxLength * config.characterWidth;
+                },
+                getText: function (session, row) {
+                    return row < labels.length ? labels[row] : "";
+                }
+            };
+        } else {
+            session.gutterRenderer = null;
+        }
+        aceEditor.renderer.updateFull();
+    }-*/;
 
     private void updateText() {
         if (started && textDirty) {

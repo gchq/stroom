@@ -48,6 +48,12 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
     // guice bindings happen as the lmdb lib path is read by eager singletons before we
     // can inject and use ConfigMapperSpy.
     static {
+        extractLmdbLibraryToTempDir();
+    }
+
+    /// Sets the LMDB library to be extracted to a new temporary directory. It must be called before the injector
+    /// is made, i.e. in a test class's static initialiser.
+    public static void extractLmdbLibraryToTempDir() {
         final Path libPath;
         try {
             libPath = Files.createTempDirectory("stroom_lmdb_lib__");

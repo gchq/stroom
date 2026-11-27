@@ -31,4 +31,8 @@ dependencies {
     implementation libs.guice
     implementation libs.restygwt
     implementation libs.slf4j.api
+
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

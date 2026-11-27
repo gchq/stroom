@@ -1,0 +1,693 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueFromMapping;
+import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.FieldsLeftOut;
+import stroom.ai.impl.tools.generation.RebuiltMapping;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltReader;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.TranslationInputText;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.docstore.api.DocumentActionHandler;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.LongSupplier;
+
+/// Describing a hand-written translation in place (decided with the user 2026-11-25): an existing pipeline's
+/// translation read into the tools' knowledge without a new version. Its translation XSLT ([XsltStages]: never a
+/// pre-processor before it) is read back into a mapping as rebuild_mapping reads one ([XsltReader]), and that into
+/// a catalogue of event types; then, without asking (only the tools' hidden blocks change):
+///
+/// - the mapping is kept in the XSLT's description, with the hidden link to its source notes
+///   ([KeptMapping#SOURCE_NOTES]): its code, and the user's own text, are left as they are (needs Edit on it);
+/// - the catalogue is kept in a source notes doc beside the pipeline (made there, which needs Create in its folder,
+///   or the one already there), the build's notes a working copy of it, written back once confirmed.
+///
+/// Where the user may not, who can is said and the induction is kept in the build only (its notes, and the mapping
+/// in its record), to be written back when it is confirmed by someone who may. The survey covers every feed of
+/// every pipeline using the XSLT ([XsltUsers]), stated first for the user to narrow; the catalogue records the
+/// feeds it was checked against. Where a pre-processor feeds the translation, the build's records are read at the
+/// translation's input ([TranslationInputs]).
+class InPlaceInduction {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InPlaceInduction.class);
+
+    /// The build record's choice: the existing pipeline described in place; also the key of what was described.
+    static final String IN_PLACE = "in_place";
+    /// The described pipeline's translation element.
+    static final String ELEMENT = "translation_element";
+    /// True where a pre-processor feeds the translation.
+    static final String PRE_PROCESSED = "pre_processed";
+    /// The feeds surveyed, as the user chose them.
+    static final String FEEDS = "feeds";
+    /// The kept mapping's key saying it was read from a hand-written XSLT, not generated: `at`, `build`, `xslt` (the
+    /// UUID of the XSLT it was read from) and `note`.
+    static final String INDUCTED = "inducted";
+    /// The record's key, and the result's, saying why the XSLT couldn't be read back into a mapping: it is
+    /// described as far as it can be, without one (decided by the user, 2026-11-25).
+    static final String MAPPING_NOT_READ = "mapping_not_read";
+    // The record's keys of what was written in place.
+    static final String XSLT = "xslt";
+    private static final String NOTES = "notes";
+    private static final String MAPPING = "mapping";
+    private static final String WRITTEN = "written";
+    private static final String NOT_WRITTEN = "not_written";
+    private static final String CONTENT_PACK = "content_pack";
+
+    private final PipelineShapes pipelineShapes;
+    private final XsltStages xsltStages;
+    private final DocumentAccess documentAccess;
+    private final DocumentWrites documentWrites;
+    private final WriteGuard guard;
+    private final CatalogueNotes catalogueNotes;
+    private final XsltUsers xsltUsers;
+    private final EventVersions eventVersions;
+    private final Provider<DocFinder> docFinder;
+    private final Provider<BuildRecords> buildRecords;
+    private final LongSupplier clock;
+    private final ContentStorePacks packs;
+    // The sample's fields where the translation reads them; none in tests that make it themselves.
+    private Provider<SampleFieldNames> sampleFieldNames;
+
+    @Inject
+    InPlaceInduction(final PipelineShapes pipelineShapes,
+                     final XsltStages xsltStages,
+                     final DocumentAccess documentAccess,
+                     final DocumentWrites documentWrites,
+                     final WriteGuard guard,
+                     final CatalogueNotes catalogueNotes,
+                     final XsltUsers xsltUsers,
+                     final EventVersions eventVersions,
+                     final Provider<DocFinder> docFinder,
+                     final Provider<BuildRecords> buildRecords) {
+        this(pipelineShapes, xsltStages, documentAccess, documentWrites, guard, catalogueNotes, xsltUsers,
+                eventVersions, docFinder, buildRecords, System::currentTimeMillis);
+    }
+
+    /// As the injected constructor, with the clock given, for tests.
+    ///
+    /// @param pipelineShapes Reads a pipeline as Stroom runs it.
+    /// @param xsltStages     Tells the translation XSLT from a pipeline's others.
+    /// @param documentAccess Reads and writes documents, and checks permissions, as the user.
+    /// @param documentWrites Reads and writes Documentation docs.
+    /// @param guard          The build's documents.
+    /// @param catalogueNotes The build's catalogue, and the notes beside a pipeline.
+    /// @param xsltUsers      Every pipeline running the XSLT, and their feeds.
+    /// @param eventVersions  The schema the XSLT writes.
+    /// @param docFinder      Finds the XSLTs it imports.
+    /// @param buildRecords   The build records: how the build started.
+    /// @param clock          The time now, in milliseconds.
+    InPlaceInduction(final PipelineShapes pipelineShapes,
+                     final XsltStages xsltStages,
+                     final DocumentAccess documentAccess,
+                     final DocumentWrites documentWrites,
+                     final WriteGuard guard,
+                     final CatalogueNotes catalogueNotes,
+                     final XsltUsers xsltUsers,
+                     final EventVersions eventVersions,
+                     final Provider<DocFinder> docFinder,
+                     final Provider<BuildRecords> buildRecords,
+                     final LongSupplier clock) {
+        this.pipelineShapes = pipelineShapes;
+        this.xsltStages = xsltStages;
+        this.documentAccess = documentAccess;
+        this.documentWrites = documentWrites;
+        this.guard = guard;
+        this.catalogueNotes = catalogueNotes;
+        this.xsltUsers = xsltUsers;
+        this.eventVersions = eventVersions;
+        this.docFinder = docFinder;
+        this.buildRecords = buildRecords;
+        this.clock = clock;
+        this.packs = new ContentStorePacks(documentAccess);
+    }
+
+    /// The sample's fields where the translation reads them (set by injection; none in tests that make it
+    /// themselves): those the XSLT never reads are left out of the mapping read back from it.
+    ///
+    /// @param sampleFieldNames Reads the sample's fields.
+    @Inject
+    void setSampleFieldNames(final Provider<SampleFieldNames> sampleFieldNames) {
+        this.sampleFieldNames = sampleFieldNames;
+    }
+
+    /// @param startFrom A build's start ([BuildRecords#startFrom]), or null.
+    /// @return Why the pipeline it describes in place had its XSLT described without a mapping (it couldn't be read
+    /// back); empty for a build that describes none in place, or whose mapping was read.
+    static Optional<String> mappingNotRead(final Map<String, Object> startFrom) {
+        if (!inPlace(startFrom)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)).get(MAPPING_NOT_READ))
+                .map(String::valueOf);
+    }
+
+    /// @param startFrom A build's start ([BuildRecords#startFrom]), or null.
+    /// @return True if the build describes an existing pipeline in place.
+    static boolean inPlace(final Map<String, Object> startFrom) {
+        return startFrom != null && IN_PLACE.equals(startFrom.get("choice"));
+    }
+
+    /// What describing a pipeline in place would cover: its translation XSLT, whether a pre-processor feeds it, and
+    /// every pipeline running that XSLT with their feeds.
+    ///
+    /// @param pipelineUuid The existing pipeline.
+    /// @return Its scope; empty where no translation can be told in it (it is then only copied or drafted afresh).
+    Optional<Scope> scope(final String pipelineUuid) {
+        try {
+            final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
+            final List<StagedXslt> staged = xsltStages.classify(merged);
+            final Optional<StagedXslt> translation = XsltStages.first(staged, Stage.TRANSLATION)
+                    .filter(xslt -> xslt.xslt() != null)
+                    .map(this::named);
+            if (translation.isEmpty()) {
+                return Optional.empty();
+            }
+            final boolean preProcessed = staged.indexOf(translation.get()) > 0
+                                         && staged.subList(0, staged.indexOf(translation.get())).stream()
+                                                 .anyMatch(xslt -> xslt.stage() == Stage.PRE_PROCESS);
+            final DocRef pipeline = new DocRef(PipelineDoc.TYPE, pipelineUuid, NullSafe.get(merged.doc(),
+                    PipelineDoc::getName));
+            return Optional.of(new Scope(pipeline, translation.get(), preProcessed,
+                    xsltUsers.of(translation.get().xslt().getUuid())));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Pipeline {} can't be described in place: {}", pipelineUuid,
+                    e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    // The XSLT named as it is now, where its pipeline names it by UUID alone.
+    private StagedXslt named(final StagedXslt xslt) {
+        if (NullSafe.isNonBlankString(xslt.xslt().getName())) {
+            return xslt;
+        }
+        final String name = documentAccess.read(xslt.xslt(), XsltDoc.class).map(XsltDoc::getName)
+                .orElse(xslt.xslt().getUuid());
+        return new StagedXslt(xslt.element(), new DocRef(XsltDoc.TYPE, xslt.xslt().getUuid(), name), xslt.stage(),
+                xslt.inherited(), xslt.setBy(), xslt.how());
+    }
+
+    /// Describes the pipeline in place: its translation's mapping and catalogue read back from its XSLT, kept with
+    /// the XSLT and in a source notes doc beside the pipeline, without asking, where the user may; in the build
+    /// only where not.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param source  The source's name, for a new notes doc's.
+    /// @param scope   What it covers ([#scope]).
+    /// @param feeds   The feeds to survey, as the user chose them.
+    /// @return What was read and written: `status` (`described_in_place`, or `not_read` where the XSLT can't be
+    /// read back), `xslt`, `pipelines`, `feeds`, `event_types`, `written` and `not_written` (with who can).
+    Map<String, Object> describe(final ToolCallContext context,
+                                 final String build,
+                                 final String source,
+                                 final Scope scope,
+                                 final List<String> feeds) {
+        final DocRef xsltRef = scope.translation().xslt();
+        final XsltDoc xslt = documentAccess.read(xsltRef, XsltDoc.class)
+                .orElseThrow(() -> new ToolRefusal("XSLT '" + xsltRef.getName() + "' can't be read: it can't be "
+                                                   + "described in place"));
+        final String code = NullSafe.string(xslt.getData());
+        final String version = eventVersions.translationVersion(null, code);
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("schema_version", version);
+        eventVersions.forkWrittenBy(code).map(XmlSchemaDoc::getUuid)
+                .ifPresent(uuid -> payload.put(EventVersions.KEPT_SCHEMA_UUID, uuid));
+        final EventSchema schema = eventVersions.keptSchema(context, build, payload, version);
+        final RebuiltMapping rebuilt = XsltReader.rebuild(code, null, null, RebuildMappingTool.imported(
+                docFinder.get(), documentAccess, code), schema);
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put(XSLT, ref(xsltRef, xslt.getName()));
+        out.put("pipelines", scope.users().users().stream().map(user -> user.pipeline().getName()).toList());
+        out.put(FEEDS, feeds);
+        if (rebuilt.mapping() == null || !rebuilt.problems().isEmpty()) {
+            return describedUnread(context, build, scope, xslt, feeds, RebuildMappingTool.whyNotRead(rebuilt),
+                    rebuilt, out);
+        }
+        // The sample's fields the XSLT never reads, left out on purpose (decided by the user, 2026-11-25; seen in
+        // eval case 105): a translation regenerated from the mapping logs what the original did.
+        final List<String> leftOut = sampleFieldNames == null
+                ? List.of()
+                : FieldsLeftOut.of(code, rebuilt.mapping(), sampleFieldNames.get().of(context, build,
+                        scope.pipeline().getUuid(), scope.translation().element()));
+        payload.put(MAPPING, FieldsLeftOut.ignoring(rebuilt.mapping(), leftOut).toJson(DumpMode.COMPACT));
+        final Map<String, Object> inducted = new LinkedHashMap<>();
+        inducted.put("at", StreamProcessing.iso(clock.getAsLong()));
+        inducted.put("build", build);
+        // The XSLT read: a copy of it (a new version's) carries the block, but is drift-checked as any other.
+        inducted.put(XSLT, xsltRef.getUuid());
+        inducted.put("note", "read from the hand-written XSLT, which stays as it is: the XSLT is the authority");
+        payload.put(INDUCTED, inducted);
+
+        // The catalogue: beside the pipeline, the build's notes a working copy of it.
+        final DocRef pipeline = scope.pipeline();
+        // From a content pack the Content Store installed (an upgrade pulls it again, overwriting it): nothing is
+        // written in it, and the induction is kept in the build (decided by the user, 2026-11-25).
+        final Optional<String> xsltPack = packs.packOf(xsltRef);
+        final Optional<String> pipelinePack = packs.packOf(pipeline);
+        Optional<DocRef> original = pipelinePack.isPresent()
+                ? Optional.empty()
+                : besidePipeline(pipeline);
+        original.ifPresent(found -> catalogueNotes.carryInto(build, pipeline));
+        final Catalogue before = catalogueNotes.catalogue(build).orElse(null);
+        final Catalogue catalogue = readBack(CatalogueFromMapping.read(rebuilt.mapping(), before), before)
+                .withCheckedFeeds(feeds);
+        catalogueNotes.write(context.session(), build, source, catalogue, reading(rebuilt.mapping(),
+                scope.preProcessed()));
+        final List<String> notWritten = new ArrayList<>();
+        final List<String> packed = new ArrayList<>();
+        xsltPack.ifPresent(pack -> packed.add("XSLT '" + xslt.getName() + "' is in " + pack));
+        pipelinePack.ifPresent(pack -> packed.add("the pipeline '" + NullSafe.nonBlankStringElse(
+                pipeline.getName(), documentAccess.path(pipeline)) + "', beside which its source notes go, is in "
+                                                  + pack));
+        final Optional<DocRef> folder = documentAccess.parent(pipeline);
+        if (pipelinePack.isPresent()) {
+            // Neither made nor written beside it: the build keeps them.
+            LOGGER.debug("Source notes kept in build {}: {}", build, pipelinePack.get());
+        } else if (original.isEmpty()) {
+            final boolean canCreate = folder.map(found -> documentAccess.canCreate(found,
+                    DocumentationDoc.TYPE)).orElse(false);
+            if (canCreate) {
+                original = madeBeside(build, pipeline, folder.get());
+            } else {
+                notWritten.add("Create (Documentation) in folder '" + folder.map(documentAccess::folderPath)
+                        .orElse("?") + "', for the source notes beside the pipeline");
+            }
+        } else if (documentAccess.canEdit(original.get())) {
+            writtenBack(build, original.get());
+        } else {
+            notWritten.add("Edit on the source notes '" + original.get().getName() + "'");
+        }
+        final boolean xsltWritten = xsltPack.isEmpty() && documentAccess.canEdit(xsltRef) && writeXslt(xslt,
+                payload, original.orElse(null));
+        if (!xsltWritten && xsltPack.isEmpty()) {
+            notWritten.addFirst("Edit on XSLT '" + documentAccess.path(xsltRef) + "', for its mapping");
+        }
+        final Map<String, Object> written = new LinkedHashMap<>();
+        written.put("xslt_description", xsltWritten
+                ? "its mapping and the link to its source notes, in hidden blocks (its code and the text above "
+                  + "them kept)"
+                : null);
+        written.put(NOTES, original.map(notes -> ref(notes, notes.getName())).orElse(null));
+        remember(build, scope, xslt.getName(), feeds, original.orElse(null), xsltWritten, xsltWritten
+                ? null
+                : payload);
+        out.put("status", "described_in_place");
+        out.put("rebuilt", rebuilt.summary());
+        out.put("event_types", catalogue.eventTypes().stream().map(EventType::typeId).toList());
+        if (!leftOut.isEmpty()) {
+            out.put("left_out", FieldsLeftOut.said(leftOut) + " (the sample's fields its XSLT never reads, in the "
+                                + "mapping's ignored_fields: a translation regenerated from it doesn't log them, as "
+                                + "the original doesn't; map one only when the user asks for it)");
+        }
+        out.put(WRITTEN, written);
+        if (!notWritten.isEmpty()) {
+            out.put(NOT_WRITTEN, whoCan(notWritten));
+        }
+        if (!packed.isEmpty()) {
+            out.put(CONTENT_PACK, inPack(packed));
+        }
+        return out;
+    }
+
+    // Described as far as it can be, its XSLT not read back into a mapping (decided by the user, 2026-11-25): no
+    // mapping block; the catalogue, and its timeline roles, made from the survey as for a new translation (the notes
+    // already beside the pipeline carried in, where there are some); the notes beside the pipeline and the link to
+    // them in the XSLT's description written once there are notes to link (now, for those already beside it, else
+    // once the catalogue is confirmed), the user's text kept.
+    private Map<String, Object> describedUnread(final ToolCallContext context,
+                                                final String build,
+                                                final Scope scope,
+                                                final XsltDoc xslt,
+                                                final List<String> feeds,
+                                                final String why,
+                                                final RebuiltMapping rebuilt,
+                                                final Map<String, Object> out) {
+        final DocRef xsltRef = scope.translation().xslt();
+        final DocRef pipeline = scope.pipeline();
+        final Optional<String> xsltPack = packs.packOf(xsltRef);
+        final Optional<String> pipelinePack = packs.packOf(pipeline);
+        final Optional<DocRef> original = pipelinePack.isPresent()
+                ? Optional.empty()
+                : besidePipeline(pipeline);
+        original.ifPresent(found -> catalogueNotes.carryInto(build, pipeline));
+        catalogueNotes.catalogue(build).ifPresent(carried -> catalogueNotes.write(context.session(), build, build,
+                carried.withCheckedFeeds(feeds)));
+        final List<String> notWritten = new ArrayList<>();
+        final List<String> packed = new ArrayList<>();
+        xsltPack.ifPresent(pack -> packed.add("XSLT '" + xslt.getName() + "' is in " + pack));
+        pipelinePack.ifPresent(pack -> packed.add("the pipeline '" + NullSafe.nonBlankStringElse(pipeline.getName(),
+                documentAccess.path(pipeline)) + "', beside which its source notes go, is in " + pack));
+        boolean linked = false;
+        if (original.isPresent() && xsltPack.isEmpty()) {
+            linked = documentAccess.canEdit(xsltRef) && writeXslt(xslt, null, original.get());
+            if (!linked) {
+                notWritten.add("Edit on XSLT '" + documentAccess.path(xsltRef) + "', for the link to its source "
+                               + "notes");
+            }
+        }
+        remember(build, scope, xslt.getName(), feeds, original.orElse(null), linked, null);
+        final Map<String, Object> startFrom = new LinkedHashMap<>(buildRecords.get().startFrom(build)
+                .orElse(Map.of()));
+        final Map<String, Object> described = new LinkedHashMap<>(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)));
+        described.put(MAPPING_NOT_READ, why);
+        startFrom.put(IN_PLACE, described);
+        buildRecords.get().rememberStartFrom(build, startFrom);
+        final Map<String, Object> written = new LinkedHashMap<>();
+        written.put("xslt_description", linked
+                ? "the link to its source notes, in a hidden block (its code and the text above it kept); no "
+                  + "mapping"
+                : null);
+        written.put(NOTES, original.map(notes -> ref(notes, notes.getName())).orElse(null));
+        out.put("status", "described_in_place");
+        out.put(MAPPING_NOT_READ, why);
+        out.put("rebuilt", rebuilt.summary());
+        out.put("event_types", catalogueNotes.catalogue(build)
+                .map(catalogue -> catalogue.eventTypes().stream().map(EventType::typeId).toList())
+                .orElse(List.of()));
+        out.put(WRITTEN, written);
+        if (!notWritten.isEmpty()) {
+            out.put(NOT_WRITTEN, whoCan(notWritten));
+        }
+        if (!packed.isEmpty()) {
+            out.put(CONTENT_PACK, inPack(packed));
+        }
+        return out;
+    }
+
+    /// Once the catalogue is confirmed, it is written back to the notes beside the pipeline (with the feeds it was
+    /// checked against), and the XSLT's mapping written where it wasn't before (the user may now); only where the
+    /// build describes a pipeline in place.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return What was written back, said; empty for a build that doesn't describe one in place.
+    Optional<Map<String, Object>> confirmed(final ToolCallContext context, final String build) {
+        final Map<String, Object> startFrom = buildRecords.get().startFrom(build).orElse(null);
+        if (!inPlace(startFrom)) {
+            return Optional.empty();
+        }
+        final Map<String, Object> described = new LinkedHashMap<>(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)));
+        final List<String> feeds = JsonValues.strings(described.get(FEEDS));
+        catalogueNotes.catalogue(build).ifPresent(catalogue -> {
+            if (!catalogue.checkedFeeds().equals(feeds) && !feeds.isEmpty()) {
+                catalogueNotes.write(context.session(), build, build, catalogue.withCheckedFeeds(feeds), null);
+            }
+        });
+        final Map<String, Object> out = new LinkedHashMap<>();
+        final List<String> notWritten = new ArrayList<>();
+        final String notesUuid = JsonValues.text(JsonValues.mapOrEmpty(described.get(NOTES)).get("uuid"));
+        Optional<DocRef> original = notesUuid.isEmpty()
+                ? Optional.empty()
+                : documentAccess.findDocRef(notesUuid);
+        final List<String> packed = new ArrayList<>();
+        final Map<String, Object> pipelineRef = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, JsonValues.text(pipelineRef.get("uuid")),
+                JsonValues.text(pipelineRef.get("name")));
+        final Optional<String> pipelinePack = packs.packOf(pipeline);
+        final Optional<DocRef> folder = original.isEmpty() && pipelinePack.isEmpty()
+                ? documentAccess.parent(pipeline)
+                : Optional.empty();
+        if (folder.isPresent() && documentAccess.canCreate(folder.get(), DocumentationDoc.TYPE)) {
+            // No notes beside the pipeline yet (none could be made when it was described, or its XSLT couldn't be
+            // read back, so the catalogue was made from the survey since): made now, by someone who may.
+            original = madeBeside(build, pipeline, folder.get());
+            original.ifPresent(made -> {
+                described.put(NOTES, ref(made, made.getName()));
+                out.put(NOTES, "the confirmed catalogue in source notes made beside the pipeline: '"
+                               + made.getName() + "'");
+            });
+        } else if (original.isPresent() && documentAccess.canEdit(original.get())) {
+            writtenBack(build, original.get());
+            out.put(NOTES, "the confirmed catalogue written back to '" + original.get().getName() + "'");
+        } else if (pipelinePack.isPresent()) {
+            packed.add("the pipeline, beside which its source notes go, is in " + pipelinePack.get());
+        } else {
+            notWritten.add(original.map(notes -> "Edit on the source notes '" + notes.getName() + "'")
+                    .orElse("Create (Documentation) beside the pipeline, for its source notes"));
+        }
+        final Map<String, Object> keptMapping = JsonValues.mapOrEmpty(described.get(MAPPING));
+        final String xsltUuid = JsonValues.text(JsonValues.mapOrEmpty(described.get(XSLT)).get("uuid"));
+        final boolean notesMade = original.isPresent() && !original.get().getUuid().equals(notesUuid);
+        if (!keptMapping.isEmpty() && !xsltUuid.isEmpty()) {
+            final DocRef xsltRef = new DocRef(XsltDoc.TYPE, xsltUuid);
+            final Optional<XsltDoc> xslt = documentAccess.read(xsltRef, XsltDoc.class);
+            final Optional<String> xsltPack = packs.packOf(xsltRef);
+            if (xsltPack.isPresent()) {
+                packed.add("XSLT '" + xslt.map(XsltDoc::getName).orElse(xsltUuid) + "' is in " + xsltPack.get());
+            } else if (xslt.isPresent() && documentAccess.canEdit(xsltRef)
+                && writeXslt(xslt.get(), keptMapping, original.orElse(null))) {
+                described.remove(MAPPING);
+                described.put(WRITTEN, true);
+                out.put(XSLT, "its mapping written in the XSLT's description now");
+            } else {
+                notWritten.add("Edit on XSLT '" + xsltRef.getUuid() + "', for its mapping");
+            }
+        } else if (original.isPresent() && !xsltUuid.isEmpty()
+                   && (notesMade || described.containsKey(MAPPING_NOT_READ))) {
+            // Its mapping written already, or none to keep (it couldn't be read back): the link to its notes.
+            linkWritten(new DocRef(XsltDoc.TYPE, xsltUuid), original.get(), described, out, notWritten, packed);
+        }
+        if (!described.equals(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)))) {
+            final Map<String, Object> recorded = new LinkedHashMap<>(startFrom);
+            recorded.put(IN_PLACE, described);
+            buildRecords.get().rememberStartFrom(build, recorded);
+        }
+        if (!notWritten.isEmpty()) {
+            out.put(NOT_WRITTEN, whoCan(notWritten));
+        }
+        if (!packed.isEmpty()) {
+            out.put(CONTENT_PACK, inPack(packed));
+        }
+        return Optional.of(out);
+    }
+
+    // The link to the notes written in the XSLT's description (where it isn't already): its mapping written
+    // already, or none to keep; what stops it said.
+    private void linkWritten(final DocRef xsltRef,
+                             final DocRef notes,
+                             final Map<String, Object> described,
+                             final Map<String, Object> out,
+                             final List<String> notWritten,
+                             final List<String> packed) {
+        final Optional<XsltDoc> xslt = documentAccess.read(xsltRef, XsltDoc.class);
+        final Optional<String> xsltPack = packs.packOf(xsltRef);
+        if (xsltPack.isPresent()) {
+            packed.add("XSLT '" + xslt.map(XsltDoc::getName).orElse(xsltRef.getUuid()) + "' is in "
+                       + xsltPack.get());
+        } else if (xslt.isPresent() && documentAccess.canEdit(xsltRef) && writeXslt(xslt.get(), null, notes)) {
+            described.put(WRITTEN, true);
+            out.put(XSLT, "the link to its source notes written in the XSLT's description" + (described.containsKey(
+                    MAPPING_NOT_READ)
+                    ? " (no mapping: it couldn't be read back)"
+                    : ""));
+        } else {
+            notWritten.add("Edit on XSLT '" + xsltRef.getUuid() + "', for the link to its source notes");
+        }
+    }
+
+    // What the user lacks, and who can write it in place instead: the induction is kept in the build until then.
+    private static String whoCan(final List<String> lacking) {
+        return "Not written in place: it needs " + String.join(", and ", lacking) + ". The document's owner, or "
+               + "anyone with those permissions, can describe it in place (start a build from it as you did); until "
+               + "then the description is kept in this build only (its source notes, and the mapping in its "
+               + "record), and written in place when it is confirmed by someone who may.";
+    }
+
+    // Where it came from a content pack the Content Store installed: why nothing was written there, and where it
+    // goes instead.
+    private static String inPack(final List<String> packed) {
+        return "Not written in place: " + String.join(", and ", packed) + ", a content pack installed from the "
+               + "Content Store, which Stroom pulls again on an upgrade, overwriting what was written in it. The "
+               + "mapping and catalogue belong in the pack's own source (its repository); until then they are kept "
+               + "in this build only (its source notes, and the mapping in its record).";
+    }
+
+    // The notes beside the pipeline, outside any build.
+    private Optional<DocRef> besidePipeline(final DocRef pipeline) {
+        return catalogueNotes.notesBeside(pipeline).filter(notes -> guard.buildOf(notes).isEmpty());
+    }
+
+    // The build's notes moved beside the pipeline (Stroom checks the user may), then carried back into the build as
+    // its working copy: the notes beside the pipeline, made.
+    private Optional<DocRef> madeBeside(final String build, final DocRef pipeline, final DocRef folder) {
+        final Optional<DocRef> notes = catalogueNotes.notesDocRef(build);
+        if (notes.isEmpty()) {
+            return Optional.empty();
+        }
+        guard.moveTo(notes.get(), new WriteGuard.Folder(folder, documentAccess.folderPath(folder), false));
+        catalogueNotes.carryInto(build, pipeline);
+        return Optional.of(notes.get());
+    }
+
+    // The build's notes (its working copy) written over the notes beside the pipeline.
+    private void writtenBack(final String build, final DocRef original) {
+        catalogueNotes.notesDocRef(build).ifPresent(copy -> documentWrites.copyFields(copy, original,
+                BuildDocumentation.DOC_FIELDS));
+    }
+
+    // The XSLT's description with the mapping (where there is one) and the link to the notes in hidden blocks, its
+    // code and the user's own text kept; false where Stroom has no XSLT store.
+    @SuppressWarnings("unchecked")
+    private boolean writeXslt(final XsltDoc xslt, final Map<String, Object> payload, final DocRef notes) {
+        // No payload: no mapping kept with it (it couldn't be read back), only the link to its notes.
+        String description = payload == null
+                ? xslt.getDescription()
+                : KeptMapping.withMapping(xslt.getDescription(), KeptMapping.TRANSLATION, payload);
+        if (notes != null) {
+            description = KeptMapping.withSourceNotes(description, notes);
+        }
+        if (Objects.equals(description, xslt.getDescription())) {
+            return true;
+        }
+        final Optional<DocumentActionHandler> handler = documentAccess.handler(XsltDoc.TYPE);
+        final String described = description;
+        handler.ifPresent(store -> store.writeDocument(xslt.copy().description(described).build()));
+        return handler.isPresent();
+    }
+
+    // What was described, kept in the build record's start: the translation, its element, whether a pre-processor
+    // feeds it, the feeds, the notes beside the pipeline, and the mapping where it couldn't be written.
+    private void remember(final String build,
+                          final Scope scope,
+                          final String xsltName,
+                          final List<String> feeds,
+                          final DocRef notes,
+                          final boolean xsltWritten,
+                          final Map<String, Object> unwritten) {
+        final Map<String, Object> startFrom = new LinkedHashMap<>(buildRecords.get().startFrom(build)
+                .orElse(Map.of()));
+        final Map<String, Object> described = new LinkedHashMap<>();
+        described.put(XSLT, ref(scope.translation().xslt(), xsltName));
+        described.put(ELEMENT, scope.translation().element());
+        described.put(PRE_PROCESSED, scope.preProcessed());
+        described.put(FEEDS, feeds);
+        described.put(NOTES, notes == null
+                ? null
+                : ref(notes, notes.getName()));
+        described.put(WRITTEN, xsltWritten);
+        if (unwritten != null) {
+            described.put(MAPPING, unwritten);
+        }
+        startFrom.put(IN_PLACE, described);
+        buildRecords.get().rememberStartFrom(build, startFrom);
+    }
+
+    // The catalogue read back proposed for the user to confirm, its TypeIds as the XSLT writes them; those the
+    // catalogue had confirmed already kept so.
+    private static Catalogue readBack(final CatalogueFromMapping.FromMapping read, final Catalogue before) {
+        final Set<String> known = new HashSet<>();
+        if (before != null) {
+            before.eventTypes().stream().filter(EventType::confirmed).map(EventType::typeId).forEach(known::add);
+        }
+        return read.catalogue().withEventTypes(read.catalogue().eventTypes().stream()
+                .map(type -> known.contains(type.typeId())
+                        ? type
+                        : type.readBack())
+                .toList());
+    }
+
+    /// How the catalogue reads its records, from the mapping read back: its reading keys, and where a
+    /// pre-processor feeds the translation, read as [TranslationInputText] gives its input (XML of JSON and records
+    /// as JSON, other XML as XML).
+    ///
+    /// @param mapping      The mapping read back.
+    /// @param preProcessed True where a pre-processor feeds the translation.
+    /// @return The reading.
+    static Map<String, Object> reading(final TranslationMapping mapping, final boolean preProcessed) {
+        final Map<String, Object> json = mapping.toJson(DumpMode.COMPACT);
+        final Map<String, Object> reading = new LinkedHashMap<>();
+        CatalogueReading.READING_KEYS.forEach(key -> {
+            if (json.get(key) != null) {
+                reading.put(key, json.get(key));
+            }
+        });
+        if (preProcessed && !"xml".equals(mapping.input()) && !"xml_fragments".equals(mapping.input())) {
+            // The pre-processor's output read as JSON ([TranslationInputText]): its records by their names.
+            reading.put("input", "json");
+            reading.remove("record");
+            reading.remove("xml_namespace");
+            reading.remove("root");
+        }
+        return reading;
+    }
+
+    private static Map<String, Object> ref(final DocRef ref, final String name) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("type", ref.getType());
+        out.put("uuid", ref.getUuid());
+        // A pipeline may name a document by its UUID alone: no name to give then.
+        out.put("name", NullSafe.isNonBlankString(name)
+                ? name
+                : ref.getName());
+        return out;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What describing a pipeline in place covers.
+    ///
+    /// @param pipeline     The existing pipeline.
+    /// @param translation  Its translation XSLT.
+    /// @param preProcessed True where a pre-processor feeds the translation: its records are read at its input.
+    /// @param users        Every pipeline running the XSLT, and their feeds.
+    record Scope(DocRef pipeline, StagedXslt translation, boolean preProcessed, XsltUsers.Users users) {
+
+        /// @return It in words, for the user: the XSLT, and what describing it in place covers.
+        String said() {
+            return "Its translation XSLT '" + translation.xslt().getName() + "'" + (preProcessed
+                    ? " (after a pre-processor: its records are read where the translation reads them)"
+                    : "") + ". " + users.said();
+        }
+    }
+}

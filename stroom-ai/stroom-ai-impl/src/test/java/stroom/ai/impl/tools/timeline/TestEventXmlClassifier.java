@@ -1,0 +1,198 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.timeline;
+
+import stroom.ai.impl.tools.timeline.EventXmlClassifier.Classified;
+import stroom.ai.impl.tools.timeline.EventXmlClassifier.Route;
+import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// The roles, labels and keys an event's Events XML gives, by the schema's elements and Actions alone.
+class TestEventXmlClassifier {
+
+    @ParameterizedTest
+    @CsvSource({
+            "Authenticate, Logon, IDLE_END",
+            "Authenticate, ScreenUnlock, IDLE_END",
+            "Authenticate, Connect, PERIOD_START",
+            "Authenticate, Reconnect, PERIOD_START",
+            "Authenticate, Logoff, IDLE_START",
+            "Authenticate, ScreenLock, IDLE_START",
+            "Authenticate, Disconnect, PERIOD_END",
+            "Authenticate, ChangePassword, ACTION",
+            "Process, Execute, OPEN",
+            "Process, Startup, OPEN",
+            "Process, Terminate, CLOSE",
+            "Process, Shutdown, CLOSE",
+            "Process, Call, ACTION",
+            "View, , ACTION",
+            "Send, , ACTION",
+            "Network, , ACTION"})
+    void theElementAndItsActionGiveTheRole(final String element, final String action, final Role role) {
+        assertThat(EventXmlClassifier.role(element, action)).isEqualTo(role);
+    }
+
+    @Test
+    void anEventsXmlGivesItsTypeKindObjectHostAndKeysButNeverItsUserOrTime() {
+        final Classified classified = EventXmlClassifier.classify("""
+                <?xml version="1.1" encoding="UTF-8"?>
+                <Events xmlns="event-logging:3" Version="4.1.0">
+                  <Event>
+                    <EventTime><TimeCreated>2001-01-01T00:00:00.000Z</TimeCreated></EventTime>
+                    <EventSource>
+                      <Device><HostName>WS-01</HostName></Device>
+                      <User><Id>CORP\\JSMITH</Id></User>
+                    </EventSource>
+                    <EventDetail>
+                      <TypeId>web-get</TypeId>
+                      <Description>A page fetched</Description>
+                      <View>
+                        <Resource><URL>https://research.example.org/pricing</URL><Title>Pricing</Title></Resource>
+                      </View>
+                    </EventDetail>
+                  </Event>
+                </Events>""").orElseThrow();
+
+        assertThat(classified.element()).isEqualTo("View");
+        assertThat(classified.typeId()).isEqualTo("web-get");
+        assertThat(classified.type()).isEqualTo("web-get");
+        assertThat(classified.schemaType()).isEqualTo("View");
+        assertThat(classified.role()).isEqualTo(Role.ACTION);
+        assertThat(classified.kind()).isEqualTo("view");
+        // The title says more than the URL.
+        assertThat(classified.object()).isEqualTo("Pricing");
+        assertThat(classified.host()).isEqualTo("WS-01");
+        assertThat(classified.keys()).containsEntry("Resource/URL", "https://research.example.org/pricing")
+                .containsEntry("Resource/Title", "Pricing");
+        assertThat(classified.route()).isEqualTo(Route.XML);
+        // The user is in the XML, but the timeline's is the index's: it is never read from here.
+        assertThat(classified.toString()).doesNotContain("JSMITH").doesNotContain("2001");
+    }
+
+    @Test
+    void aProcessGivesItsApplicationAndItsIdAsKeys() {
+        final Classified classified = EventXmlClassifier.classify("""
+                <Event><EventDetail><Process><Action>Execute</Action>
+                  <Command>C:\\Program Files\\Office\\WINWORD.EXE</Command><ProcessId>4242</ProcessId>
+                </Process></EventDetail></Event>""").orElseThrow();
+
+        assertThat(classified.schemaType()).isEqualTo("Process/Execute");
+        assertThat(classified.type()).isEqualTo("Process/Execute");
+        assertThat(classified.role()).isEqualTo(Role.OPEN);
+        assertThat(classified.application()).isEqualTo("WINWORD.EXE");
+        assertThat(classified.keys()).containsEntry("ProcessId", "4242").doesNotContainKey("Action");
+        assertThat(classified.isType("process/execute")).isTrue();
+    }
+
+    @Test
+    void aNetworkSendOrReceiveEventsObjectIsItsDestinationsHostElseItsAddress() {
+        final Classified network = EventXmlClassifier.classify("""
+                <Event><EventDetail><Network><Open>
+                  <Source><Device><HostName>ws-01</HostName><IPAddress>10.0.0.5</IPAddress></Device></Source>
+                  <Destination><Device><HostName>files.personal-cloud.example</HostName>
+                    <IPAddress>203.0.113.9</IPAddress></Device><Port>443</Port></Destination>
+                </Open></Network></EventDetail></Event>""").orElseThrow();
+        final Classified byAddress = EventXmlClassifier.classify("""
+                <Event><EventDetail><Network><Close>
+                  <Source><Device><Name>laptop</Name></Device></Source>
+                  <Destination><Device><IPAddress>203.0.113.9</IPAddress></Device></Destination>
+                </Close></Network></EventDetail></Event>""").orElseThrow();
+        final Classified receive = EventXmlClassifier.classify("""
+                <Event><EventDetail><Receive>
+                  <Source><Device><HostName>mail.example.com</HostName></Device></Source>
+                  <Destination><Device><HostName>ws-01</HostName></Device></Destination>
+                </Receive></EventDetail></Event>""").orElseThrow();
+        final Classified send = EventXmlClassifier.classify("""
+                <Event><EventDetail><Send>
+                  <Destination><Device><HostName>smtp.example.com</HostName></Device></Destination>
+                  <Payload><Email><Subject>Q3 numbers</Subject></Email></Payload>
+                </Send></EventDetail></Event>""").orElseThrow();
+
+        assertThat(network.object()).isEqualTo("files.personal-cloud.example");
+        assertThat(byAddress.object()).isEqualTo("203.0.113.9");
+        assertThat(receive.object()).isEqualTo("ws-01");
+        // A more telling object (a subject, a URL) still comes first.
+        assertThat(send.object()).isEqualTo("Q3 numbers");
+    }
+
+    @Test
+    void theKeysAreEveryLeafOfTheEventButItsTimeUserAndTypeDataByItsName() {
+        final Classified classified = EventXmlClassifier.classify("""
+                <Event><EventTime><TimeCreated>2026-09-15T10:00:00.000Z</TimeCreated></EventTime>
+                  <EventSource><System><Name>NetScaler</Name></System><Device><HostName>ns-gw01</HostName></Device>
+                    <Client><IPAddress>198.51.100.10</IPAddress></Client>
+                    <User><Id>dana.whitfield</Id><UserDetails><Id>P10001</Id></UserDetails></User>
+                  </EventSource>
+                  <EventDetail><TypeId>vpn.login</TypeId><Description>A login</Description>
+                    <Authenticate><Action>Connect</Action><User><Id>dana.whitfield</Id></User>
+                      <Data Name="SessionId" Value="8614"/><Data Name="Country" Value="AU"/></Authenticate>
+                  </EventDetail></Event>""").orElseThrow();
+        final Classified web = EventXmlClassifier.classify("""
+                <Event><EventDetail><Network><Open>
+                  <Destination><Device><HostName>a.example</HostName></Device></Destination>
+                  <Data Name="Category" Value="Webmail"/>
+                </Open></Network></EventDetail></Event>""").orElseThrow();
+
+        assertThat(classified.keys()).containsEntry("Data[SessionId]", "8614").containsEntry("Data[Country]", "AU")
+                .containsEntry("EventSource/Client/IPAddress", "198.51.100.10")
+                .containsEntry("EventSource/System/Name", "NetScaler")
+                .containsEntry("EventSource/Device/HostName", "ns-gw01")
+                .doesNotContainKeys("User/Id", "Action", "EventSource/User/Id", "EventSource/User/UserDetails/Id",
+                        "EventDetail/TypeId", "EventDetail/Description", "EventTime/TimeCreated");
+        assertThat(classified.keys().values()).doesNotContain("dana.whitfield", "P10001");
+        assertThat(web.keys()).containsEntry("Open/Data[Category]", "Webmail")
+                .containsEntry("Open/Destination/Device/HostName", "a.example");
+        // The index's fields, merged in by name where the XML has none by it.
+        assertThat(classified.withKeys(Map.of("session.id", "8614", "Data[Country]", "NZ")).keys())
+                .containsEntry("session.id", "8614").containsEntry("Data[Country]", "AU");
+    }
+
+    @Test
+    void whatIsntAnEventWithAnEventDetailIsNotClassified() {
+        assertThat(EventXmlClassifier.classify("<Events><Event><EventTime/></Event></Events>")).isEmpty();
+        assertThat(EventXmlClassifier.classify("not xml")).isEmpty();
+        assertThat(EventXmlClassifier.classify(null)).isEmpty();
+        assertThat(EventXmlClassifier.classify("<Event><EventDetail><TypeId>x</TypeId></EventDetail></Event>"))
+                .isEmpty();
+    }
+
+    @Test
+    void anIndexsElementIsSpeltAsTheSchemaSpellsIt() {
+        assertThat(EventXmlClassifier.isElement("authenticate")).isTrue();
+        assertThat(EventXmlClassifier.isElement("Logon")).isFalse();
+        final Classified classified = EventXmlClassifier.of("authenticate", "logoff", null, null, null, null,
+                Map.of(), Route.INDEX_FIELDS);
+        assertThat(classified.schemaType()).isEqualTo("Authenticate/logoff");
+        assertThat(classified.role()).isEqualTo(Role.IDLE_START);
+    }
+
+    @Test
+    void aCommandsBaseNameIsItsLastPartWithoutArguments() {
+        assertThat(EventXmlClassifier.baseName("C:\\Program Files\\Office\\WINWORD.EXE /n")).isEqualTo("WINWORD.EXE");
+        assertThat(EventXmlClassifier.baseName("/usr/bin/vim -R notes.txt")).isEqualTo("vim");
+        assertThat(EventXmlClassifier.baseName("\"C:\\Apps\\My App.exe\" /x")).isEqualTo("My App.exe");
+        assertThat(EventXmlClassifier.baseName("notepad.exe a.txt")).isEqualTo("notepad.exe");
+        assertThat(EventXmlClassifier.baseName(" ")).isNull();
+    }
+}

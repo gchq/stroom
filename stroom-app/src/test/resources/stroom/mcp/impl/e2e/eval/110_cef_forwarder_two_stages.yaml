@@ -1,0 +1,63 @@
+name: Events to ArcSight as CEF through a forwarding template of two stages (a shared Kafka XSLT)
+template: EVAL-110 Kafka Forwarding
+capabilities: [cef, forwarding, inheritance]
+# The site's CEF forwarders inherit one template (decided with the user, 2026-11-25): an open flattener slot, then a
+# shared XSLT (stroom-app's test resource eval_shared_kafka_output.xsl) turning each record's pair named cef into a
+# kafka-records:1 record for the Kafka producer, the topic set there, once, for every forwarder. The right route drafts
+# only the flattener (draft_cef_mapping template=: each CEF line in the form the shared XSLT reads, no topic), makes a
+# child of the template setting only the flattener, steps it through the shared stage and reviews it. The traps: a
+# single XSLT writing Kafka records itself (a topic of its own, the template's shared stage overridden), a pipeline of
+# its own (create_pipeline standalone), or the shared XSLT changed.
+# Its setup (setup: {forwarding: ...}) makes the Events feed and the template directly in Stroom
+# ([AbstractEvalTest#setUpForwarding]).
+setup:
+  forwarding:
+    folder: /Feeds/EVAL-110
+    feed: EVAL-110-EVENTS
+    template_folder: /Forwarding Templates/EVAL-110
+    template: EVAL-110 Kafka Forwarding
+    shared_xslt: eval_shared_kafka_output.xsl
+    events:
+      - >-
+        <Event><EventTime><TimeCreated>2026-11-24T08:48:10.000Z</TimeCreated></EventTime><EventSource><System>
+        <Name>SecretServer</Name><Organisation>Delinea</Organisation><Version>11.4</Version></System><Device>
+        <HostName>ss-web-02</HostName></Device><User><Id>priya.patel</Id></User></EventSource><EventDetail>
+        <TypeId>User-Login</TypeId><Description>User logged in</Description><Authenticate><Action>Logon</Action>
+        <User><Id>priya.patel</Id></User><Outcome><Success>true</Success></Outcome></Authenticate></EventDetail>
+        </Event>
+      - >-
+        <Event><EventTime><TimeCreated>2026-11-24T08:56:15.000Z</TimeCreated></EventTime><EventSource><System>
+        <Name>SecretServer</Name><Organisation>Delinea</Organisation><Version>11.4</Version></System><Device>
+        <HostName>ss-web-01</HostName></Device><User><Id>riley.chen</Id></User></EventSource><EventDetail>
+        <TypeId>Secret-View</TypeId><Description>Secret viewed</Description><View><Resource><Type>Secret</Type>
+        <Name>Edge Admin</Name></Resource></View></EventDetail></Event>
+request: >
+  Send the Events of our EVAL-110-EVENTS feed to ArcSight as CEF over Kafka. Use our forwarding template,
+  'EVAL-110 Kafka Forwarding', as every one of our ArcSight feeds does.
+user_knows: >
+  Only keys in ArcSight's CEF dictionary. The template's shared XSLT sets the Kafka topic for every feed and must not
+  change; this feed has no topic of its own.
+expected:
+  route:
+    calls_in_order: [draft_cef_mapping, create_pipeline, step_sample]
+    forbidden_calls: [save_xslt, update_pipeline]
+  forwarder:
+    flattener: flattenFilter
+    stage: kafkaOutputFilter
+    topic: arcsight-prod
+    lines: 2
+    line_starts: "CEF:0|Delinea|SecretServer|11.4|"
+reference:
+  # <events> is the feed's Events stream, <template> the forwarding template, <xslt> the flattener draft_cef_mapping
+  # saved, <cef pipeline> the pipeline create_pipeline made ([AbstractEvalTest#runForwardingReference]).
+  calls:
+    - {tool: draft_cef_mapping, arguments: {stream_ids: [<events>], custom_keys: false, template: <template>,
+                                            feeds: [EVAL-110-EVENTS]}}
+    - {tool: draft_cef_mapping, arguments: {stream_ids: [<events>], custom_keys: false, template: <template>,
+                                            feeds: [EVAL-110-EVENTS], build: eval-110, name: EVAL-110-CEF}}
+    - {tool: create_pipeline, arguments: {build: eval-110, name: EVAL-110-CEF, template_uuid: <template>,
+                                          set_properties: [{element: flattenFilter, name: xslt, doc_uuid: <xslt>,
+                                                            doc_type: XSLT}]}}
+    - {tool: step_sample, arguments: {pipeline_uuid: <cef pipeline>, stream_ids: [<events>]}}
+    - {tool: draft_cef_mapping, arguments: {stream_ids: [<events>], custom_keys: false,
+                                            pipeline_uuid: <cef pipeline>}}

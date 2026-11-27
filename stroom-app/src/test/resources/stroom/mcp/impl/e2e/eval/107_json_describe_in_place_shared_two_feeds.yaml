@@ -1,0 +1,62 @@
+name: A hand-written VPN translation shared by two pipelines of two feeds, described in place over both (JSON array)
+template: Event Data (JSON)
+capabilities: [event_types, hand_written, in_place, many_feeds]
+# One hand-written XSLT (hand_written_vpn.xsl) runs in two pipelines, each with its own feed (EVAL-107 and
+# EVAL-107-B, in another folder). Described in place, the choice states both pipelines and both feeds, their streams
+# and an estimate of the survey, before the user chooses which the survey covers; the user keeps both, so both are
+# surveyed and the catalogue records both as the feeds it was checked against. The traps: surveying the one feed the
+# user named, or copying the XSLT as a new version for one feed only.
+setup:
+  hand_written:
+    folder: /Feeds/EVAL-107
+    feed: EVAL-107
+    xslt: hand_written_vpn.xsl
+    pipeline: EVAL-107-Events
+    template: Event Data (JSON)
+    properties: [{element: jsonParser, name: addRootObject, value: false}]
+    processor_filter: {stream_type: Raw Events}
+    sample: |
+      [{"ts": "2026-11-03T08:00:01.000Z", "action": "login", "user": "jbloggs", "host": "vpn-gw-1", "result": "success"},
+       {"ts": "2026-11-03T08:02:45.000Z", "action": "login", "user": "asmith", "host": "vpn-gw-1", "result": "failure"},
+       {"ts": "2026-11-03T12:10:00.000Z", "action": "logout", "user": "jbloggs", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:30:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+       {"ts": "2026-11-03T09:31:00.000Z", "action": "heartbeat", "host": "vpn-gw-1"}]
+    shared_with:
+      folder: /Feeds/EVAL-107-B
+      feed: EVAL-107-B
+      pipeline: EVAL-107-B-Events
+      sample: |
+        [{"ts": "2026-11-03T08:00:01.000Z", "action": "login", "user": "jbloggs", "host": "vpn-gw-1", "result": "success"},
+         {"ts": "2026-11-03T08:02:45.000Z", "action": "login", "user": "asmith", "host": "vpn-gw-1", "result": "failure"},
+         {"ts": "2026-11-03T12:10:00.000Z", "action": "logout", "user": "jbloggs", "host": "vpn-gw-1"},
+         {"ts": "2026-11-03T09:30:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+         {"ts": "2026-11-03T09:31:00.000Z", "action": "heartbeat", "host": "vpn-gw-1"}]
+request: >
+  Our VPN audit feed, EVAL-107, is translated by a hand-written XSLT. Get the tools to understand that translation and
+  its event types, without making a new version.
+user_knows: >
+  The same XSLT translates another site's feed too; both are to be covered. The translation must not change. Describe
+  it in place when asked, and survey every feed it serves.
+expected:
+  records: 4
+  records_in_sample: 5
+  event_types: [Authenticate, Update]
+  route:
+    start_from: in_place
+    calls_in_order: [survey_feed, catalogue_event_types, survey_feed, catalogue_event_types]
+    forbidden_calls: [copy_pipeline, rebuild_mapping, draft_translation_mapping, promote_build]
+  in_place: {code_unchanged: true, mapping_kept: true, notes_beside: true, confirmed: true,
+             checked_feeds: [EVAL-107, EVAL-107-B]}
+  type_ids:
+    pattern: any
+    exactly: [vpn-login, vpn-login-failed, vpn-logout, vpn-config-change]
+  catalogue: {catch_all_confirmed: true, event_types_at_least: 4}
+reference:
+  # <raw> and <shared raw> are the two feeds' raw streams.
+  calls:
+    - {tool: start_build, arguments: {build: eval-107, feeds: [EVAL-107]}}
+    - {tool: survey_feed, arguments: {feed: EVAL-107, build: eval-107}}
+    - {tool: catalogue_event_types, arguments: {build: eval-107}, answer: Describe it in place (no new version)}
+    - {tool: survey_feed, arguments: {feed: EVAL-107-B, build: eval-107}}
+    - {tool: catalogue_event_types, arguments: {build: eval-107, stream_ids: [<raw>, <shared raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-107, confirm: true}, confirm: true}

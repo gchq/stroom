@@ -1,0 +1,97 @@
+name: Case 113's week of badge, logon and VPN events, from an index a build made (its index plan maps the fields), the model naming no field (a chat)
+kind: chat
+capabilities: [timeline, elasticsearch, periods]
+# Case 113 in Stroom's chat (where a case's index plans are set up), with the index plan an onboarding build keeps
+# beside the indexing XSLT of the pipeline feeding the index (index_plans: UserName, Host, Action, EventCode, Object
+# and SessionId from their event-logging paths), as an index Stroom built has: the reference names only the index
+# and its codes' roles, every field the timeline reads from the plan (the element field found by its values), as
+# asked for by the user 2026-11-27 (cases 113 to 115 have no plan, and Haiku and Sonnet named few or none of the
+# fields). Run on a model, it shows whether the fields are still missed where a build mapping exists.
+# One person's week (akhan, 16 to 20 November 2026) in one Elasticsearch index "Site access", made by
+# EvalTimelineScenes (scene physical_access): badge enter and leave events logged separately (EventCode
+# badge.enter, badge.leave; Site, Zone and Door), the doors on the way in and out different; workstation logons and
+# logoffs (Element Authenticate, Action Logon, Logoff) with intranet requests between; VPN connects and disconnects
+# from a laptop (Authenticate Connect, Disconnect, SessionId). Planted: Wednesday badged in at HQ with no logon all
+# day; Thursday a VPN session while on site at the depot; Tuesday an early badge leave at HQ with no enter logged;
+# Friday a badge enter with no leave. The answer is activity_timeline's periods (periods.csv): on_site periods
+# paired at the site and zone whatever the door (the badge types given period roles by Site, Zone), the VPN's
+# remote_session periods filled in from the schema (Connect to Disconnect), the two unpaired ends marked, and the
+# periods' events in no session, span or activity. The traps: pairing by door, the VPN's sessions as activity, a
+# day badged in read as worked, the other person's events. Skipped without an Elasticsearch node.
+elastic_index:
+  name: Site access
+  generate: {kind: timeline_scenes, scene: physical_access, seed: 113}
+  fields: {EventTime: date, Source: text, UserName: text, Host: text, Element: text, Action: text, EventCode: text,
+           Object: text, Site: text, Zone: text, Door: text, SessionId: text}
+index_plans:
+  - index: Site access
+    pipeline: Site access indexing
+    fields:
+      - {name: UserName, type: keyword, source: EventSource/User/Id}
+      - {name: EventTime, type: date, source: EventTime/TimeCreated}
+      - {name: Host, type: keyword, source: EventSource/Device/HostName}
+      - {name: Action, type: keyword, source: EventDetail/Authenticate/Action}
+      - {name: EventCode, type: keyword, source: EventDetail/TypeId}
+      - {name: Object, type: keyword, source: EventDetail/View/Resource/URL}
+      - {name: SessionId, type: keyword, source: EventSource/SessionId}
+request: >
+  Build akhan's timeline for the week of 16 November 2026 from the "Site access" Elasticsearch index. When were they
+  on site, when were they connected remotely, and were there days they were on site but never logged on? Say where
+  the badge records are incomplete.
+user_knows: >
+  Source says which product wrote each event: badge (EventCode badge.enter and badge.leave: entering and leaving a
+  site's zone, logged separately, by whichever door; Site and Zone say where, Door the door), windows (Element
+  Authenticate, Action Logon and Logoff, on the workstation in Host), vpn (Authenticate Connect and Disconnect from
+  the laptop, SessionId the VPN's session) and proxy (EventCode web.get, Object the URL). Being on site is from a
+  zone's enter to its leave, whatever the doors. The week is 16 November 2026 00:00 UTC up to, not including,
+  21 November 2026.
+expected:
+  tools_used: [activity_timeline]
+  # Scored on periods.csv and events.csv (EvalTimelineScore), never on the model's wording: each period's kind, its
+  # key (the site and zone, whatever the door; the VPN's laptop), its times (to the minute the seed jitters within)
+  # and its ends seen.
+  timeline:
+    entity: akhan
+    periods:
+      - {kind: on_site, key: 'HQ, Level 2', start: '2026-11-16T08:2', end: '2026-11-16T17:1', start_seen: seen,
+         end_seen: seen}
+      # Tuesday's early leave with no enter logged: from Monday's leave, its start not seen.
+      - {kind: on_site, key: 'HQ, Level 2', end: '2026-11-17T07:5', start_seen: start not seen, end_seen: seen}
+      - {kind: remote_session, key: lt-akhan-02, start: '2026-11-17T09:0', end: '2026-11-17T12:3',
+         start_seen: seen, end_seen: seen}
+      - {kind: remote_session, key: lt-akhan-02, start: '2026-11-17T13:3', end: '2026-11-17T17:0',
+         start_seen: seen, end_seen: seen}
+      # Wednesday: badged in at HQ, no logon all day.
+      - {kind: on_site, key: 'HQ, Level 2', start: '2026-11-18T08:4', end: '2026-11-18T16:5', start_seen: seen,
+         end_seen: seen}
+      - {kind: on_site, key: 'Depot, Warehouse', start: '2026-11-19T08:3', end: '2026-11-19T16:0', start_seen: seen,
+         end_seen: seen}
+      - {kind: remote_session, key: lt-akhan-02, start: '2026-11-19T10:', end: '2026-11-19T11:', start_seen: seen,
+         end_seen: seen}
+      # Friday's enter with no leave: to the period's end, its end not seen.
+      - {kind: on_site, key: 'HQ, Level 2', start: '2026-11-20T09:0', end: '2026-11-21T00:00', start_seen: seen,
+         end_seen: end not seen}
+    periods_by_kind: {on_site: 5, remote_session: 3}
+    periods_imply_no_activity: true
+    # Thursday's VPN session while on site at the depot.
+    periods_within:
+      - {kind: remote_session, within: on_site, start: '2026-11-19'}
+    no_activity_on: ['2026-11-18']
+reference:
+  calls:
+    - {tool: activate_timelines, arguments: {}}
+    - tool: activity_timeline
+      arguments:
+        entity: akhan
+        timeFrom: '2026-11-16T00:00:00.000Z'
+        timeTo: '2026-11-21T00:00:00.000Z'
+        timeZone: UTC
+        sources:
+          # No field named: the plan maps each, the element field found by its values.
+          - index: Site access
+            typeRoles: {badge.enter: 'period_start on_site by Site, Zone',
+                        badge.leave: 'period_end on_site by Site, Zone', web.get: action}
+  answer: >-
+    akhan was on site at HQ on Monday, Tuesday until 07:5x (no enter logged), Wednesday (with no logon all day) and
+    Friday (no leave logged), and at the depot on Thursday, with a VPN session from the laptop during it; on Tuesday
+    they worked remotely over the VPN.

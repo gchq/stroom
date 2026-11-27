@@ -1,0 +1,22 @@
+{
+ "rules": [
+  "door-granted",
+  "door-denied",
+  "door-alarm"
+ ],
+ "counts": {
+  "read": 33,
+  "kept_as_xpath": 0,
+  "calls_imported_functions": 0,
+  "not_read": 0
+ },
+ "kept_as_xpath": [],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "JSON keys read by type (string[@key='x']) read as any key (*[@key='x'])",
+  "the records' template (applied with no mode) read as the record template",
+  "a chain of xsl:if, each writing an event, read as one rule each in turn"
+ ],
+ "not_read": [],
+ "differences": []
+}

@@ -1,0 +1,28 @@
+{
+ "rules": [
+  "rule-1",
+  "rule-2",
+  "other"
+ ],
+ "counts": {
+  "read": 22,
+  "kept_as_xpath": 5,
+  "calls_imported_functions": 0,
+  "not_read": 0
+ },
+ "kept_as_xpath": [
+  "rule rule-1: its condition",
+  "rule rule-1: EventDetail/TypeId",
+  "rule rule-2: its condition",
+  "rule rule-2: EventDetail/TypeId",
+  "rule other: EventDetail/TypeId"
+ ],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "JSON keys read by type (string[@key='x']) read as any key (*[@key='x'])",
+  "the records' template (applied with no mode) read as the record template",
+  "an xsl:choose inside the event, read as one rule per branch"
+ ],
+ "not_read": [],
+ "differences": []
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<audit>
+  <entry type="login" severity="low" at="2026-11-08T08:00:00.000Z" user="jbloggs" station="kiosk-3"/>
+  <entry type="login" severity="high" at="2026-11-08T08:05:00.000Z" user="root" station="kiosk-9"/>
+  <entry type="heartbeat" severity="low" at="2026-11-08T08:06:00.000Z" station="kiosk-3"/>
+  <entry type="print" severity="low" at="2026-11-08T08:07:00.000Z" user="asmith" station="kiosk-4"/>
+</audit>

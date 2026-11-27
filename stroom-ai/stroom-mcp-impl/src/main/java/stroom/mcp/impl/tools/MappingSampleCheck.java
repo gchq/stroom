@@ -1,0 +1,477 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.draft.CheckedRecords;
+import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.generation.Condition;
+import stroom.ai.impl.tools.generation.DropRule;
+import stroom.ai.impl.tools.generation.EventRule;
+import stroom.ai.impl.tools.generation.Extraction;
+import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.tools.generation.SharedFunctions;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.Placeholders;
+import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.sample.SplitterDryRun;
+import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.XmlTree;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.XPathChecks;
+import stroom.util.shared.NullSafe;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+/// A translation mapping checked against the sample's records before anything is generated or stepped (on [LocalCheck]
+/// and [XPathChecks]): fields no record has, time formats the values don't fit, schema values a constant or map gives,
+/// xpaths that select nothing and extraction regexes that match nothing.
+final class MappingSampleCheck {
+
+    /// How long the check may take.
+    static final Duration CHECK_TIME = Duration.ofSeconds(60);
+    /// The key of the fields whose values going into users' Ids carry a domain, for the caller to take out (not
+    /// for the result: they are [LocalCheck.QualifiedIds], not JSON).
+    static final String DOMAIN_QUALIFIED = "domain_qualified";
+    /// The key the stand-ins for none found are kept under ([Placeholders.Found]), for the tool to ask the user
+    /// about; taken out before the check is returned.
+    static final String PLACEHOLDERS = "placeholders";
+    /// The key the confirmed event types the mapping translates otherwise go under (taken out by the caller: they
+    /// are [ConfirmedEventTypes.Lost], not JSON).
+    static final String CONFIRMED_LOST = "confirmed_lost";
+    /// The key the contradictions of the event types not yet confirmed go under ([SourceNotes#checkMapping]),
+    /// taken out by the caller.
+    static final String CATALOGUE_CONTRADICTIONS = "catalogue_contradictions";
+    /// The key the required elements every sample record of their rule fills go under, by rule
+    /// ([LocalCheck#requiredFilled]), for the caller to drop from the warning that they may be left out; taken out
+    /// by the caller.
+    static final String REQUIRED_FILLED = "required_filled";
+    /// The key what the check read and worked out goes under ([Earlier]), for the caller to take out and give the
+    /// check of the same sample again, once the user's answers have changed the mapping.
+    static final String EARLIER = "earlier";
+
+    private MappingSampleCheck() {
+        // Static only.
+    }
+
+    /// The mapping checked against the sample's records. Seen in production: a Fortigate sample's check (10 streams
+    /// of 1 MB, 60 extract entries) held the server for over a minute; past [#CHECK_TIME], the extractions left are
+    /// named, not checked.
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec that reads text, or null.
+    /// @param schema   The event-logging schema.
+    /// @param inferred True if the spec was inferred from the sample rather than given.
+    /// @param clock    The clock the check's time is read against.
+    /// @return `records`, `problems`, `warnings`, `fields_seen`, `not_checked`, `kept_unknown` and `note`,
+    /// [#DOMAIN_QUALIFIED] and [#PLACEHOLDERS].
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock) {
+        return check(mapping, samples, splitter, schema, inferred, clock, null, null);
+    }
+
+    /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock)], with the build's catalogue
+    /// checked too: the confirmed event types the mapping translates otherwise go under [#CONFIRMED_LOST], dropped
+    /// ones a rule still translates are warned of, as are confirmed ones whose rules no longer write the vendor's
+    /// code as Data ([VendorCodeKept]), the event types not yet confirmed that a rule contradicts go under
+    /// [#CATALOGUE_CONTRADICTIONS], and what couldn't be checked is said under `not_checked`.
+    ///
+    /// @param mapping   The mapping.
+    /// @param samples   The sample's texts.
+    /// @param splitter  The Data Splitter spec that reads text, or null.
+    /// @param schema    The event-logging schema.
+    /// @param inferred  True if the spec was inferred from the sample rather than given.
+    /// @param clock     The clock the check's time is read against.
+    /// @param catalogue The build's catalogue of event types, or null when it has none.
+    /// @param scope     The build's (or its group's) source type scope, or null for none: records of source types
+    ///                  outside it are not compared ([ConfirmedEventTypes#lost]).
+    /// @return As the other, with [#CONFIRMED_LOST] and [#CATALOGUE_CONTRADICTIONS].
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock,
+                                     final Catalogue catalogue,
+                                     final SourceTypeScope scope) {
+        return check(mapping, samples, splitter, schema, inferred, clock, catalogue, scope, null);
+    }
+
+    /// As [#check(TranslationMapping, List, SplitterSpec, EventSchema, boolean, Clock, Catalogue, SourceTypeScope)],
+    /// after an earlier check of the same sample in the same call, the mapping since changed as the user answered
+    /// its forms (a domain split, stand-ins for none left out). What that check read and worked out is used again
+    /// where the change can't alter it, so the answers cost a check of what they change, not of the whole sample
+    /// again (seen in eval case 36 on Haiku: the check run twice, a minute each):
+    ///
+    /// * the records, and their extracted values, when the mapping reads records as before (its input, held
+    ///   fields, namespace, record, root, pairs, extract and for_each the same; [CheckedRecords#forMapping]);
+    /// * whether an event type's way recognises each record, when its conditions are also tested alike (the same
+    ///   nil values and unescape transforms): stand-ins left out (nil_values) change them, a domain split doesn't;
+    /// * the rule taking each record, when its rules are also the same (names and conditions, in order);
+    /// * the extractions' own check (their regexes run as XPath's), when the mapping reads records as before and
+    ///   imports the same functions, and the earlier one finished within its time.
+    ///
+    /// Everything else is checked again, as it reads what the answers change (transforms, nil values, entries).
+    ///
+    /// @param mapping   The mapping.
+    /// @param samples   The sample's texts.
+    /// @param splitter  The Data Splitter spec that reads text, or null.
+    /// @param schema    The event-logging schema.
+    /// @param inferred  True if the spec was inferred from the sample rather than given.
+    /// @param clock     The clock the check's time is read against.
+    /// @param catalogue The build's catalogue of event types, or null when it has none.
+    /// @param scope     The build's (or its group's) source type scope, or null for none.
+    /// @param earlier   What an earlier check of this call kept ([#EARLIER]), or null: used only for the same
+    ///                  sample texts read with the same splitter.
+    /// @return As the other, with [#EARLIER].
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> check(final TranslationMapping mapping,
+                                     final List<String> samples,
+                                     final SplitterSpec splitter,
+                                     final EventSchema schema,
+                                     final boolean inferred,
+                                     final Clock clock,
+                                     final Catalogue catalogue,
+                                     final SourceTypeScope scope,
+                                     final Earlier earlier) {
+        final Instant deadline = clock.instant().plus(CHECK_TIME);
+        final Earlier same = earlier != null && earlier.samples().equals(samples)
+                             && Objects.equals(earlier.splitter(), splitter)
+                ? earlier
+                : null;
+        // Each record's extracted values and rule worked out once, for every part of the check (seen in eval case
+        // 36 on Haiku: 60 extract entries over 1,000 records, run some 55 times a check, a minute of the build).
+        final CheckedRecords reused = same == null
+                ? null
+                : same.checked().forMapping(mapping);
+        final LocalCheck.SampleRecords found = reused == null
+                ? LocalCheck.sampleRecords(mapping, samples, splitter)
+                : same.found();
+        final CheckedRecords checked = reused == null
+                ? CheckedRecords.of(mapping, found.records())
+                : reused;
+        final Map<String, Object> check = new LinkedHashMap<>(LocalCheck.checkMapping(checked));
+        final List<String> problems = new ArrayList<>(JsonValues.strings(check.get("problems")));
+        final List<String> warnings = new ArrayList<>(JsonValues.strings(check.get("warnings")));
+        problems.addAll(LocalCheck.checkSchemaValues(checked, schema));
+        final List<LocalCheck.QualifiedIds> qualified = LocalCheck.domainQualifiedIds(checked, schema);
+        warnings.addAll(LocalCheck.domainQualifiedWarnings(qualified));
+        // Values that look like stand-ins for none, for the user to decide on.
+        final List<Placeholders.Found> placeholders = LocalCheck.placeholders(checked, schema);
+        warnings.addAll(PlaceholderChoices.warnings(placeholders));
+        // Data a rule's own records never hold.
+        warnings.addAll(LocalCheck.dataNotHeld(checked));
+        warnings.addAll(LocalCheck.mapKeysNotHeld(checked));
+        // Rules the sample never reached: this check says nothing of them.
+        final List<String> unreached = LocalCheck.rulesUnreached(checked);
+        if (!unreached.isEmpty()) {
+            warnings.add("Rules " + unreached + " took none of the " + found.records().size() + " sample records, "
+                         + "so this check says nothing of them: before relying on them, step a record of each "
+                         + "(step_records at the survey's locations), or give a sample that holds them");
+        }
+        // The required elements the sample's records leave out, counted.
+        final Map<String, List<String>> requiredOnInput = XsltGenerator.generate(mapping, schema,
+                NullSafe.nonBlankStringElse(schema.version(), "4.1.0")).requiredOnInput();
+        warnings.addAll(LocalCheck.requiredLeftEmpty(checked, requiredOnInput));
+        final Map<String, Set<String>> requiredFilled = LocalCheck.requiredFilled(checked, requiredOnInput);
+        warnings.addAll(checkXPaths(mapping, samples, splitter));
+        warnings.addAll(checkSeveralValues(mapping, samples, splitter));
+        final boolean extractionsAlike = reused != null && same.extractions() != null
+                                         && same.checked().mapping().functions().equals(mapping.functions());
+        final XPathChecks.Findings extractions = extractionsAlike
+                ? same.extractions()
+                : checkExtractions(mapping, samples, splitter, found.records(), deadline, clock);
+        // Kept for a check again only when it finished within its time: one cut short may get further.
+        final boolean extractionsWhole = extractionsAlike || !clock.instant().isAfter(deadline);
+        problems.addAll(extractions.problems());
+        warnings.addAll(extractions.warnings());
+        if (inferred) {
+            // Read with a guess at the converter, a field the guess doesn't name may be one the build's own
+            // converter does (seen: a hand-written syslog splitter's 'pwd' refused, as the inferred one has no such
+            // field).
+            final List<String> missing = problems.stream()
+                    .filter(p -> p.startsWith("field '") && p.contains(" is in none of the "))
+                    .toList();
+            problems.removeAll(missing);
+            missing.forEach(p -> warnings.add(p + " (the sample was read with an inferred Data Splitter: give "
+                                              + "splitter if the build's converter names its fields otherwise)"));
+        }
+        // Event types the user said to drop that a rule still translates.
+        warnings.addAll(ConfirmedEventTypes.undropped(checked, catalogue));
+        // Confirmed event types whose rules no longer write the vendor's code as Data (seen in eval cases 67, 70).
+        warnings.addAll(VendorCodeKept.missing(checked, catalogue, scope));
+        check.put("problems", problems);
+        check.put("warnings", warnings);
+        check.put(DOMAIN_QUALIFIED, qualified);
+        check.put(PLACEHOLDERS, placeholders);
+        check.put(REQUIRED_FILLED, requiredFilled);
+        check.put(CONFIRMED_LOST, ConfirmedEventTypes.lost(checked, catalogue, scope, schema));
+        check.put(CATALOGUE_CONTRADICTIONS, SourceNotes.checkMapping(checked, catalogue));
+        final List<String> notChecked = ConfirmedEventTypes.notChecked(checked, catalogue);
+        if (!notChecked.isEmpty()) {
+            final List<Object> said = new ArrayList<>(check.get("not_checked") instanceof final List<?> already
+                    ? already
+                    : List.of());
+            said.addAll(notChecked);
+            check.put("not_checked", said);
+        }
+        if (NullSafe.isNonEmptyString(found.note())) {
+            check.put("note", found.note());
+        }
+        check.put(EARLIER, new Earlier(samples, splitter, found, checked, extractionsWhole
+                ? extractions
+                : null));
+        return check;
+    }
+
+    /// Warnings for xpaths that select nothing in any sample record (or fail to evaluate).
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec, or null.
+    /// @return The warnings.
+    static List<String> checkXPaths(final TranslationMapping mapping,
+                                    final List<String> samples,
+                                    final SplitterSpec splitter) {
+        if (NullSafe.isNonEmptyString(mapping.forEach())) {
+            return List.of();
+        }
+        final Map<String, List<String>> inputs = xpathInputs(mapping);
+        if (inputs.isEmpty()) {
+            return List.of();
+        }
+        return XPathChecks.checkXPaths(inputs, MappingFacts.mappingNamespaces(mapping),
+                recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping));
+    }
+
+    /// Warnings for the xpaths of entries without `repeat` that give several values in a sample record (written joined
+    /// in one element).
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec, or null.
+    /// @return The warnings.
+    static List<String> checkSeveralValues(final TranslationMapping mapping,
+                                           final List<String> samples,
+                                           final SplitterSpec splitter) {
+        if (NullSafe.isNonEmptyString(mapping.forEach())) {
+            return List.of();
+        }
+        final Map<String, List<String>> used = new LinkedHashMap<>();
+        mapping.common().stream()
+                .filter(MappingSampleCheck::oneValueAnElement)
+                .forEach(entry -> add(used, entry.xpath(), entry.path()));
+        for (final EventRule rule : mapping.events()) {
+            rule.fields().stream()
+                    .filter(MappingSampleCheck::oneValueAnElement)
+                    .forEach(entry -> add(used, entry.xpath(), "[" + rule.name() + "] " + entry.path()
+                                                               + (NullSafe.isNonEmptyString(entry.dataName())
+                            ? " " + entry.dataKey()
+                            : "")));
+        }
+        final List<String> imported = mapping.functions().stream().map(SharedFunctions::prefix).toList();
+        // One reading only the variables it binds itself is run too (a for ... return, as TWITTER's mentions).
+        used.keySet().removeIf(xpath -> xpath.contains("stroom:") || XPathChecks.readsUnboundVariable(xpath)
+                                        || imported.stream().anyMatch(prefix -> xpath.contains(prefix + ":")));
+        if (used.isEmpty()) {
+            return List.of();
+        }
+        return XPathChecks.severalValues(used, MappingFacts.mappingNamespaces(mapping),
+                recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping));
+    }
+
+    // Whether the entry writes its xpath's values as one element, so several are written joined: not one with
+    // repeat, nor a pair or a change (2026-11-23, chat 188: a Data per pair said to give several values without
+    // repeat), whose Data per pair or per property is a loop writing an element per item, and whose pair or
+    // property read by its name is one value, the list holding one of each name.
+    private static boolean oneValueAnElement(final FieldMapping entry) {
+        return !entry.repeat() && entry.pair() == null && entry.change() == null;
+    }
+
+    /// Each extraction's regex run (with XPath's own regex rules) on the text it reads in the sample.
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec, or null.
+    /// @param records  The sample's records, as [LocalCheck#sampleRecords] reads them.
+    /// @param deadline When to stop checking.
+    /// @param clock    The clock it is read against.
+    /// @return The problems and warnings.
+    @SuppressWarnings("unchecked")
+    static XPathChecks.Findings checkExtractions(final TranslationMapping mapping,
+                                                 final List<String> samples,
+                                                 final SplitterSpec splitter,
+                                                 final List<Object> records,
+                                                 final Instant deadline,
+                                                 final Clock clock) {
+        if (NullSafe.isNonEmptyString(mapping.forEach()) || mapping.extract().isEmpty()) {
+            return new XPathChecks.Findings(List.of(), List.of());
+        }
+        final List<XPathChecks.Extraction> extractions = mapping.extract().stream()
+                .map(MappingSampleCheck::extraction)
+                .toList();
+        final List<Map<String, ?>> maps = new ArrayList<>();
+        records.stream()
+                .filter(Map.class::isInstance)
+                .forEach(record -> maps.add((Map<String, ?>) record));
+        final boolean fieldTexts = "data_splitter".equals(mapping.input()) || "json".equals(mapping.input());
+        return XPathChecks.checkExtractions(extractions, fieldTexts, maps,
+                () -> recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping),
+                MappingFacts.mappingNamespaces(mapping), deadline, clock);
+    }
+
+    /// Each sample record as the XML document the translation reads it from (its root element is the record).
+    ///
+    /// @param mapping  The mapping.
+    /// @param samples  The sample's texts.
+    /// @param splitter The Data Splitter spec, or null.
+    /// @return The documents.
+    static List<String> recordDocuments(final TranslationMapping mapping,
+                                        final List<String> samples,
+                                        final SplitterSpec splitter) {
+        final String namespace = MappingFacts.inputNamespace(mapping);
+        final List<String> documents = new ArrayList<>();
+        if ("json".equals(mapping.input())) {
+            samples.forEach(text -> documents.addAll(XPathChecks.jsonRecordDocuments(text, namespace)));
+            return documents;
+        }
+        if ("data_splitter".equals(mapping.input())) {
+            if (splitter == null) {
+                return documents;
+            }
+            for (final String text : samples) {
+                SplitterDryRun.dryRun(splitter, ToolText.strip(text, "﻿\r\n ")).records().forEach(record ->
+                        documents.add(XPathChecks.splitterRecordDocument(record, namespace)));
+            }
+            return documents;
+        }
+        for (final Object record : LocalCheck.sampleRecords(mapping, samples, splitter).records()) {
+            if (record instanceof final XmlTree.Element element) {
+                documents.add(XPathChecks.xml11(document(mapping, element, namespace)));
+            }
+        }
+        return documents;
+    }
+
+    /// Each xpath the mapping reads, with what it is used for: not those calling a shared XSLT's functions (only
+    /// Stroom, which imports it, can run them), nor those reading a variable, which only the XSLT binds.
+    ///
+    /// @param mapping The mapping.
+    /// @return The xpaths, each with what it is used for (e.g. `EventTime/TimeCreated`, `[logon] when`).
+    static Map<String, List<String>> xpathInputs(final TranslationMapping mapping) {
+        final Map<String, List<String>> used = new LinkedHashMap<>();
+        mapping.common().forEach(entry -> entryXPaths(used, entry, entry.path()));
+        for (final EventRule rule : mapping.events()) {
+            rule.fields().forEach(entry -> entryXPaths(used, entry, "[" + rule.name() + "] " + entry.path()));
+        }
+        for (final EventRule rule : mapping.events()) {
+            for (final Condition condition : rule.when()) {
+                add(used, condition.xpath(), "[" + rule.name() + "] when");
+            }
+        }
+        for (final DropRule drop : mapping.dropWhen()) {
+            for (final Condition condition : drop.when()) {
+                add(used, condition.xpath(), "drop: " + drop.reason());
+            }
+        }
+        for (final Extraction extraction : mapping.extract()) {
+            add(used, extraction.xpath(), "extract");
+        }
+        final List<String> imported = mapping.functions().stream().map(SharedFunctions::prefix).toList();
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        used.forEach((xpath, uses) -> {
+            if (XPathChecks.evaluable(xpath, imported)) {
+                out.put(xpath, uses);
+            }
+        });
+        return out;
+    }
+
+    // A record as the XMLFragmentParser's wrapper gives it: a fragment declaring no namespace takes its default.
+    // Read without it, the checks passed xpaths that select nothing in Stroom.
+    private static String document(final TranslationMapping mapping,
+                                   final XmlTree.Element element,
+                                   final String namespace) {
+        final String text = XmlTree.toText(element);
+        if (!"xml_fragments".equals(mapping.input())) {
+            return text;
+        }
+        final XmlTree.Element wrapped = XmlTree.parse("<records xmlns=\"" + NullSafe.string(namespace) + "\">" + text
+                                                      + "</records>");
+        return XmlTree.toText(wrapped.elements().getFirst());
+    }
+
+    private static void entryXPaths(final Map<String, List<String>> used, final FieldMapping entry, final String as) {
+        // A change's values as the record holds them: its xpath unwraps JSON text with a function only the
+        // generated XSLT declares.
+        add(used, entry.change() == null
+                ? entry.xpath()
+                : entry.change().checkedXpath(), as);
+        if (entry.lookup() != null) {
+            add(used, entry.lookup().xpath(), as);
+        }
+    }
+
+    private static void add(final Map<String, List<String>> used, final String xpath, final String as) {
+        if (NullSafe.isNonEmptyString(xpath)) {
+            used.computeIfAbsent(xpath, key -> new ArrayList<>()).add(as);
+        }
+    }
+
+    private static XPathChecks.Extraction extraction(final Extraction extraction) {
+        return new XPathChecks.Extraction(extraction.field(), extraction.xpath(), extraction.regex(),
+                extraction.flags(), extraction.names());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a check read and worked out, for a check of the same sample again in the same call.
+    ///
+    /// @param samples     The sample's texts it read.
+    /// @param splitter    The Data Splitter spec it read them with, or null.
+    /// @param found       The records it read.
+    /// @param checked     The records as its mapping read them, with what it worked out of them.
+    /// @param extractions The extractions' own check, or null when it ran out of time.
+    record Earlier(List<String> samples,
+                   SplitterSpec splitter,
+                   LocalCheck.SampleRecords found,
+                   CheckedRecords checked,
+                   XPathChecks.Findings extractions) {
+
+    }
+}

@@ -1,0 +1,111 @@
+# Standing instructions (AGENTS docs)
+
+A Documentation doc named `AGENTS` holds standing instructions for building pipelines: the equivalent of an
+AGENTS.md, kept in Stroom beside the content it is about.
+
+## Where it applies
+
+| Doc | Applies to |
+| --- | --- |
+| `System/AGENTS` | Everything |
+| `System/Feeds/Events/AGENTS` | Every feed and pipeline under `System/Feeds/Events` |
+| `System/Feeds/Events/Keycloak/AGENTS` | Keycloak only |
+
+`get_instructions` returns every doc that applies to the folders, feeds or documents given, from the most general
+to the most specific, so the more specific instruction reads last. The agent loads them at the start of every run
+and again once it knows where the work lives. The user's own request takes precedence, and no instruction can lift
+an approval or the write guard: the server enforces those whatever a doc says.
+
+## What to write
+
+Short, concrete rules the agent can apply and you can check:
+
+```markdown
+# Standing instructions
+
+## Fields
+- The acting account goes in EventSource/User/Id; the account acted on goes in the event detail's User.
+- Host names are lower case and without the domain (ws01, not WS01.corp.example).
+- Keep the vendor's event code in EventDetail/TypeId, and a short description in EventDetail/Description.
+- EventDetail/TypeId is <Category>-<Action>, e.g. User-Login (where the source has no single event code).
+
+## Time
+- Sources without a time zone are UTC.
+
+## Naming
+- Feeds and events pipelines: <Vendor>-<Product>-V<major>.<minor>, e.g. Fortigate-FG60F-V1.2.
+- Elasticsearch indices: ecs-<source>-v<n>.
+
+## XSLT style
+- Variables and named templates in camelCase.
+- Always declare value maps as xsl:map.
+```
+
+A `## Required imports` section names shared XSLTs every XSLT of a stage imports (`- translation: Stream-Meta-V1`,
+`- indexing: Common-Index-V1`; stages translation, records, indexing, reference, cef). The server applies it: generated XSLTs
+get the imports (`build_translation_xslt`, `save_xslt index_plan=`, the CEF plan's save and `build_reference_xslt
+build=` add them, and say which named templates each
+offers: call them with `shared` entries where they write; for a translation, also the functions each defines, with
+the `functions` entry that binds their prefix), and a hand-written XSLT without them is refused at save.
+`build_translation_xslt` and `save_xslt` warn when a translation or indexing XSLT imports one but calls none of its named templates.
+
+A `## Component templates` section says which Elasticsearch component templates new index templates compose
+(`- include: logs-ilm-90d, org-base`, `- exclude: legacy-base`). The server applies it: `propose_index_template`
+references the included ones (asking for their content) and leaves the excluded out, and `check_index_template`
+notes a template that breaks it. A user's own `include_components` wins over an exclusion. Excluding `ecs@mappings`
+is the only way a template following the ECS convention goes without it.
+
+A `## Documentation` section says how `write_documentation` lays out a pipeline's Field mapping (`- field mapping:
+compact`, or `by event type`, the default; `one table` and `single table` mean compact). The most specific doc that
+says wins, and the result notes it. A layout the user asks for goes in `field_mapping_layout` (`by_event_type` or
+`compact`) and wins over the doc.
+
+Lines of a `## Fields` section of the form `- user: Initiator.Id, user.name` name the fields that hold a thing in
+the data sources where the doc applies: `user`, `person` (`person id`), `target user`, `target person` (`target
+person id`), `host`, `application` (`process`), `object`, `element` (`event detail`: the EventDetail element),
+`action` (its Action), `event type` (`event code`: the source's own code), `title` (a window title), `text`
+(`message`), `session` (`session id`), `feed`, `category` and `country`.
+`activity_timeline`, `sequence_query` and `compare_activity` read them themselves, the first field an index has
+used, the most specific doc winning, after the call's own and before the index plan and the field conventions.
+Prose bullets in the section (no `key:`) are left to the agent.
+
+Lines of an `## Event types` section of the form `- Tun-Ascend: active` give an event type's timeline role (the
+type its TypeId or element and Action, e.g. `Process/Execute`; the role `focus`, `active`, `idle`, `open`, `close`,
+`action` or `ignore`). `activity_timeline` reads them after the call's, a skill's and the translation's catalogue,
+before the schema's table, and offers the lines for the types it had to classify itself. A `## Sources` section's
+`- timeline: <index>, <index>` line, in an AGENTS doc at the top of the tree, names the indexes an
+`activity_timeline` call with no sources reads where no form can ask. An `## Exclusions` section's
+`- web.get: https://telemetry.example.net/*` lines (an event type and an object, exact or a prefix ending `*`; the same
+section in a skill applies to every source it reads) are left out of that index's timelines with no form, and said.
+
+## What the tools read exactly
+
+The tools apply these sections themselves: `## Fields`, `## Required imports`, `## Component templates`,
+`## Documentation`, `## Event types`, `## Sources` and `## Exclusions`, each a heading of its own (any level) and its `- key: value` bullets, up to the next heading;
+and `## Ignore`, the folders searches leave out. Only the first section of each name is read. A bullet whose key the tools don't know, a field no index
+there has, or a field line under another heading (e.g. `## Notes`) is left out without a word. Everything else in a
+doc, including prose in those sections, guides the agent only, and no format is asked of it.
+
+`check_instructions` checks the docs that apply in a folder, or a draft, against the first six and the indexes there:
+problems (what the tools can't apply as written: an unknown key, a misspelt field, field lines under another
+heading, a heading such as `## Field names`, a section given twice, the same key twice with different fields) and
+suggestions (a line a more general doc gives already, a field the index plan of a feeding pipeline maps otherwise,
+an index whose user only a field convention finds), each with its fix. `propose_instructions` makes the same checks
+on what it proposes, and `action=draft` drafts the `## Fields` lines from the indexes, their plans, the docs in
+force and what the user said, asking only where those differ or nothing is found.
+
+An XSLT style section is applied through the translation mapping's `style` (naming, and when to use variables and
+xsl:maps; see the XSLT guide), and the same `style` of an index plan and of a CEF plan (`draft_cef_mapping style=`),
+so every generated XSLT follows it without hand edits.
+
+The name Stroom looks for is `AGENTS`. Anyone who can
+edit a folder can edit its `AGENTS` doc, so set folder permissions accordingly.
+
+## Suggesting standing instructions
+
+In the chat, `instruction_evidence` gives the user's own recent chats: the form answers they gave the same way
+again and again (repeated), those they gave different ways (mixed, which is no rule), and what they wrote. Draft
+rules only from repeated choices or from what the user said they always want, check the folder's `AGENTS` doc
+(`get_instructions`) so nothing is said twice, and offer them with `propose_instructions`: the user reviews the
+diff and applies it, to the doc's editor, or by creating the doc if the folder has none. A preference of the user's
+own belongs in their memory, not a folder's doc.

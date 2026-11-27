@@ -1,0 +1,216 @@
+{
+ "review": {
+  "lines": 5,
+  "problems": [
+   "key rt given twice in a line (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "src holds 'not-an-ip', not an IPv4 address (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cs1 has no cs1Label: ArcSight shows it with no name (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "key 'myField' is not in ArcSight's CEF dictionary (keys outside it aren't allowed: ArcSight won't index it) (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cs2Label without its cs2 (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cn1 has no cn1Label: ArcSight shows it with no name (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cn1 holds 'abc', not a long (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "rt holds '12': CEF times are milliseconds since 1970 or 'MMM dd yyyy HH:mm:ss' (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "end holds 'yesterday': CEF times are milliseconds since 1970 or 'MMM dd yyyy HH:mm:ss' (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "a header of 5 fields, where CEF has 7 (CEF:n|vendor|product|version|class id|name|severity), or an unescaped | in one (1 line; e.g. CEF:0|Delinea|SecretServer|only five|3|x=1)",
+   "an unescaped | in the header's name or class id (in 'Secret viewed: a=b|c'): escape it as \\| (1 line; e.g. CEF:0|D|S|1|Secret-View|Secret viewed: a=b|c|3|suser=b)",
+   "severity '99' is not 0 to 10 (or Low, Medium, High, Very-High) (1 line; e.g. CEF:0|D|S|1|X|Y|99|act=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa dmac=zz)",
+   "act longer than its 63 characters (ArcSight cuts it) (1 line; e.g. CEF:0|D|S|1|X|Y|99|act=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa dmac=zz)",
+   "dmac holds 'zz', not a mac (1 line; e.g. CEF:0|D|S|1|X|Y|99|act=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa dmac=zz)",
+   "a raw line break inside a CEF line (escape it as \\n) (1 line; e.g. CEF:0|D|S|1|X|Y|3|msg=first\nsecond)"
+  ],
+  "implied_mapping": {
+   "Authenticate": [
+    {
+     "path": "EventSource/System/Environment",
+     "key": "cs1",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventTime/TimeCreated",
+     "key": "rt",
+     "seen": "1 of 1"
+    },
+    {
+     "path": "EventSource/User/Id",
+     "key": "suser",
+     "seen": "1 of 1"
+    }
+   ]
+  },
+  "not_sent": [
+   {
+    "event_type": "Authenticate",
+    "path": "EventDetail/Authenticate/Action",
+    "events": "1 of 1"
+   },
+   {
+    "event_type": "Authenticate",
+    "path": "EventDetail/Authenticate/Data[@Name='note']/@Value",
+    "events": "1 of 1"
+   },
+   {
+    "event_type": "Authenticate",
+    "path": "EventDetail/Authenticate/Data[@Name='session_id']/@Value",
+    "events": "1 of 1"
+   },
+   {
+    "event_type": "Authenticate",
+    "path": "EventDetail/Authenticate/Outcome/Success",
+    "events": "1 of 1"
+   },
+   {
+    "event_type": "Authenticate",
+    "path": "EventSource/Client/IPAddress",
+    "events": "1 of 1"
+   },
+   {
+    "event_type": "Authenticate",
+    "path": "EventSource/Device/HostName",
+    "events": "1 of 1"
+   },
+   {
+    "event_type": "Authenticate",
+    "path": "EventSource/Device/IPAddress",
+    "events": "1 of 1"
+   }
+  ]
+ },
+ "review_none": {
+  "lines": 5,
+  "problems": [
+   "key rt given twice in a line (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "src holds 'not-an-ip', not an IPv4 address (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cs1 has no cs1Label: ArcSight shows it with no name (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "key 'myField' is not in ArcSight's CEF dictionary (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cs2Label without its cs2 (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cn1 has no cn1Label: ArcSight shows it with no name (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "cn1 holds 'abc', not a long (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "rt holds '12': CEF times are milliseconds since 1970 or 'MMM dd yyyy HH:mm:ss' (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "end holds 'yesterday': CEF times are milliseconds since 1970 or 'MMM dd yyyy HH:mm:ss' (1 line; e.g. CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday)",
+   "a header of 5 fields, where CEF has 7 (CEF:n|vendor|product|version|class id|name|severity), or an unescaped | in one (1 line; e.g. CEF:0|Delinea|SecretServer|only five|3|x=1)",
+   "an unescaped | in the header's name or class id (in 'Secret viewed: a=b|c'): escape it as \\| (1 line; e.g. CEF:0|D|S|1|Secret-View|Secret viewed: a=b|c|3|suser=b)",
+   "severity '99' is not 0 to 10 (or Low, Medium, High, Very-High) (1 line; e.g. CEF:0|D|S|1|X|Y|99|act=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa dmac=zz)",
+   "act longer than its 63 characters (ArcSight cuts it) (1 line; e.g. CEF:0|D|S|1|X|Y|99|act=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa dmac=zz)",
+   "dmac holds 'zz', not a mac (1 line; e.g. CEF:0|D|S|1|X|Y|99|act=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa dmac=zz)",
+   "a raw line break inside a CEF line (escape it as \\n) (1 line; e.g. CEF:0|D|S|1|X|Y|3|msg=first\nsecond)"
+  ],
+  "implied_mapping": {},
+  "not_sent": []
+ },
+ "parsed": [
+  {
+   "header": [
+    "CEF:0",
+    "Delinea",
+    "SecretServer",
+    "11.4",
+    "User-Login",
+    "User logged in",
+    "3"
+   ],
+   "extension": [
+    [
+     "src",
+     "not-an-ip"
+    ],
+    [
+     "cs1",
+     "Prod"
+    ],
+    [
+     "myField",
+     "x"
+    ],
+    [
+     "suser",
+     "priya.patel"
+    ],
+    [
+     "rt",
+     "1790552890000"
+    ],
+    [
+     "cs2Label",
+     "x"
+    ],
+    [
+     "cn1",
+     "abc"
+    ],
+    [
+     "rt",
+     "12"
+    ],
+    [
+     "end",
+     "yesterday"
+    ]
+   ]
+  },
+  {
+   "header": [
+    "CEF:0",
+    "Delinea",
+    "SecretServer",
+    "only five",
+    "3"
+   ],
+   "extension": []
+  },
+  {
+   "header": [
+    "CEF:0",
+    "D",
+    "S",
+    "1",
+    "Secret-View",
+    "Secret viewed: a=b",
+    "c"
+   ],
+   "extension": [
+    [
+     "suser",
+     "b"
+    ]
+   ]
+  },
+  {
+   "header": [
+    "CEF:0",
+    "D",
+    "S",
+    "1",
+    "X",
+    "Y",
+    "99"
+   ],
+   "extension": [
+    [
+     "act",
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    [
+     "dmac",
+     "zz"
+    ]
+   ]
+  },
+  {
+   "header": [
+    "CEF:0",
+    "D",
+    "S",
+    "1",
+    "X",
+    "Y",
+    "3"
+   ],
+   "extension": [
+    [
+     "msg",
+     "first\nsecond"
+    ]
+   ]
+  }
+ ]
+}

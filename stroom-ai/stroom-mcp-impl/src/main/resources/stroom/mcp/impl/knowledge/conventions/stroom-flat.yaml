@@ -1,0 +1,25 @@
+# Flat event-logging names, as Stroom's own example indexes use. A starting point, not a default:
+# the agent only uses a convention the user or configuration selects.
+name: stroom-flat
+description: Flat field names derived from event-logging paths (UserId, HostName, EventTime)
+structure: flat
+reference_index_docs: []        # Index or Elastic Index docs whose fields are authoritative
+required_fields: {StreamId: id, EventId: id, EventTime: date}
+field_map:
+  EventTime/TimeCreated: {name: EventTime, type: date}
+  EventSource/System/Name: {name: System, type: keyword}
+  EventSource/System/Environment: {name: Environment, type: keyword}
+  EventSource/Generator: {name: Generator, type: keyword}
+  EventSource/Device/HostName: {name: HostName, type: keyword}
+  EventSource/Device/IPAddress: {name: IPAddress, type: ip}
+  EventSource/User/Id: {name: UserId, type: keyword}
+  EventSource/Client/IPAddress: {name: ClientIPAddress, type: ip}
+  EventSource/Server/IPAddress: {name: ServerIPAddress, type: ip}
+  # Network events, whichever action (Permit, Deny, Connect...).
+  EventDetail/Network/*/Source/Device/IPAddress: {name: SourceIPAddress, type: ip}
+  EventDetail/Network/*/Source/Port: {name: SourcePort, type: long}
+  EventDetail/Network/*/Source/TransportProtocol: {name: TransportProtocol, type: keyword}
+  EventDetail/Network/*/Destination/Device/IPAddress: {name: DestinationIPAddress, type: ip}
+  EventDetail/Network/*/Destination/Port: {name: DestinationPort, type: long}
+  EventDetail/TypeId: {name: TypeId, type: keyword}
+  EventDetail/Description: {name: Description, type: text}

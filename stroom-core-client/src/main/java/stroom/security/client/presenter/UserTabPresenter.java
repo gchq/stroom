@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.ai.client.AiToolAccessPresenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -73,6 +74,11 @@ public class UserTabPresenter
             .withLabel("API Keys")
             .withTooltip("API keys held by this user/group.")
             .build();
+    // Manage MCP tool policies only
+    private static final TabData MCP_TOOLS_TAB = TabDataImpl.builder()
+            .withLabel("MCP Tools")
+            .withTooltip("The MCP tools this user/group may use, from every enabled MCP tool policy covering it.")
+            .build();
 
     private final UserInfoPresenter userInfoPresenter;
     private final LazyValue<UserPermissionReportPresenter> userPermsReportPresenterLazyValue;
@@ -80,6 +86,7 @@ public class UserTabPresenter
     private final LazyValue<ApiKeysPresenter> apiKeysListPresenterLazyValue;
     private final LazyValue<AppPermissionsEditPresenter> appPermissionsEditPresenterLazyValue;
     private final LazyValue<UserAndGroupsPresenter> userAndGroupsPresenterLazyValue;
+    private final LazyValue<AiToolAccessPresenter> aiToolAccessPresenterLazyValue;
     private final List<TabData> tabs = new ArrayList<>();
 
     private UserRef userRef;
@@ -95,7 +102,8 @@ public class UserTabPresenter
                             final Provider<UserDependenciesListPresenter> userDependenciesListPresenterProvider,
                             final Provider<ApiKeysPresenter> apiKeysListPresenterProvider,
                             final Provider<AppPermissionsEditPresenter> appPermissionsEditPresenterProvider,
-                            final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider) {
+                            final Provider<UserAndGroupsPresenter> userAndGroupsPresenterProvider,
+                            final Provider<AiToolAccessPresenter> aiToolAccessPresenterProvider) {
         super(eventBus, view);
         this.userInfoPresenter = userInfoPresenter;
         this.userPermsReportPresenterLazyValue = new LazyValue<>(
@@ -123,6 +131,11 @@ public class UserTabPresenter
                 userAndGroupsPresenter -> {
                     userAndGroupsPresenter.setUserRef(userRef);
                 });
+        this.aiToolAccessPresenterLazyValue = new LazyValue<>(
+                aiToolAccessPresenterProvider,
+                aiToolAccessPresenter -> {
+                    aiToolAccessPresenter.setUserRef(userRef);
+                });
 
         final boolean hasManagerUsersPerm = clientSecurityContext.hasAppPermission(
                 AppPermission.MANAGE_USERS_PERMISSION);
@@ -134,6 +147,9 @@ public class UserTabPresenter
             addTab(APP_PERMS_TAB);
         }
         addTab(DOC_PERMS_TAB);
+        if (clientSecurityContext.hasAppPermission(AppPermission.MANAGE_MCP_TOOL_POLICIES)) {
+            addTab(MCP_TOOLS_TAB);
+        }
         addTab(DEPENDENCIES_TAB);
         if (clientSecurityContext.hasAppPermission(AppPermission.MANAGE_API_KEYS)) {
             addTab(API_KEYS_TAB);
@@ -197,6 +213,10 @@ public class UserTabPresenter
             callback.onReady(userDependenciesListPresenter);
         } else if (API_KEYS_TAB.equals(tab)) {
             callback.onReady(apiKeysListPresenterLazyValue.getValue());
+        } else if (MCP_TOOLS_TAB.equals(tab)) {
+            final AiToolAccessPresenter aiToolAccessPresenter = aiToolAccessPresenterLazyValue.getValue();
+            aiToolAccessPresenter.setUserRef(userRef);
+            callback.onReady(aiToolAccessPresenter);
         } else {
             callback.onReady(null);
         }
@@ -242,6 +262,8 @@ public class UserTabPresenter
                 userDependenciesListPresenter.setUserRef(userRef));
         apiKeysListPresenterLazyValue.consumeIfInitialised(apiKeysPresenter ->
                 apiKeysPresenter.setOwner(userRef));
+        aiToolAccessPresenterLazyValue.consumeIfInitialised(aiToolAccessPresenter ->
+                aiToolAccessPresenter.setUserRef(userRef));
     }
 
     public UserRef getUserRef() {

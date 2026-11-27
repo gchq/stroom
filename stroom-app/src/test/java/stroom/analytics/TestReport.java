@@ -18,6 +18,7 @@ package stroom.analytics;
 
 import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.impl.mock.MockAiModule;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ReportExecutor;
 import stroom.analytics.impl.ReportStore;
@@ -52,6 +53,7 @@ import stroom.query.api.Column;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.resource.impl.ResourceModule;
 import stroom.test.BootstrapTestModule;
+import stroom.test.ConfigMapperSpy;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -112,6 +114,8 @@ class TestReport extends AbstractAnalyticsTest {
     private ScheduledExecutorService<ReportDoc> scheduledExecutorService;
     @Inject
     private MetaService metaService;
+    @Inject
+    private ConfigMapperSpy configMapperSpy;
 
     /**
      * The stream type that {@link ReportExecutor} writes report output as.
@@ -324,6 +328,79 @@ class TestReport extends AbstractAnalyticsTest {
     }
 
     /**
+     * A report too big for one batch is summarised a batch at a time, then the batches' findings are merged into
+     * the one summary the report carries.
+     */
+    @Test
+    void testALargeReportIsSummarisedInBatchesThenMerged() {
+        configMapperSpy.setConfigValueMapper(TableAnalysisConfig.class, config -> config.copy()
+                .maxRowsPerBatch(2)
+                .build());
+
+        final ReportOutput output = runCsvReportWithAiSummary();
+
+        // The 5 rows go in batches of 2, so the summary is the merge of what they found, not one batch's answer.
+        assertThat(output.meta()).contains("ReportAiSummary:[Stub Merged Summary]");
+        assertThat(output.meta()).doesNotContain("Stub Batch Analysis").doesNotContain("covers only");
+        assertThat(output.data().lines().skip(1)).hasSize(5);
+    }
+
+    /**
+     * Only so many rows of a report are summarised, however many the report holds, so a large report can't run
+     * up the cost of its summary; the report itself still has every row.
+     */
+    @Test
+    void testOnlyTheRowsUpToTheCapOfALargeReportAreSummarised() {
+        configMapperSpy.setConfigValueMapper(TableAnalysisConfig.class, config -> config.copy()
+                .maxTotalRows(2)
+                .build());
+
+        final ReportOutput output = runCsvReportWithAiSummary();
+
+        // The stub model says how many rows it was given, and the summary says it is of those rows only.
+        assertThat(output.meta()).contains("ReportAiSummary:[Stub Batch Analysis — 2 rows]")
+                .contains("This answer covers only the first 2 rows of a larger table");
+        assertThat(output.data().lines().skip(1)).hasSize(5);
+    }
+
+    /**
+     * Runs a CSV report of {@link #QUERY} that asks the stub model for a summary.
+     *
+     * @return The report's data and its stream's meta, where the summary goes.
+     */
+    private ReportOutput runCsvReportWithAiSummary() {
+        final ReportDoc reportDoc = ReportDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(QUERY)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .reportSettings(ReportSettings
+                        .builder()
+                        .fileType(DownloadSearchResultFileType.CSV)
+                        .aiSummaryEnabled(true)
+                        .aiSummaryModel(writeStubModel())
+                        .build())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
+                .build();
+        writeReport(reportDoc);
+        createExecutionSchedule(reportStore.list().getFirst());
+
+        scheduledExecutorService.exec(reportExecutor);
+
+        analyticsDataSetup.checkStreamCount(9);
+        try (final Source source = streamStore.openSource(analyticsDataSetup.getNewestMeta().getId())) {
+            final String data = SourceUtil.readString(source).trim();
+            try (final InputStreamProvider inputStreamProvider = source.get(0);
+                    final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                return new ReportOutput(data, StreamUtil.streamToString(inputStream));
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
      * @return A model that answers without a network or an API key, see {@code AiServiceImpl.STUB_MODEL_ID}.
      */
     private DocRef writeStubModel() {
@@ -400,6 +477,7 @@ class TestReport extends AbstractAnalyticsTest {
      */
     @AfterEach
     void tidyUpReports() {
+        configMapperSpy.clearConfigValueMappers();
         openAIModelStore.list().forEach(docRef -> openAIModelStore.deleteDocument(docRef));
         reportStore.list().forEach(docRef -> reportStore.deleteDocument(docRef));
         metaService.find(FindMetaCriteria.createWithType(REPORT_STREAM_TYPE))
@@ -526,5 +604,13 @@ class TestReport extends AbstractAnalyticsTest {
         assertThat(reportStore.list().getFirst().getUuid()).isEqualTo(docRef.getUuid());
 
         return docRef;
+    }
+
+    /**
+     * @param data The report's rows, with its header.
+     * @param meta The meta of the report's stream.
+     */
+    private record ReportOutput(String data, String meta) {
+
     }
 }

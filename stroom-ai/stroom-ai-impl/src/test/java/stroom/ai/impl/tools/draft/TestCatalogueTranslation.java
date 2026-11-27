@@ -1,0 +1,1436 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.draft;
+
+import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueCheck;
+import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
+import stroom.ai.impl.tools.catalogue.CatalogueSample;
+import stroom.ai.impl.tools.catalogue.Placement;
+import stroom.ai.impl.tools.generation.ModelReader;
+import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.HeldSchemasWorld;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// The translation drafted from the catalogue of event types: a rule per (event type, way of recognising it), in the
+/// catalogue's order, then the catch-all; the vendor's code as Data, TypeId fixed, Description in the design's order.
+class TestCatalogueTranslation extends DraftFixtures {
+
+    private static final EventSchema SCHEMA = EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);
+    private static final Function<String, String> CHECK = detail -> SourceNotes.detailProblem(SCHEMA, detail);
+    // Codes that mean nothing without the vendor's documentation.
+    private static final String CODES = """
+            ts,host,evt,usr,src,res
+            2026-10-01T08:00:00Z,dc01,4624,alice,10.0.0.1,0x0
+            2026-10-01T08:05:00Z,dc01,4625,bob,10.0.0.2,0xC000006A
+            2026-10-01T08:10:00Z,dc01,4634,alice,10.0.0.1,0x0
+            2026-10-01T08:11:00Z,dc01,4634,carol,10.0.0.3,0x0
+            2026-10-01T08:12:00Z,dc01,9999,carol,10.0.0.3,0x0
+            2026-10-01T08:13:00Z,dc01,1102,carol,10.0.0.3,0x0
+            """;
+    // Each record a batch of alerts, each alert told by an item of its tags (eval case 69).
+    private static final String BATCHES = """
+            [{"gateway": "mx-gw1", "batch": 101, "alerts": [{"time": "2026-11-19T09:00:00Z", "tags": ["inbound", \
+            "malware", "high"], "sender": "billing@evil.example", "recipient": "alice@corp.example", "subject": \
+            "Invoice overdue"}, {"time": "2026-11-19T09:00:05Z", "tags": ["inbound", "phishing"], "sender": \
+            "it-help@evil.example", "recipient": "bob@corp.example", "subject": "Reset your password"}]},
+             {"gateway": "mx-gw2", "batch": 102, "alerts": [{"time": "2026-11-19T09:01:00Z", "tags": ["outbound", \
+            "policy", "low"], "sender": "carol@corp.example", "recipient": "someone@partner.example", "subject": \
+            "Customer list"}]},
+             {"gateway": "mx-gw1", "batch": 103, "alerts": [{"time": "2026-11-19T09:02:00Z", "tags": ["malware", \
+            "inbound"], "sender": "post@evil.example", "recipient": "dave@corp.example", "subject": "Your parcel"}, \
+            {"time": "2026-11-19T09:02:30Z", "tags": ["high", "inbound", "phishing"], "sender": "ceo@evil.example", \
+            "recipient": "erin@corp.example", "subject": "Urgent transfer"}, {"time": "2026-11-19T09:03:00Z", \
+            "tags": ["policy", "outbound"], "sender": "bob@corp.example", "recipient": "me@home.example", \
+            "subject": "Payroll"}]},
+             {"gateway": "mx-gw2", "batch": 104, "alerts": [{"time": "2026-11-19T09:04:00Z", "tags": ["inbound", \
+            "low", "phishing"], "sender": "prize@evil.example", "recipient": "alice@corp.example", "subject": \
+            "You won"}]}]
+            """;
+
+    // Microsoft 365 audit records, as JSON lines (chat 182): AppAccessContext.IssuedAtTime empty in every one.
+    private static final String M365 = """
+            {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Send", "UserId": "jo@acme.example", \
+            "Recipients": "al@acme.example;bo@acme.example", "Subject": "Report", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "Send", "UserId": "al@acme.example", \
+            "Recipients": "jo@acme.example", "Subject": "Re: Report", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "FolderBind", "UserId": "jo@acme.example", \
+            "FolderPath": "\\\\Inbox", "Size": "12 KB", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            {"CreationTime": "2026-11-01T10:03:00Z", "Operation": "FolderBind", "UserId": "bo@acme.example", \
+            "FolderPath": "\\\\Sent Items", "Size": "40 KB", "Workload": "Exchange", \
+            "AppAccessContext": {"IssuedAtTime": null, "ClientAppId": "app1"}}
+            """;
+
+    // Inbox rules created, each with its parameters (a name/value list), as M365's audit log nests them.
+    private static final String RULES = """
+            {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "New-InboxRule", "UserId": "jo@acme.example", \
+            "Workload": "Exchange", "event": {"MailboxOwnerUPN": "jo@acme.example", \
+            "Parameters": [{"Name": "Name", "Value": "FW to personal"}, {"Name": "From", "Value": "a@b.example"}]}}
+            {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "New-InboxRule", "UserId": "al@acme.example", \
+            "Workload": "Exchange", "event": {"MailboxOwnerUPN": "al@acme.example", \
+            "Parameters": [{"Name": "Name", "Value": "Tidy"}, {"Name": "MoveToFolder", "Value": "Old"}]}}
+            {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "New-InboxRule", "UserId": "bo@acme.example", \
+            "Workload": "Exchange", "event": {"MailboxOwnerUPN": "bo@acme.example", \
+            "Parameters": [{"Name": "Name", "Value": "Junk"}, {"Name": "From", "Value": "c@d.example"}]}}
+            """;
+
+    // Users updated, each with the properties changed (an old/new list), as a directory's audit log nests them.
+    private static final String USERS = """
+            {"CreationTime": "2026-11-01T10:00:00Z", "Operation": "Update user.", "UserId": "jo@acme.example", \
+            "event": {"Target": "sam@acme.example", "ModifiedProperties": [{"Name": "DisplayName", "OldValue": \
+            "Sam T", "NewValue": "Sam Taylor"}, {"Name": "JobTitle", "OldValue": "", "NewValue": "Analyst"}]}}
+            {"CreationTime": "2026-11-01T10:01:00Z", "Operation": "Update user.", "UserId": "jo@acme.example", \
+            "event": {"Target": "kate@acme.example", "ModifiedProperties": [{"Name": "DisplayName", "OldValue": \
+            "Kate", "NewValue": "Kate Jones"}, {"Name": "Department", "OldValue": "Ops", "NewValue": "Finance"}]}}
+            {"CreationTime": "2026-11-01T10:02:00Z", "Operation": "Update user.", "UserId": "al@acme.example", \
+            "event": {"Target": "sam@acme.example", "ModifiedProperties": [{"Name": "JobTitle", "OldValue": \
+            "Analyst", "NewValue": "Lead"}, {"Name": "Department", "OldValue": "", "NewValue": "Ops"}]}}
+            """;
+    // Users updated as a directory's API writes them: targets, each with the properties changed, values JSON text.
+    private static final String TARGETS = """
+            {"activityDateTime": "2026-11-01T10:00:00Z", "activityDisplayName": "Update user", "event": \
+            {"targetResources": [{"id": "u-1", "type": "User", "modifiedProperties": [{"displayName": "DisplayName", \
+            "oldValue": "[\\"Sam T\\"]", "newValue": "[\\"Sam Taylor\\"]"}, {"displayName": "JobTitle", \
+            "oldValue": "[]", "newValue": "[\\"Analyst\\"]"}]}]}}
+            {"activityDateTime": "2026-11-01T10:01:00Z", "activityDisplayName": "Update user", "event": \
+            {"targetResources": [{"id": "u-2", "type": "User", "modifiedProperties": [{"displayName": "DisplayName", \
+            "oldValue": "[\\"Kate\\"]", "newValue": "[\\"Kate Jones\\"]"}]}, {"id": "u-3", "type": "User", \
+            "modifiedProperties": [{"displayName": "JobTitle", "oldValue": "[\\"Analyst\\"]", "newValue": \
+            "[\\"Lead\\"]"}, {"displayName": "DisplayName", "oldValue": "[\\"Al\\"]", "newValue": \
+            "[\\"Al Smith\\"]"}]}]}}
+            """;
+
+    @Test
+    void aRulePerWayOfRecognisingEachEventTypeInTheCataloguesOrderThenTheCatchAll() {
+        final Map<String, Object> draft = draft(CODES, notes(List.of(
+                type("Authenticate-Logon", "Logon", "Authenticate", "Logon", "true", way(eq("evt", "4624"))),
+                type("Authenticate-LogonFailed", "Logon failed", "Authenticate", "Logon", "false",
+                        way(eq("evt", "4625"), eq("res", "0xC000006A"))),
+                type("Authenticate-Logoff", "Logoff", "Authenticate", "Logoff", null, way(eq("evt", "4634")),
+                        way(eq("evt", "4647"))),
+                dropped("Clear-Log", way(eq("evt", "9999")))), true));
+
+        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(draft).get("events"));
+        // More specific first (more conditions), ties in the catalogue's order; each way its own rule.
+        assertThat(rules).extracting(rule -> rule.get("name")).containsExactly("authenticate_logon_failed",
+                "authenticate_logon", "authenticate_logoff", "authenticate_logoff_4647", "uncatalogued");
+        assertThat(rules.get(3).get("when")).isEqualTo(List.of(Map.of("field", "evt", "equals", "4647")));
+        // TypeId fixed, the event type's; none read from a field for every record.
+        assertThat(fields(rules.get(1)).get("EventDetail/TypeId")).isEqualTo(map("path", "EventDetail/TypeId",
+                "value", "Authenticate-Logon"));
+        assertThat(common(draft)).doesNotContainKey("EventDetail/TypeId");
+        assertThat(fields(rules.get(0)).get("EventDetail/Authenticate/Outcome/Success").get("value"))
+                .isEqualTo("false");
+        assertThat(fields(rules.get(2)).get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logoff");
+        // The vendor's code as Data named after its field, every equals field of the way.
+        assertThat(JsonValues.maps(rules.get(0).get("fields")))
+                .contains(map("path", "EventDetail/Authenticate/Data", "data_name", "evt", "field", "evt"))
+                .contains(map("path", "EventDetail/Authenticate/Data", "data_name", "res", "field", "res"));
+        // The catch-all: Unknown, the records' fields as Data, agreed with the catalogue.
+        final Map<String, Object> catchAll = rules.getLast();
+        assertThat(catchAll).containsEntry("catch_all", true)
+                .containsEntry("allow_unknown", CatalogueTranslation.CATCH_ALL_AGREED);
+        assertThat(fields(catchAll).get("EventDetail/TypeId").get("value")).isEqualTo("Unknown");
+        assertThat(JsonValues.maps(catchAll.get("fields")))
+                .contains(map("path", "EventDetail/Unknown/Data", "data_name", "evt", "field", "evt"));
+        // The dropped event type: a drop rule, no translating rule.
+        assertThat(JsonValues.maps(mappingOf(draft).get("drop_when"))).containsExactly(map(
+                "reason", "the user said to leave these untranslated: Clear-Log",
+                "when", List.of(Map.of("field", "evt", "equals", "9999"))));
+        // Said: the uncatalogued record (1102); every event type has records in the sample.
+        assertThat(notes(draft)).anyMatch(note -> note.startsWith("1 sampled record(s) no event type recognises"))
+                .noneMatch(note -> note.startsWith("Event types no sampled record"));
+        assertThat(generate(mappingOf(draft)).problems()).as("generates").isEmpty();
+    }
+
+    @Test
+    void anUnconfirmedCatchAllIsNotAgreedForTheUser() {
+        final Map<String, Object> draft = draft(CODES, notes(List.of(
+                type("Authenticate-Logon", "Logon", "Authenticate", "Logon", "true", way(eq("evt", "4624")))),
+                false));
+
+        final Map<String, Object> catchAll = JsonValues.maps(mappingOf(draft).get("events")).getLast();
+        assertThat(catchAll).containsEntry("catch_all", true).doesNotContainKey("allow_unknown");
+    }
+
+    @Test
+    void aCatchAllWithItsOwnTranslationWritesThatEventNotUnknown() {
+        // Read back by rebuild_mapping from a hand-written last rule taking every remaining record.
+        final Map<String, Object> notes = notes(List.of(
+                type("Authenticate-LogonFailed", "Logon failed", "Authenticate", "Logon", "false",
+                        way(eq("evt", "4625")))), true);
+        notes.put("catch_all", Map.of("status", "confirmed", "translation", Map.of("type_id",
+                "Authenticate-Logon", "event_detail", "Authenticate", "action", "Logon")));
+
+        final Map<String, Object> catchAll = JsonValues.maps(mappingOf(draft(CODES, notes)).get("events"))
+                .getLast();
+
+        assertThat(catchAll).containsEntry("catch_all", true).doesNotContainKey("allow_unknown");
+        assertThat(fields(catchAll).get("EventDetail/TypeId").get("value")).isEqualTo("Authenticate-Logon");
+        assertThat(fields(catchAll).get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
+        assertThat(JsonValues.maps(catchAll.get("fields")))
+                .contains(map("path", "EventDetail/Authenticate/Data", "data_name", "evt", "field", "evt"))
+                .noneMatch(field -> String.valueOf(field.get("path")).contains("Unknown"));
+    }
+
+    @Test
+    void aTypeIdNotGivenIsTheDefault() {
+        final Map<String, Object> type = type(null, "Explicit logon", "Authenticate", "Logon", null,
+                way(Map.of("field", "evt", "one_of", List.of("4648"))));
+
+        final Map<String, Object> draft = draft(CODES, notes(List.of(type), true));
+
+        assertThat(fields(JsonValues.maps(mappingOf(draft).get("events")).getFirst()).get("EventDetail/TypeId"))
+                .containsEntry("value", "Authenticate-Explicit");
+    }
+
+    @Test
+    void theDescriptionIsTheRecordsMessageElseTheEventTypesOwnText() {
+        // (2)/(3): no message in the records: the event type's description, fixed.
+        final Map<String, Object> logon = type("Authenticate-Logon", "Logon", "Authenticate", "Logon", "true",
+                way(eq("evt", "4624")));
+        logon.put("description", "An account logged on");
+        final Map<String, Object> fixed = JsonValues.maps(mappingOf(draft(CODES, notes(List.of(logon), true)))
+                .get("events")).getFirst();
+        assertThat(fields(fixed).get("EventDetail/Description")).isEqualTo(map("path", "EventDetail/Description",
+                "value", "An account logged on"));
+
+        // (1): the records' message, alone.
+        final String messages = """
+                {"time":"2026-10-01T08:00:00Z","host":"a","op":"login","user":"alice","message":"alice logged in"}
+                {"time":"2026-10-01T08:01:00Z","host":"a","op":"logout","user":"alice","message":"alice left"}
+                """;
+        final Map<String, Object> withMessage = type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null,
+                way(eq("op", "login")));
+        withMessage.put("description", "An account logged on");
+        final Map<String, Object> draft = draft(messages, notes(List.of(withMessage), true));
+        assertThat(common(draft).get("EventDetail/Description")).containsEntry("field", "message");
+        assertThat(fields(JsonValues.maps(mappingOf(draft).get("events")).getFirst()))
+                .doesNotContainKey("EventDetail/Description");
+
+        // (1): a field of free text a person wrote about the event.
+        final String tickets = """
+                time,host,op,user,comment
+                2026-10-01T08:00:00Z,a,close,alice,fixed the printer
+                2026-10-01T08:01:00Z,a,open,bob,printer broken
+                """;
+        final Map<String, Object> closed = type("Update-Ticket", "Ticket closed", "Update", "Modify", null,
+                way(eq("op", "close")));
+        closed.put("description", "A ticket is closed");
+        final Map<String, Object> ticket = JsonValues.maps(mappingOf(draft(tickets, notes(List.of(closed), true)))
+                .get("events")).getFirst();
+        assertThat(fields(ticket).get("EventDetail/Description")).containsEntry("field", "comment")
+                .doesNotContainKey("value");
+    }
+
+    @Test
+    void aFreeTextFieldSomeOfTheWaysRecordsLackIsTheDescriptionWithTheTypesOwnTextAsItsDefault() {
+        // Eval case 42 (cause verified 2026-11-27): the free-text field moved to EventDetail/Description with no
+        // default, so the records with it empty were written with no Description (70 of 300 events).
+        final String tickets = """
+                time,host,op,user,comment
+                2026-10-01T08:00:00Z,a,close,alice,fixed the printer
+                2026-10-01T08:01:00Z,a,close,bob,
+                2026-10-01T08:02:00Z,a,open,bob,printer broken
+                """;
+        final Map<String, Object> closed = type("Update-Ticket", "Ticket closed", "Update", "Modify", null,
+                way(eq("op", "close")));
+        closed.put("description", "A ticket is closed");
+
+        final Map<String, Object> ticket = JsonValues.maps(mappingOf(draft(tickets, notes(List.of(closed), true)))
+                .get("events")).getFirst();
+
+        assertThat(fields(ticket).get("EventDetail/Description")).containsEntry("field", "comment")
+                .containsEntry("default", "A ticket is closed");
+    }
+
+    @Test
+    void anEventTypeWhoseRecordsHoldNoMessageIsDescribedByItsOwnText() {
+        // Seen in eval case 47 (FortiGate, 2026-11-20): the message (msg) in common, which only some records hold, so
+        // the traffic records, none of which hold it, had no Description at all.
+        final String mixed = """
+                {"time":"2026-10-01T08:00:00Z","host":"a","op":"login","user":"alice","msg":"alice logged in"}
+                {"time":"2026-10-01T08:01:00Z","host":"a","op":"traffic","user":"alice"}
+                {"time":"2026-10-01T08:02:00Z","host":"a","op":"traffic","user":"bob"}
+                {"time":"2026-10-01T08:03:00Z","host":"a","op":"scan","user":"bob","msg":"port scan"}
+                {"time":"2026-10-01T08:04:00Z","host":"a","op":"scan","user":"carol"}
+                """;
+        final Map<String, Object> logon = type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null,
+                way(eq("op", "login")));
+        logon.put("description", "An account logged on");
+        final Map<String, Object> traffic = type("Permit-Traffic", "Traffic", "Network/Permit", null, null,
+                way(eq("op", "traffic")));
+        traffic.put("description", "A connection was allowed");
+        final Map<String, Object> scan = type("Alert-Scan", "Scan", "Alert", null, null, way(eq("op", "scan")));
+        scan.put("description", "A port scan was seen");
+        final Map<String, Object> draft = draft(mixed, notes(List.of(logon, traffic, scan), true));
+        assertThat(common(draft).get("EventDetail/Description")).containsEntry("field", "msg");
+        final Map<String, Map<String, Object>> rules = new LinkedHashMap<>();
+        JsonValues.maps(mappingOf(draft).get("events")).forEach(rule -> rules.put(String.valueOf(fields(rule)
+                .get("EventDetail/TypeId").get("value")), rule));
+
+        // Every record of the type holds its message: the message, alone, as before.
+        assertThat(fields(rules.get("Authenticate-Logon"))).doesNotContainKey("EventDetail/Description");
+        // None does: the type's own text.
+        assertThat(fields(rules.get("Permit-Traffic")).get("EventDetail/Description")).isEqualTo(map("path",
+                "EventDetail/Description", "value", "A connection was allowed"));
+        // Some do: the message, else the type's own text.
+        assertThat(fields(rules.get("Alert-Scan")).get("EventDetail/Description"))
+                .containsEntry("field", "msg")
+                .containsEntry("default", "A port scan was seen");
+    }
+
+    @Test
+    void aSoleEventTypeTakesEveryRecordAndHasNoCatchAllAfterIt() {
+        final Map<String, Object> draft = draft(CODES, notes(List.of(
+                type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null)), true));
+
+        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(draft).get("events"));
+        assertThat(rules).singleElement().satisfies(rule -> assertThat(rule).doesNotContainKey("when")
+                .doesNotContainKey("catch_all"));
+        assertThat(generate(mappingOf(draft)).problems()).isEmpty();
+    }
+
+    @Test
+    void theSourceTypeFieldIsNoVendorCode() {
+        final Map<String, Object> notes = notes(List.of(
+                type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null, way(eq("host", "dc01"),
+                        eq("evt", "4624")))), true);
+        notes.put("scope", Map.of("source_type_field", "host", "source_types", List.of("dc01")));
+
+        final Map<String, Object> rule = JsonValues.maps(mappingOf(draft(CODES, notes)).get("events")).getFirst();
+
+        assertThat(JsonValues.maps(rule.get("fields"))).noneMatch(field -> "host".equals(field.get("data_name")))
+                .anyMatch(field -> "evt".equals(field.get("data_name")));
+    }
+
+    @Test
+    void aFieldAnotherEventTypeTestsIsStillDataOfThisOnesRecords() {
+        final String sample = """
+                ts,host,a,b,usr
+                2026-10-01T08:00:00Z,dc01,login,7,alice
+                2026-10-01T08:01:00Z,dc01,save,7,alice
+                """;
+        final Map<String, Object> draft = draft(sample, notes(List.of(
+                type("Authenticate-Logon", "Logon", "Authenticate", "Logon", null, way(eq("a", "login"))),
+                type("Update-Code", "Code saved", "Update", "Modify", null, way(eq("b", "7"), eq("a", "save")))),
+                true));
+
+        final Map<String, Object> logon = JsonValues.maps(mappingOf(draft).get("events")).stream()
+                .filter(rule -> "authenticate_logon".equals(rule.get("name")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(JsonValues.maps(logon.get("fields")))
+                .contains(map("path", "EventDetail/Authenticate/Data", "data_name", "b", "field", "b"));
+    }
+
+    @Test
+    void theVendorCodesDataNameIsItsFieldsLastSegment() {
+        assertThat(CatalogueTranslation.vendorCodeName("System/EventID", false)).isEqualTo("EventID");
+        assertThat(CatalogueTranslation.vendorCodeName("event.logger_name", true)).isEqualTo("logger_name");
+        assertThat(CatalogueTranslation.vendorCodeName("event.logger_name", false)).isEqualTo("event.logger_name");
+        assertThat(CatalogueTranslation.vendorCodeName("['log.level']", true)).isEqualTo("log.level");
+        assertThat(CatalogueTranslation.vendorCodeName("labels['app.kubernetes.io/name']", true))
+                .isEqualTo("app.kubernetes.io/name");
+        assertThat(CatalogueTranslation.vendorCodeName("Header/@id", false)).isEqualTo("id");
+        assertThat(CatalogueTranslation.vendorCodeName("evt", false)).isEqualTo("evt");
+    }
+
+    @Test
+    void withoutACatalogueTheDraftsOwnRulesStayADraftToBeCatalogued() {
+        final Map<String, Object> draft = DraftMapping.draft(List.of(CODES), "Acme", "Acme", "Test",
+                Map.of("source", "Acme", "fields", List.of()), CHECK, null);
+
+        assertThat(notes(draft)).anyMatch(note -> note.startsWith("No catalogue of event types yet"));
+        // Its own rule for the rest flagged as the catalogue's catch-all is (Unknown, the records' fields as Data), so
+        // processing logs Caught by from the flag; no other rule is.
+        final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(draft).get("events"));
+        assertThat(rules.getLast()).containsEntry("catch_all", true);
+        assertThat(rules.subList(0, rules.size() - 1)).noneMatch(rule -> rule.containsKey("catch_all"));
+    }
+
+    @Test
+    void aRuleStartsFromTheDraftsOwnRuleForItsRecords() {
+        // The draft's own rule for a firewall's allowed traffic reads the addresses into Network/Permit: the event
+        // type's rule for those records keeps what it read.
+        final Map<String, Object> draft = draft(TestDraftMapping.FW_JSON, notes(List.of(
+                type("Network-Permit", "Traffic allowed", "Network/Permit", null, null, way(eq("event_type",
+                        "TRAFFIC"), eq("action", "ALLOW")))), true));
+
+        final Map<String, Object> rule = JsonValues.maps(mappingOf(draft).get("events")).getFirst();
+        assertThat(JsonValues.maps(rule.get("fields")))
+                .contains(map("path", "EventDetail/Network/Permit/Destination/Port", "field", "dst_port"))
+                .contains(map("path", "EventDetail/Network/Permit/Data", "data_name", "event_type", "field",
+                        "event_type"));
+    }
+
+    @Test
+    void aRepeatedGroupsItemsAreRecognisedByTheirOwnFieldsAndTheRecordsWithScopeRecord() {
+        // One object wrapping the records (for_each): the item's fields are the conditions' own, the record's
+        // with scope record.
+        final String wrapped = """
+                {"source": "audit", "Records": [
+                 {"eventTime": "2026-10-01T08:00:00Z", "eventName": "ConsoleLogin", "user": "alice",
+                  "host": "h1"},
+                 {"eventTime": "2026-10-01T08:01:00Z", "eventName": "DeleteBucket", "user": "bob",
+                  "host": "h1"}]}
+                """;
+        final Map<String, Object> login = type("Authenticate-ConsoleLogin", "Console login", "Authenticate", "Logon",
+                null, way(eq("eventName", "ConsoleLogin"), Map.of("field", "source", "equals", "audit", "scope",
+                        "record")));
+        login.put("actor", "user");
+        final Map<String, Object> draft = draft(wrapped, notes(List.of(login), true));
+
+        assertThat(mappingOf(draft).get("for_each")).isEqualTo("Records");
+        final Map<String, Object> rule = JsonValues.maps(mappingOf(draft).get("events")).getFirst();
+        assertThat(rule.get("when")).isEqualTo(List.of(Map.of("field", "eventName", "equals", "ConsoleLogin"),
+                Map.of("field", "source", "equals", "audit", "scope", "record")));
+        // Its own records counted: the delete is uncatalogued.
+        assertThat(notes(draft)).anyMatch(note -> note.startsWith("1 sampled record(s) no event type recognises"));
+        assertThat(generate(mappingOf(draft)).problems()).isEmpty();
+    }
+
+    @Test
+    void aCatalogueReadingItemsInsideRecordsIsDraftedPerItem() {
+        // Seen in eval case 69 (Haiku): each record a batch of alerts, the catalogue reading each alert as its own
+        // record (for_each); the draft drafted whole batches, said every event type was not in the sample, and its
+        // rules matched nothing.
+        final Map<String, Object> malware = type("Alert-Malware", "Malware found", "Alert", null, null,
+                way(eq("tags", "malware")));
+        final Map<String, Object> phishing = type("Alert-Phishing", "Phishing found", "Alert", null, null,
+                way(eq("tags", "phishing")));
+        final Map<String, Object> policy = type("Alert-PolicyViolation", "Policy broken", "Alert", null, null,
+                way(eq("tags", "policy")));
+        for (final Map<String, Object> type : List.of(malware, phishing, policy)) {
+            type.put("actor", "recipient");
+            type.put("description", "The gateway raised an alert");
+        }
+        final Map<String, Object> draft = DraftMapping.draft(List.of(BATCHES), "Acme", "Acme", "Test",
+                notes(List.of(malware, phishing, policy), true), CHECK, null, "alerts");
+
+        final Map<String, Object> mapping = mappingOf(draft);
+        assertThat(mapping).containsEntry("input", "json").containsEntry("json_layout", "array")
+                .containsEntry("for_each", "alerts");
+        // Items counted, every one recognised: nothing not in the sample, nothing uncatalogued.
+        assertThat(draft.get("records")).isEqualTo(7);
+        assertThat(notes(draft)).noneMatch(note -> note.startsWith("Event types no sampled record"))
+                .noneMatch(note -> note.contains("no event type recognises"));
+        final List<Map<String, Object>> rules = JsonValues.maps(mapping.get("events"));
+        assertThat(rules).extracting(rule -> rule.get("name")).containsExactly("alert_malware", "alert_phishing",
+                "alert_policy_violation", "uncatalogued");
+        // Conditions and fields relative to the item; the batch's own fields read with scope record.
+        assertThat(rules.getFirst().get("when")).isEqualTo(List.of(Map.of("field", "tags", "equals", "malware")));
+        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
+        rules.forEach(rule -> entries.addAll(JsonValues.maps(rule.get("fields"))));
+        assertThat(entries).filteredOn(entry -> "gateway".equals(entry.get("field")))
+                .isNotEmpty()
+                .allMatch(entry -> "record".equals(entry.get("scope")));
+        assertThat(entries).filteredOn(entry -> "sender".equals(entry.get("field")))
+                .isNotEmpty()
+                .allMatch(entry -> entry.get("scope") == null);
+        assertThat(fields(rules.getFirst()).get("EventSource/User/Id")).containsEntry("field", "recipient");
+        assertThat(fields(rules.getFirst()).get("EventDetail/Description")).containsEntry("value",
+                "The gateway raised an alert");
+        // The rules recognise the items, by the one evaluator, as processing reads them.
+        final TranslationMapping parsed = TranslationMapping.parse(mapping);
+        final List<String> taken = new ArrayList<>();
+        for (final Object record : LocalCheck.sampleRecords(parsed, BATCHES, null, 0).records()) {
+            for (final Object item : LocalCheck.itemsOf(record, "alerts")) {
+                taken.add(LocalCheck.ruleOf(parsed, item, null));
+            }
+        }
+        assertThat(taken).containsExactly("alert_malware", "alert_phishing", "alert_policy_violation",
+                "alert_malware", "alert_phishing", "alert_policy_violation", "alert_phishing");
+        // Generated: what is left is the schema's to fill (the device, the alert's type), nothing unreadable.
+        assertThat(generate(mapping).problems()).as("generates")
+                .allMatch(problem -> problem.endsWith("is required by the schema; map it"));
+    }
+
+    @Test
+    void aCatalogueReadingItemsWhereRecordsHoldNoneDraftsTheRecordsAsTheyAre() {
+        // A for_each the records don't hold (a reading kept from another sample): the records as they are.
+        final Map<String, Object> draft = DraftMapping.draft(List.of(BATCHES), "Acme", "Acme", "Test",
+                notes(List.of(type("Alert-Malware", "Malware found", "Alert", null, null,
+                        way(eq("tags", "malware")))), true), CHECK, null, "nothing_here");
+
+        assertThat(mappingOf(draft)).doesNotContainKey("for_each");
+        assertThat(draft.get("records")).isEqualTo(4);
+    }
+
+    @Test
+    void aFieldOnlyARecordOrTwoOfAnEventTypeHoldIsWrittenAsItsDataHoweverLongTheSample() {
+        // As in the planted features e2e, with a catalogue: Data from the event type's own records, every one of
+        // them, not only those a dry run spreads over a long sample.
+        final Map<String, Object> deliver = type("Send-Deliver", "Mail delivered", "Send", null, null,
+                way(eq("action", "deliver")));
+        deliver.put("actor", "sender");
+        final Map<String, Object> reject = type("Receive-Reject", "Mail rejected", "Receive", null, null,
+                way(eq("action", "reject")));
+        reject.put("actor", "sender");
+
+        final Map<String, Object> draft = draft(rareFieldsSample(), notes(List.of(deliver, reject), true));
+
+        final Map<String, Map<String, Object>> rules = rules(draft);
+        assertThat(dataNames(rules.get("send_deliver"))).contains(RARE_DELIVER_FIELD)
+                .doesNotContain(RARE_REJECT_FIELD);
+        assertThat(dataNames(rules.get("receive_reject"))).contains(RARE_REJECT_FIELD)
+                .doesNotContain(RARE_DELIVER_FIELD);
+    }
+
+    @Test
+    void placementsAreTypedEntriesOfTheRuleAndTheFieldsLeftOverAreDataOnce() {
+        // Decided by the user 2026-11-21 (chat 182: almost every field of the M365 audit events kept as Data).
+        final Map<String, Object> send = type("Send-Mail", "Send mail", "Send", null, null,
+                way(eq("Operation", "Send")));
+        send.put("placements", List.of(
+                Map.of("path", "Source/User/EmailAddress", "field", "UserId"),
+                Map.of("path", "Destination/User", "for_each", Map.of("split", "Recipients", "on", ";"),
+                        "fields", List.of(Map.of("path", "EmailAddress", "item", true))),
+                Map.of("path", "Payload/Email/Subject", "field", "Subject"),
+                // One field typed in two places.
+                Map.of("path", "Payload/Email/From/EmailAddress", "field", "UserId")));
+        final Map<String, Object> view = type("View-Folder", "View folder", "View", null, null,
+                way(eq("Operation", "FolderBind")));
+        view.put("placements", List.of(
+                Map.of("path", "Folder/Path", "field", "FolderPath", "also_data", true),
+                Map.of("path", "Folder/Size", "field", "Size", "transform", "digits")));
+        final Map<String, Object> draft = draft(M365, notes(List.of(send, view), true));
+
+        final Map<String, Map<String, Object>> rules = rules(draft);
+        final Map<String, Map<String, Object>> sent = fields(rules.get("send_mail"));
+        assertThat(sent.get("EventDetail/Send/Source/User/EmailAddress")).containsEntry("field", "UserId");
+        assertThat(sent.get("EventDetail/Send/Payload/Email/Subject")).containsEntry("field", "Subject");
+        assertThat(sent.get("EventDetail/Send/Payload/Email/From/EmailAddress")).containsEntry("field", "UserId");
+        assertThat(sent.get("EventDetail/Send/Destination/User")).containsKey("for_each");
+        // The placed fields aren't Data too; the rest are, each once; the vendor's code always.
+        final List<String> sentData = dataNames(rules.get("send_mail"));
+        assertThat(sentData).doesNotContain("UserId", "Subject", "Recipients").contains("Operation", "Workload")
+                .doesNotHaveDuplicates();
+        final Map<String, Map<String, Object>> viewed = fields(rules.get("view_folder"));
+        assertThat(viewed.get("EventDetail/View/Folder/Path")).containsEntry("field", "FolderPath")
+                .doesNotContainKey("also_data");
+        assertThat(viewed.get("EventDetail/View/Folder/Size")).containsEntry("transform", "digits");
+        // also_data keeps the placed field as Data too, as a placement converting the value (transform) does.
+        assertThat(dataNames(rules.get("view_folder"))).contains("FolderPath", "Size").doesNotHaveDuplicates();
+        // Generates, but for the device these records don't name (the agent's to map).
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void aPairPlacedByItsNameIsATypedEntryAndTheListsOtherPairsAreDataPerPair() {
+        // Decided by the user 2026-11-23 (chat 187): the rule's name pair typed, the rest of its settings Data named
+        // by their pairs' names; a pair kept as Data too (also_data) written as its own named Data.
+        final Map<String, Object> create = type("Create-InboxRule", "Create inbox rule", "Create", null, null,
+                way(eq("Operation", "New-InboxRule")));
+        create.put("placements", List.of(
+                Map.of("path", "Configuration/Name", "pair", Map.of("list", "event.Parameters", "name", "Name")),
+                Map.of("path", "Configuration/Description", "pair", Map.of("list", "event.Parameters", "name", "From"),
+                        "also_data", true)));
+        final Map<String, Object> draft = draft(RULES, notes(List.of(create), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("create_inbox_rule").get("fields"));
+        final Map<String, Object> keys = Map.of("list", "event.Parameters", "name", "Name", "name_key", "Name",
+                "value_key", "Value");
+        assertThat(fields).anySatisfy(field -> assertThat(field)
+                .containsEntry("path", "EventDetail/Create/Configuration/Name").containsEntry("pair", keys));
+        assertThat(fields).anySatisfy(field -> assertThat(field).containsEntry("path", "EventDetail/Create/Data")
+                .containsEntry("pair", Map.of("list", "event.Parameters", "name_key", "Name", "value_key", "Value")));
+        assertThat(fields).anySatisfy(field -> assertThat(field).containsEntry("path", "EventDetail/Create/Data")
+                .containsEntry("data_name", "From"));
+        assertThat(dataNames(rules(draft).get("create_inbox_rule"))).doesNotContain("event.Parameters");
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void aChangePlacedByNameIsTypedInBothSnapshotsAndTheListsOtherPropertiesAreDataOfTheAffectedObject() {
+        // Decided by the user 2026-11-23: {path: User/Name, change: {list, name}} writes Before/User/Name (old) and
+        // After/User/Name (new); the list's other properties Data of the object the event type acts on (affected_as).
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("Operation", "Update user.")));
+        update.put("affected", "event.Target");
+        update.put("affected_as", "After/User/Id");
+        update.put("placements", List.of(Map.of("path", "User/Name", "change",
+                Map.of("list", "event.ModifiedProperties", "name", "DisplayName"))));
+        final Map<String, Object> draft = draft(USERS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        final Map<String, Object> keys = Map.of("list", "event.ModifiedProperties", "name", "DisplayName",
+                "name_key", "Name", "old_key", "OldValue", "new_key", "NewValue");
+        for (final String side : List.of("Before", "After")) {
+            assertThat(fields).anySatisfy(field -> assertThat(field)
+                    .containsEntry("path", "EventDetail/Update/" + side + "/User/Name").containsEntry("change", keys));
+            assertThat(fields).anySatisfy(field -> assertThat(field)
+                    .containsEntry("path", "EventDetail/Update/" + side + "/User/Data")
+                    .containsEntry("change", Map.of("list", "event.ModifiedProperties", "name_key", "Name",
+                            "old_key", "OldValue", "new_key", "NewValue")));
+        }
+        assertThat(dataNames(rules(draft).get("update_user"))).doesNotContain("event.ModifiedProperties");
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void theUsersAnswerOfWhichKeyHoldsTheOldValueSetsTheSnapshotsAndAKeyGivenInAPlacementWins() {
+        // Decided by the user 2026-11-23: the build's answer (put in the notes by the draft's tool) over key order;
+        // keys a placement gives over both.
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("Operation", "Update user.")));
+        update.put("affected", "event.Target");
+        update.put("affected_as", "After/User/Id");
+        update.put("placements", List.of(Map.of("path", "User/Name", "change",
+                Map.of("list", "event.ModifiedProperties", "name", "DisplayName", "old_key", "OldValue",
+                        "new_key", "NewValue"))));
+        final Map<String, Object> notes = notes(List.of(update), true);
+        notes.put(SourceNotes.CHANGE_SIDES, Map.of("event.ModifiedProperties", "NewValue"));
+        final Map<String, Object> draft = draft(USERS, notes);
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        assertThat(fields).anySatisfy(field -> assertThat(field)
+                .containsEntry("path", "EventDetail/Update/Before/User/Data")
+                .containsEntry("change", Map.of("list", "event.ModifiedProperties", "name_key", "Name",
+                        "old_key", "NewValue", "new_key", "OldValue")));
+        assertThat(fields).anySatisfy(field -> assertThat(field)
+                .containsEntry("path", "EventDetail/Update/Before/User/Name")
+                .containsEntry("change", Map.of("list", "event.ModifiedProperties", "name", "DisplayName",
+                        "name_key", "Name", "old_key", "OldValue", "new_key", "NewValue")));
+    }
+
+    @Test
+    void aGroupOverTargetsReadingAChangeIsWrittenInBothSnapshotsWithEachTargetsOtherPropertiesAsData() {
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("activityDisplayName", "Update user")));
+        update.put("placements", List.of(Map.of("path", "User", "for_each",
+                Map.of("array", "event.targetResources"), "fields", List.of(Map.of("path", "Id", "field", "id"),
+                        Map.of("path", "Name", "change", Map.of("list", "modifiedProperties", "name",
+                                "DisplayName"))))));
+        final Map<String, Object> draft = draft(TARGETS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        final Map<String, Object> named = Map.of("path", "Name", "change", Map.of("list", "modifiedProperties",
+                "name", "DisplayName", "name_key", "displayName", "old_key", "oldValue", "new_key", "newValue"));
+        final Map<String, Object> perProperty = Map.of("path", "Data", "change", Map.of("list",
+                "modifiedProperties", "name_key", "displayName", "old_key", "oldValue", "new_key", "newValue"));
+        for (final String side : List.of("Before", "After")) {
+            assertThat(fields).anySatisfy(field -> {
+                assertThat(field).containsEntry("path", "EventDetail/Update/" + side + "/User");
+                assertThat(JsonValues.maps(field.get("fields"))).contains(named, perProperty);
+            });
+        }
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void targetsPlacedAsAGroupInAfterAloneGetAnObjectInBothSnapshotsWithADataPerProperty() {
+        // Seen in eval case 76 (Haiku): the targets placed as a group in After alone, its one field the id, never the
+        // change form; no property's old or new value was written.
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("activityDisplayName", "Update user")));
+        update.put("placements", List.of(Map.of("path", "After/Object", "for_each",
+                Map.of("array", "event.targetResources"), "as", "targetResource",
+                "fields", List.of(Map.of("path", "Id", "field", "id", "item", true)))));
+        final Map<String, Object> draft = draft(TARGETS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        final Map<String, Object> perProperty = Map.of("path", "Data", "change", Map.of("list",
+                "modifiedProperties", "name_key", "displayName", "old_key", "oldValue", "new_key", "newValue"));
+        for (final String side : List.of("Before", "After")) {
+            assertThat(fields).filteredOn(field -> ("EventDetail/Update/" + side + "/Object").equals(field.get("path")))
+                    .singleElement()
+                    .satisfies(group -> assertThat(JsonValues.maps(group.get("fields")))
+                            .containsExactly(Map.of("path", "Id", "field", "id", "item", true), perProperty));
+        }
+        assertThat(generate(mappingOf(draft)).problems()).as("generates")
+                .allMatch(problem -> problem.contains("EventSource/Device is required"));
+    }
+
+    @Test
+    void eachSnapshotsOwnPlacementOfTheTargetsKeepsItsOwnFields() {
+        // Seen in eval case 76: each snapshot's targets placed apart; the one reading a change was written in both,
+        // over the other's.
+        final Map<String, Object> update = type("Update-User", "Update user", "Update", null, null,
+                way(eq("activityDisplayName", "Update user")));
+        update.put("placements", List.of(
+                Map.of("path", "Before/User", "for_each", Map.of("array", "event.targetResources"),
+                        "fields", List.of(Map.of("path", "Id", "field", "id"))),
+                Map.of("path", "After/User", "for_each", Map.of("array", "event.targetResources"),
+                        "fields", List.of(Map.of("path", "Id", "field", "id"), Map.of("path", "Name", "change",
+                                Map.of("list", "modifiedProperties", "name", "DisplayName"))))));
+        final Map<String, Object> draft = draft(TARGETS, notes(List.of(update), true));
+
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("update_user").get("fields"));
+        assertThat(fields).filteredOn(field -> "EventDetail/Update/Before/User".equals(field.get("path")))
+                .singleElement()
+                .satisfies(group -> assertThat(JsonValues.maps(group.get("fields")))
+                        .extracting(field -> field.get("path")).containsExactly("Id", "Data"));
+        assertThat(fields).filteredOn(field -> "EventDetail/Update/After/User".equals(field.get("path")))
+                .singleElement()
+                .satisfies(group -> assertThat(JsonValues.maps(group.get("fields")))
+                        .extracting(field -> field.get("path")).containsExactly("Id", "Name", "Data"));
+    }
+
+    @Test
+    void aPlacementInEventSourceIsWrittenInTheEventTypesRule() {
+        // 2026-11-22 (chat 183: the client application's name kept as Data, the user expecting EventSource/Client).
+        final Map<String, Object> view = type("View-Folder", "View folder", "View", null, null,
+                way(eq("Operation", "FolderBind")));
+        view.put("placements", List.of(
+                Map.of("path", "Folder/Path", "field", "FolderPath"),
+                Map.of("path", "EventSource/Client/Name", "field", "AppAccessContext.ClientAppId"),
+                // The common entries write the system's name for every event: left out, said.
+                Map.of("path", "EventSource/System/Name", "field", "Workload")));
+        final Map<String, Object> draft = draft(M365, notes(List.of(view), true));
+
+        final Map<String, Object> rule = rules(draft).get("view_folder");
+        assertThat(fields(rule).get("EventSource/Client/Name")).containsEntry("field", "AppAccessContext.ClientAppId");
+        assertThat(fields(rule)).doesNotContainKeys("EventDetail/View/EventSource/Client/Name",
+                "EventSource/System/Name");
+        assertThat(dataNames(rule)).doesNotContain("AppAccessContext.ClientAppId").contains("Workload");
+        assertThat(common(draft).get("EventSource/System/Name")).containsEntry("value", "Acme");
+        assertThat(notes(draft)).anyMatch(note -> note.contains("placement 'EventSource/System/Name' is written by "
+                                                                + "the common entries"));
+    }
+
+    @Test
+    void aFieldEmptyInEverySampledRecordIsLeftOutOfTheRulesAndSaid() {
+        // Chat 182: AppAccessContext.IssuedAtTime, empty in all 1,547 sampled records, drafted into several rules
+        // as Data, each then warned of.
+        final Map<String, Object> draft = draft(M365, notes(List.of(
+                type("Send-Mail", "Send mail", "Send", null, null, way(eq("Operation", "Send"))),
+                type("View-Folder", "View folder", "View", null, null, way(eq("Operation", "FolderBind")))),
+                true));
+
+        for (final Map<String, Object> rule : rules(draft).values()) {
+            assertThat(JsonValues.maps(rule.get("fields"))).as(String.valueOf(rule.get("name")))
+                    .noneMatch(field -> String.valueOf(field.get("field")).endsWith("IssuedAtTime")
+                                        || String.valueOf(field.get("data_name")).endsWith("IssuedAtTime"));
+        }
+        assertThat(notes(draft)).anyMatch(note -> note.contains("empty in every sampled record")
+                                                  && note.contains("AppAccessContext.IssuedAtTime"));
+    }
+
+    // Seen in testing: every uncatalogued record said to become Unknown, whatever the mapping's own drops.
+    @Test
+    void theUncataloguedRecordsTheMappingsOwnDropRulesDropAreCountedApart() {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "data_splitter");
+        mapping.put("common", new ArrayList<>());
+        mapping.put("events", new ArrayList<>());
+        mapping.put("drop_when", new ArrayList<>(List.of(Map.of("reason", "heartbeats", "when",
+                List.of(eq("evt", "1102"))))));
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (final String evt : List.of("4624", "4624", "1102", "1102", "1102", "7777")) {
+            records.add(new LinkedHashMap<>(Map.of("evt", evt, "usr", "alice")));
+        }
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+
+        final Map<String, Object> applied = CatalogueTranslation.apply(mapping, List.of("evt", "usr"),
+                Map.of("evt", List.of("4624", "1102", "7777"), "usr", List.of("alice")), catalogue, null, List.of(),
+                CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        // Three dropped by the mapping's own drop rule, one left to the catch-all as Unknown.
+        assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 3);
+    }
+
+    // Seen in review: the draft's events rule with drop: true was discarded as the events list was replaced, yet
+    // its records were counted as dropped by the mapping; the applied draft wrote them as Unknown.
+    @Test
+    void aDraftsEventsRuleThatDropsIsKeptAheadOfTheCatchAllAndItsRecordsCountedAsDropped() {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "data_splitter");
+        mapping.put("common", new ArrayList<>());
+        mapping.put("events", new ArrayList<>(List.of(
+                new LinkedHashMap<>(Map.of("name", "heartbeats", "when", List.of(eq("evt", "1102")), "drop", true)),
+                new LinkedHashMap<>(Map.of("name", "everything", "fields", List.of())))));
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (final String evt : List.of("4624", "1102", "1102", "7777")) {
+            records.add(new LinkedHashMap<>(Map.of("evt", evt, "usr", "alice")));
+        }
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+
+        final Map<String, Object> applied = CatalogueTranslation.apply(mapping, List.of("evt", "usr"),
+                Map.of("evt", List.of("4624", "1102", "7777"), "usr", List.of("alice")), catalogue, null, List.of(),
+                CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 2);
+        final List<Map<String, Object>> events = JsonValues.maps(mapping.get("events"));
+        assertThat(events).extracting(rule -> rule.get("name"))
+                .containsExactly("authenticate_logon", "heartbeats", CatalogueTranslation.CATCH_ALL_NAME);
+        assertThat(events.get(1)).containsEntry("drop", true).containsEntry("when", List.of(eq("evt", "1102")));
+        // What the catch-all form counts as dropped by the mapping's drop rules is what the applied mapping drops.
+        assertThat(CatalogueCheck.Drafted.dropsOf(mapping)).hasSize(1);
+    }
+
+    // Found in review (2026-11-26): drafted again from the catalogue, the latest mapping's own drops were lost (only
+    // its rules' names were passed on), while the catalogue check counted them: processing changed between drafts.
+    @Test
+    void aReDraftFromTheCatalogueKeepsTheLatestMappingsOwnDrops() {
+        final Map<String, Object> handDrop = Map.of("reason", "noise", "when", List.of(eq("evt", "9999")));
+        final Map<String, Object> existing = new LinkedHashMap<>();
+        existing.put("input", "data_splitter");
+        existing.put("drop_when", List.of(
+                Map.of("reason", SourceNotes.DROPPED_REASON + ": Old-Type", "when", List.of(eq("evt", "5555"))),
+                handDrop));
+        existing.put("events", List.of(
+                Map.of("name", "logons", "when", List.of(eq("evt", "4624")), "fields", List.of(Map.of("path",
+                        "EventDetail/TypeId", "value", "Authenticate-Logon"))),
+                Map.of("name", "heartbeats", "when", List.of(eq("evt", "1102")), "drop", true),
+                Map.of("name", CatalogueTranslation.CATCH_ALL_NAME, "fields", List.of())));
+        final Map<String, Object> notes = SourceNotes.withExistingRules(notes(List.of(type("Authenticate-Logon",
+                "Logon", "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true), existing);
+
+        final Map<String, Object> draft = draft(CODES, notes);
+
+        final Map<String, Object> mapping = mappingOf(draft);
+        // The catalogue's own drop (of an event type it no longer has) is the catalogue's to write: not kept.
+        assertThat(JsonValues.maps(mapping.get("drop_when"))).containsExactly(handDrop);
+        final List<Map<String, Object>> events = JsonValues.maps(mapping.get("events"));
+        assertThat(events).extracting(rule -> rule.get("name"))
+                .containsExactly("logons", "heartbeats", CatalogueTranslation.CATCH_ALL_NAME);
+        assertThat(events.get(1)).containsEntry("drop", true).containsEntry("when", List.of(eq("evt", "1102")));
+        assertThat(notes(draft)).anyMatch(note -> note.contains("Kept from the build's latest mapping")
+                                                  && note.contains("drop_when 'noise'")
+                                                  && note.contains("rule 'heartbeats' (drop: true)"));
+    }
+
+    // Seen in testing: a single-source JSON feed, event.original an escaped JSON string whose details is JSON text
+    // again; details' query_text, placed as Query/Raw by an xpath, was kept as Data too.
+    @Test
+    void aKeyOfJsonHeldInAKeyOfHeldJsonIsAFieldOfItsOwn() {
+        final Map<String, Object> draft = draft(searches(), notes(List.of(searchType(null)), true));
+
+        assertThat(mappingOf(draft).get("json_fields")).isEqualTo(List.of("event.original",
+                "event.original.details"));
+        assertThat(String.valueOf(rules(draft))).contains("event.original.details.query_text");
+    }
+
+    @Test
+    void aFieldAPlacementsXpathReadsIsNotKeptAsDataToo() {
+        final String xpath = "json-to-xml(json-to-xml(*[@key='event']/*[@key='original'])/*/*[@key='details'])"
+                             + "/*/*[@key='query_text']";
+        final Map<String, Object> draft = draft(searches(), notes(List.of(searchType(Map.of("path", "Query/Raw",
+                "xpath", xpath))), true));
+
+        // The event type's rule, whatever its name.
+        final Map<String, Object> rule = rules(draft).values().iterator().next();
+        assertThat(fields(rule).get("EventDetail/TypeId")).containsEntry("value", "SearchQuery");
+        assertThat(fields(rule).get("EventDetail/Search/Query/Raw")).containsEntry("xpath", xpath);
+        assertThat(JsonValues.maps(rule.get("fields")))
+                .noneMatch(field -> "event.original.details.query_text".equals(field.get("field")));
+        // The held JSON's other keys are Data, and the texts holding them are kept as Data too.
+        assertThat(dataNames(rule)).contains("event.original.details.scope", "event.original.client",
+                "event.original", "event.original.details");
+    }
+
+    @Test
+    void aPlacedVendorCodeIsNotDataUnlessAlsoData() {
+        final Map<String, Object> placed = type("View-Report", "Report viewed", "View", null, null,
+                way(eq("evt", "4624")));
+        placed.put("placements", List.of(Map.of("path", "Document/Id", "field", "evt")));
+        final Map<String, Object> rule = rules(draft(CODES, notes(List.of(placed), true))).get("view_report");
+        assertThat(fields(rule).get("EventDetail/View/Document/Id")).containsEntry("field", "evt");
+        assertThat(dataNames(rule)).doesNotContain("evt");
+
+        final Map<String, Object> kept = type("View-Report", "Report viewed", "View", null, null,
+                way(eq("evt", "4624")));
+        kept.put("placements", List.of(Map.of("path", "Document/Id", "field", "evt", "also_data", true)));
+        assertThat(dataNames(rules(draft(CODES, notes(List.of(kept), true))).get("view_report")))
+                .containsOnlyOnce("evt");
+    }
+
+    @Test
+    void aLaterWayIsNamedByWhatTellsItApartElseByItsNumber() {
+        final Map<String, Object> draft = draft(searches(), notes(List.of(type("SearchQuery", "Search", "Search",
+                null, null, way(eq("action", "search"), eq("env", "prod")),
+                way(eq("action", "search"), eq("env", "QA")),
+                way(eq("action", "search"), Map.of("field", "env", "matches", "^dev")))), true));
+
+        assertThat(rules(draft).keySet()).containsExactly("search_query", "search_query_qa", "search_query_3",
+                "uncatalogued");
+        assertThat(CatalogueTranslation.slug("Authenticate-LogonFailed")).isEqualTo("authenticate_logon_failed");
+        assertThat(CatalogueTranslation.slug("HTTPRequest")).isEqualTo("http_request");
+        assertThat(CatalogueTranslation.slug("Win32Process")).isEqualTo("win32_process");
+        assertThat(CatalogueTranslation.slug("search_query")).isEqualTo("search_query");
+    }
+
+    // Decided by the user (2026-11-26): an existing build drafted again keeps its rules' names, old style too.
+    @Test
+    void aBuildDraftedAgainKeepsTheNamesItsExistingMappingGivesItsRules() {
+        final Map<String, Object> notes = withExisting(notes(List.of(searchWays(eq("env", "QA"))), true),
+                existing("searchquery", "SearchQuery", eq("action", "search"), eq("env", "prod")),
+                existing("searchquery_2", "SearchQuery", eq("action", "search"), eq("env", "QA")),
+                existing("searchquery_3", "SearchQuery", eq("action", "search"),
+                        Map.of("field", "env", "matches", "^dev")),
+                existing("other", "Unknown"));
+
+        final Map<String, Object> draft = draft(searches(), notes);
+
+        assertThat(rules(draft).keySet()).containsExactly("searchquery", "searchquery_2", "searchquery_3", "other");
+        // The templates follow the rules' names.
+        final Map<String, Object> mapping = mappingOf(draft);
+        // The sample names no device: the one the schema requires given.
+        final List<Object> common = new ArrayList<>(JsonValues.listOrEmpty(mapping.get("common")));
+        common.add(Map.of("path", "EventSource/Device/HostName", "value", "search01"));
+        mapping.put("common", common);
+        final XsltGenerator.Generated generated = generate(mapping);
+        assertThat(generated.problems()).as("generates").isEmpty();
+        assertThat(generated.xslt()).contains("searchquery_2").doesNotContain("search_query_qa");
+    }
+
+    @Test
+    void aWayOrEventTypeNewToTheBuildIsNamedAfresh() {
+        final Map<String, Object> search = searchWays(eq("env", "QA"));
+        final List<Map<String, Object>> ways = new ArrayList<>(JsonValues.maps(search.get("recognised_by")));
+        ways.add(way(eq("action", "search"), eq("env", "staging")));
+        search.put("recognised_by", ways);
+        final Map<String, Object> notes = withExisting(notes(List.of(search, type("Authenticate-Logon", "Logon",
+                        "Authenticate", "Logon", "true", way(eq("action", "login")))), true),
+                existing("searchquery", "SearchQuery", eq("action", "search"), eq("env", "prod")),
+                existing("searchquery_2", "SearchQuery", eq("action", "search"), eq("env", "QA")),
+                existing("searchquery_3", "SearchQuery", eq("action", "search"),
+                        Map.of("field", "env", "matches", "^dev")),
+                existing("uncatalogued", "Unknown"));
+
+        final Map<String, Object> draft = draft(searches(), notes);
+
+        assertThat(rules(draft).keySet()).containsExactlyInAnyOrder("searchquery", "searchquery_2", "searchquery_3",
+                "search_query_staging", "authenticate_logon", "uncatalogued");
+    }
+
+    @Test
+    void aWayWhoseConditionsChangedKeepsItsNameWhereTheMatchIsUnambiguous() {
+        final List<Map<String, Object>> rules = List.of(
+                existing("searchquery", "SearchQuery", eq("action", "search"), eq("env", "prod")),
+                existing("searchquery_2", "SearchQuery", eq("action", "search"), eq("env", "QA")),
+                existing("searchquery_3", "SearchQuery", eq("action", "search"),
+                        Map.of("field", "env", "matches", "^dev")),
+                existing("uncatalogued", "Unknown"));
+
+        // QA renamed UAT: the type's second rule, its only one changed.
+        final Map<String, Object> changed = draft(searches(), withExisting(notes(List.of(searchWays(eq("env",
+                "UAT"))), true), rules.toArray(Map[]::new)));
+        assertThat(rules(changed).keySet()).containsExactly("searchquery", "searchquery_2", "searchquery_3",
+                "uncatalogued");
+
+        // Changed and another way added: which is which can't be told, so both are named afresh.
+        final Map<String, Object> search = searchWays(eq("env", "UAT"));
+        final List<Map<String, Object>> ways = new ArrayList<>(JsonValues.maps(search.get("recognised_by")));
+        ways.add(way(eq("action", "search"), eq("env", "staging")));
+        search.put("recognised_by", ways);
+        final Map<String, Object> ambiguous = draft(searches(), withExisting(notes(List.of(search), true),
+                rules.toArray(Map[]::new)));
+        assertThat(rules(ambiguous).keySet()).containsExactlyInAnyOrder("searchquery", "searchquery_3",
+                "search_query_uat", "search_query_staging", "uncatalogued");
+    }
+
+    @Test
+    void aKeptNameIsNeverGivenToARuleNewToTheBuild() {
+        // The existing mapping names its prod rule what the new naming would call the QA one.
+        final Map<String, Object> draft = draft(searches(), withExisting(notes(List.of(searchWays(eq("env",
+                        "QA"))), true),
+                existing("search_query_qa", "SearchQuery", eq("action", "search"), eq("env", "prod"))));
+
+        assertThat(rules(draft).keySet()).containsExactly("search_query_qa", "search_query_2", "search_query_3",
+                "uncatalogued");
+    }
+
+    // SearchQuery recognised three ways: prod, the second way's env (QA, say), and dev.
+    // Found in review (2026-11-27): an event type recognised by a condition the check can't evaluate (a
+    // dictionary). The check counted none of its records, and the catch-all form said they became Unknown; the
+    // translation took the condition as holding. Both now count them apart, as may be.
+    @Test
+    void aConditionNotCheckedCountsTheSameUncataloguedRecordsInTheCheckAndTheTranslation() {
+        final List<Map<String, Object>> records = countedRecords("4624", "4624", "4624", "7777");
+        final Map<String, Object> dictionary = new LinkedHashMap<>(Map.of("field", "usr", "in_dictionary",
+                "Admins"));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624"), dictionary))), true));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null);
+        final Map<String, Object> applied = applyCounted(countedMapping(List.of()), catalogue, records);
+
+        assertThat(check.notChecked()).isNotEmpty();
+        assertThat(check.uncatalogued().unknown())
+                .as("check's Unknown (catch-all form) vs translation's uncatalogued")
+                .isEqualTo(applied.get("uncatalogued"))
+                .isEqualTo(1);
+        assertThat(check.counts().get("Authenticate-Logon").mayBe()).isEqualTo(3);
+        assertThat(check.uncatalogued().mayBe()).singleElement()
+                .satisfies(mayBe -> assertThat(mayBe.said())
+                        .isEqualTo("3 may be Authenticate-Logon (a condition on usr can't be checked here)"));
+    }
+
+    // Found in review (2026-11-27): a draft drop rule with a condition the check can't evaluate dropped nothing in
+    // the check (so the catch-all form said its records became Unknown), and every record it tests in the
+    // translation's count. Both now count them apart, as may be dropped.
+    @Test
+    void aDropRuleNotCheckedCountsTheSameDroppedRecordsInTheCheckAndTheTranslation() {
+        final List<Map<String, Object>> records = countedRecords("4624", "1102", "1102", "1102", "7777");
+        final Map<String, Object> dictionary = new LinkedHashMap<>(Map.of("field", "usr", "in_dictionary",
+                "ServiceAccounts"));
+        final List<Map<String, Object>> drops = List.of(Map.of("reason", "service heartbeats", "when",
+                List.of(eq("evt", "1102"), dictionary)));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+        final Map<String, Object> mapping = countedMapping(drops);
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null,
+                CatalogueCheck.Drafted.of(mapping));
+        final Map<String, Object> applied = applyCounted(mapping, catalogue, records);
+
+        assertThat(check.uncatalogued().records()).isEqualTo(4);
+        assertThat(check.uncatalogued().dropped())
+                .as("check's dropped by the mapping (catch-all form) vs translation's uncatalogued_dropped")
+                .isEqualTo(applied.getOrDefault("uncatalogued_dropped", 0));
+        assertThat(check.uncatalogued().mayBeDropped()).isEqualTo(3)
+                .isEqualTo(applied.get("uncatalogued_may_be_dropped"));
+        assertThat(check.uncatalogued().unknown())
+                .as("check's Unknown (catch-all form) vs translation's uncatalogued")
+                .isEqualTo(applied.get("uncatalogued"));
+    }
+
+    // Found in review (2026-11-27): a draft drop rule testing past processing's string cut (a body over 10,000
+    // characters, its marker after the cut). The check reads the records cut, as processing does, and drops
+    // nothing; the translation read them whole and counted it as dropped.
+    @Test
+    void aDropRulePastTheCutCountsTheSameDroppedRecordsInTheCheckAndTheTranslation() {
+        final List<Map<String, Object>> records = countedRecords("4624", "7777", "7777");
+        records.get(1).put("body", "p".repeat(10_050) + "HEARTBEAT");
+        records.get(2).put("body", "short");
+        final Map<String, Object> marker = new LinkedHashMap<>(Map.of("field", "body", "contains", "HEARTBEAT"));
+        final List<Map<String, Object>> drops = List.of(Map.of("reason", "heartbeats", "when", List.of(marker)));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+        final Map<String, Object> mapping = countedMapping(drops);
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null,
+                CatalogueCheck.Drafted.of(mapping));
+        final Map<String, Object> applied = applyCounted(mapping, catalogue, records);
+
+        assertThat(check.uncatalogued().records()).isEqualTo(2);
+        assertThat(check.uncatalogued().dropped())
+                .as("check's dropped by the mapping (cut, as processing) vs translation's uncatalogued_dropped")
+                .isEqualTo(applied.getOrDefault("uncatalogued_dropped", 0));
+    }
+
+    // Found in review (2026-11-27): a record whose held JSON doesn't parse (its 'event' text is broken) was left
+    // out of the check's uncatalogued records, so the catch-all form never counted it; no rule recognises it, so
+    // processing (and the translation's count) writes it as Unknown.
+    @Test
+    void aRecordWhoseHeldJsonDoesntParseIsCountedAsUnknownInTheCheckAsInTheTranslation() {
+        final List<Map<String, Object>> records = new ArrayList<>();
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Security\",\"n\":1}")));
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Security\",\"n\":2}")));
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Audit\",\"n\":3}")));
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Security\",\"n\":")));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Process-Security", "Security",
+                "Process", null, null, way(eq("event.logger", "Security")))), true));
+        final Map<String, Object> mapping = countedMapping(List.of());
+        mapping.put("json_fields", new ArrayList<>(List.of("event")));
+        final TranslationMapping reading = CatalogueSample.reading("json", null, null, List.of("event"), null, null,
+                null);
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(reading, records), null);
+        final Map<String, Object> applied = applyCounted(mapping, catalogue, records);
+
+        assertThat(check.counts().get("Process-Security").records()).isEqualTo(2);
+        assertThat(check.unparsed().records()).isEqualTo(1);
+        assertThat(check.uncatalogued().unparsed()).isEqualTo(1);
+        assertThat(check.uncatalogued().unknown())
+                .as("check's Unknown (catch-all form, unparsed among them) vs translation's uncatalogued")
+                .isEqualTo(applied.get("uncatalogued"))
+                .isEqualTo(2);
+    }
+
+    // S1 (found in review, 2026-11-27): the mapping's own drop_when runs before the event rules in the generated
+    // XSLT, so the records it drops are never an event type's; the check counted them as the type's.
+    @Test
+    void theRecordsTheMappingsDropWhenDropsFirstAreNotAnEventTypesCount() {
+        final List<Map<String, Object>> records = countedRecords("4624", "4624", "4624", "7777");
+        records.get(2).put("usr", "svc-backup");
+        final List<Map<String, Object>> drops = List.of(Map.of("reason", "service accounts", "when",
+                List.of(eq("usr", "svc-backup"))));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null,
+                CatalogueCheck.Drafted.of(countedMapping(drops)));
+
+        final CatalogueCheckResult.Count logon = check.counts().get("Authenticate-Logon");
+        assertThat(logon.records()).as("the records the type's rule takes in processing").isEqualTo(2);
+        assertThat(logon.byWay()).containsExactly(2);
+        assertThat(logon.droppedFirst()).isEqualTo(1);
+        assertThat(logon.droppedFirstBy()).isEqualTo("drop_when 'service accounts'");
+    }
+
+    // A common entry joining two fields: they are read, so not kept as Data in every rule (and the catch-all) beside
+    // the element joining them.
+    @Test
+    void fieldsACommonEntryJoinsAreNotKeptAsDataToo() {
+        final Map<String, Object> join = Map.of("path", "EventSource/User/Name", "join", List.of("first", "last"),
+                "separator", " ");
+        assertThat(readPlacement(join).reads()).as("Placement's view").contains("first", "last");
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(List.of(join)), new ArrayList<>());
+        final List<Map<String, Object>> records = readsRecords("first", "Ann", "last", "Lee");
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "first", "last"), readsValues(records), readsLogon(null),
+                null, List.of(), CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            assertThat(readsDataFields(rule)).as(String.valueOf(rule)).doesNotContain("first", "last");
+        }
+    }
+
+    // A common lookup's key field is read, so not kept as Data in every rule beside the looked-up element.
+    @Test
+    void theKeyACommonLookupReadsIsNotKeptAsDataToo() {
+        final Map<String, Object> lookup = Map.of("path", "EventSource/User/Name", "lookup",
+                Map.of("map", "USER_NAMES", "field", "uid"));
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(List.of(lookup)), new ArrayList<>());
+        final List<Map<String, Object>> records = readsRecords("uid", "u-1");
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "uid"), readsValues(records), readsLogon(null), null,
+                List.of(), CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            assertThat(readsDataFields(rule)).as(String.valueOf(rule)).doesNotContain("uid");
+        }
+    }
+
+    // A draft rule's group over an array (as ListFields' snapshot groups are drafted, with no data_name): its array
+    // is read, so the whole array is not kept as Data beside the group.
+    @Test
+    void anArrayADraftedGroupReadsIsNotKeptAsDataToo() {
+        final Map<String, Object> group = new LinkedHashMap<>();
+        group.put("path", "EventDetail/Update/After/Object");
+        group.put("for_each", Map.of("array", "targets"));
+        group.put("fields", List.of(Map.of("path", "Id", "field", "id")));
+        assertThat(readPlacement(Map.of("path", "After/Object", "for_each", Map.of("array", "targets"), "fields",
+                List.of(Map.of("path", "Id", "field", "id")))).reads()).as("Placement's view").contains("targets");
+        final List<Object> events = new ArrayList<>(List.of(new LinkedHashMap<>(Map.of("name", "update", "when",
+                List.of(Map.of("field", "evt", "equals", "4738")), "fields", List.of(group)))));
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(), events);
+        final List<Map<String, Object>> records = readsRecords("targets", "[{\"id\": \"u-1\"}]");
+        final Map<String, Object> update = readsType("Update-User", "Update", null);
+        final Catalogue catalogue = SourceNotes.catalogue(readsNotes(update));
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "targets"), readsValues(records), catalogue, null,
+                List.of(), CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        final Map<String, Object> rule = JsonValues.maps(mapping.get("events")).getFirst();
+        assertThat(JsonValues.maps(rule.get("fields"))).as("the group kept")
+                .anyMatch(field -> "EventDetail/Update/After/Object".equals(field.get("path")));
+        assertThat(readsDataFields(rule)).as(String.valueOf(rule)).doesNotContain("targets");
+    }
+
+    // also_data keeps a placed field as Data too, whatever reads it: a key placed by an xpath, or the first of any_of,
+    // is kept as Data where no draft rule held it already (a draft with no rule per kind of record, its catch-all
+    // only).
+    @Test
+    void alsoDataKeepsAFieldPlacedByAnXpathAsData() {
+        final Map<String, Object> byXpath = Map.of("path", "User/Id", "xpath", "*[@key='usr']", "also_data", true);
+        final Map<String, Object> byAnyOf = Map.of("path", "User/Name", "any_of", List.of("name"), "also_data",
+                true);
+        final Map<String, Object> byField = Map.of("path", "Device/HostName", "field", "host", "also_data", true);
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(), new ArrayList<>());
+        mapping.put("input", "json");
+        final List<Map<String, Object>> records = readsRecords("usr", "ann", "name", "Ann Lee", "host", "pc1");
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "usr", "name", "host"), readsValues(records),
+                readsLogon(List.of(byXpath, byAnyOf, byField)), null, List.of(), CHECK, records,
+                PairMatches.create(), Map.of(), List.of());
+
+        final Map<String, Object> rule = JsonValues.maps(mapping.get("events")).getFirst();
+        // The field placement's kept, as the control.
+        assertThat(readsDataFields(rule)).as(String.valueOf(rule)).contains("host");
+        assertThat(readsDataFields(rule)).as(String.valueOf(rule)).contains("usr", "name");
+    }
+
+    private static Map<String, Object> applyCounted(final Map<String, Object> mapping,
+                                                    final Catalogue catalogue,
+                                                    final List<Map<String, Object>> records) {
+        final Set<String> names = new LinkedHashSet<>();
+        final Map<String, List<String>> values = new LinkedHashMap<>();
+        for (final Map<String, Object> record : records) {
+            record.forEach((name, value) -> {
+                names.add(name);
+                final List<String> held = values.computeIfAbsent(name, key -> new ArrayList<>());
+                if (!held.contains(String.valueOf(value))) {
+                    held.add(String.valueOf(value));
+                }
+            });
+        }
+        return CatalogueTranslation.apply(mapping, new ArrayList<>(names), values, catalogue, null, List.of(),
+                null, records, PairMatches.create(), Map.of(), List.of());
+    }
+
+    private static Map<String, Object> countedMapping(final List<Map<String, Object>> drops) {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "json");
+        mapping.put("common", new ArrayList<>());
+        mapping.put("events", new ArrayList<>());
+        if (!drops.isEmpty()) {
+            mapping.put("drop_when", new ArrayList<>(drops));
+        }
+        return mapping;
+    }
+
+    private static CatalogueSample countedSample(final List<Map<String, Object>> records) {
+        return countedSample(CatalogueSample.reading("json", null, null, null, null, null, null), records);
+    }
+
+    private static CatalogueSample countedSample(final TranslationMapping reading,
+                                                 final List<Map<String, Object>> records) {
+        final List<String> lines = new ArrayList<>();
+        records.forEach(record -> lines.add(ToolJson.dumps(record)));
+        return CatalogueSample.read(reading, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    private static List<Map<String, Object>> countedRecords(final String... codes) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final String code : codes) {
+            out.add(new LinkedHashMap<>(Map.of("evt", code, "usr", "alice")));
+        }
+        return out;
+    }
+
+    private static Map<String, Object> searchWays(final Map<String, Object> second) {
+        return type("SearchQuery", "Search", "Search", null, null,
+                way(eq("action", "search"), eq("env", "prod")),
+                way(eq("action", "search"), second),
+                way(eq("action", "search"), Map.of("field", "env", "matches", "^dev")));
+    }
+
+    // A rule of a build's existing mapping, writing the TypeId, taking the records the conditions hold for.
+    @SafeVarargs
+    private static Map<String, Object> existing(final String name,
+                                                final String typeId,
+                                                final Map<String, Object>... when) {
+        final Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("name", name);
+        if (when.length > 0) {
+            rule.put("when", List.of(when));
+        }
+        rule.put("fields", List.of(Map.of("path", "EventDetail/TypeId", "value", typeId)));
+        return rule;
+    }
+
+    @SafeVarargs
+    private static Map<String, Object> withExisting(final Map<String, Object> notes,
+                                                    final Map<String, Object>... rules) {
+        return SourceNotes.withExistingRules(notes, Map.of("events", List.of(rules)));
+    }
+
+    // JSON lines: event.original JSON text holding details as JSON text again.
+    private static String searches() {
+        final StringBuilder out = new StringBuilder();
+        final String[][] rows = {{"cats", "web", "alice", "prod"}, {"dogs", "web", "bob", "prod"},
+                {"invoices", "QA", "carol", "QA"}, {"fish", "web", "dave", "dev1"}};
+        int n = 0;
+        for (final String[] row : rows) {
+            final Map<String, Object> details = new LinkedHashMap<>();
+            details.put("query_text", row[0]);
+            details.put("scope", row[1]);
+            final Map<String, Object> original = new LinkedHashMap<>();
+            original.put("client", "console-" + n);
+            original.put("details", ToolJson.dumps(details));
+            final Map<String, Object> record = new LinkedHashMap<>();
+            record.put("@timestamp", "2026-11-25T10:0" + n++ + ":00Z");
+            record.put("action", "search");
+            record.put("env", row[3]);
+            record.put("usr", row[2]);
+            record.put("event", Map.of("original", ToolJson.dumps(original)));
+            out.append(ToolJson.dumps(record)).append('\n');
+        }
+        return out.toString();
+    }
+
+    private static Map<String, Object> searchType(final Map<String, Object> placement) {
+        final Map<String, Object> type = type("SearchQuery", "Search", "Search", null, null,
+                way(eq("action", "search")));
+        if (placement != null) {
+            type.put("placements", List.of(placement));
+        }
+        return type;
+    }
+
+    private static Map<String, Object> draft(final String sample, final Map<String, Object> notes) {
+        return DraftMapping.draft(List.of(sample), "Acme", "Acme", "Test", notes, CHECK, (SplitterSpec) null);
+    }
+
+    static XsltGenerator.Generated generate(final Map<String, Object> mapping) {
+        return TestDraftMapping.generate(mapping, SCHEMA, "4.1.0");
+    }
+
+    @SafeVarargs
+    static Map<String, Object> type(final String typeId,
+                                    final String title,
+                                    final String detail,
+                                    final String action,
+                                    final String success,
+                                    final Map<String, Object>... ways) {
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", title);
+        type.put("event_detail", detail);
+        type.put("action", action);
+        type.put("success", success);
+        type.put("actor", "usr");
+        type.put("recognised_by", List.of(ways));
+        type.put("basis", "documentation");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        return type;
+    }
+
+    @SafeVarargs
+    static Map<String, Object> dropped(final String typeId, final Map<String, Object>... ways) {
+        final Map<String, Object> type = type(typeId, typeId, null, null, null, ways);
+        type.put("drop", true);
+        return type;
+    }
+
+    @SafeVarargs
+    static Map<String, Object> way(final Map<String, Object>... when) {
+        return Map.of("when", List.of(when), "names", List.of());
+    }
+
+    static Map<String, Object> eq(final String field, final String value) {
+        return Map.of("field", field, "equals", value);
+    }
+
+    static Map<String, Object> notes(final List<Map<String, Object>> types, final boolean catchAllConfirmed) {
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("source", "Acme");
+        notes.put("fields", new ArrayList<>());
+        notes.put("event_types", types);
+        notes.put("catch_all", Map.of("status", catchAllConfirmed
+                ? "confirmed"
+                : "proposed"));
+        return notes;
+    }
+
+    private static Placement readPlacement(final Map<String, Object> entry) {
+        final ModelReader reader = new ModelReader();
+        final Placement read = Placement.read(reader, entry, List.of());
+        assertThat(reader.errors()).isEmpty();
+        return read;
+    }
+
+    private static Map<String, Object> readsMapping(final List<Object> common, final List<Object> events) {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "data_splitter");
+        mapping.put("common", common);
+        mapping.put("events", events);
+        return mapping;
+    }
+
+    // Records of evt 4738 and 4624, each with the given fields.
+    private static List<Map<String, Object>> readsRecords(final Object... keysAndValues) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (int n = 0; n < 3; n++) {
+            final Map<String, Object> record = new LinkedHashMap<>();
+            record.put("evt", n == 0
+                    ? "4624"
+                    : "4738");
+            for (int i = 0; i + 1 < keysAndValues.length; i += 2) {
+                record.put(String.valueOf(keysAndValues[i]), String.valueOf(keysAndValues[i + 1]));
+            }
+            out.add(record);
+        }
+        // Both kinds, so each way has records.
+        out.add(new LinkedHashMap<>(out.get(1)));
+        out.getLast().put("evt", "4624");
+        return out;
+    }
+
+    private static Map<String, List<String>> readsValues(final List<Map<String, Object>> records) {
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        for (final Map<String, Object> record : records) {
+            record.forEach((key, value) -> {
+                final List<String> held = out.computeIfAbsent(key, ignored -> new ArrayList<>());
+                if (!held.contains(String.valueOf(value))) {
+                    held.add(String.valueOf(value));
+                }
+            });
+        }
+        return out;
+    }
+
+    private static List<Object> readsDataFields(final Map<String, Object> rule) {
+        return JsonValues.maps(rule.get("fields")).stream()
+                .filter(field -> field.get("data_name") != null)
+                .map(field -> field.get("field"))
+                .toList();
+    }
+
+    private static Catalogue readsLogon(final List<Map<String, Object>> placements) {
+        return SourceNotes.catalogue(readsNotes(readsType("Authenticate-Logon", "Authenticate", placements)));
+    }
+
+    private static Map<String, Object> readsType(final String typeId,
+                                                 final String detail,
+                                                 final List<Map<String, Object>> placements) {
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", typeId);
+        type.put("event_detail", detail);
+        type.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "evt", "equals",
+                "Authenticate".equals(detail)
+                        ? "4624"
+                        : "4738")), "names", List.of())));
+        type.put("basis", "documentation");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        if (placements != null) {
+            type.put("placements", placements);
+        }
+        return type;
+    }
+
+    private static Map<String, Object> readsNotes(final Map<String, Object> type) {
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("source", "Acme");
+        notes.put("fields", new ArrayList<>());
+        notes.put("event_types", List.of(type));
+        notes.put("catch_all", Map.of("status", "confirmed"));
+        return notes;
+    }
+}

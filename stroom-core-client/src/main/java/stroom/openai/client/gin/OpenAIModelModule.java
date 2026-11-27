@@ -18,9 +18,18 @@ package stroom.openai.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.openai.client.OpenAIModelPlugin;
+import stroom.openai.client.presenter.McpToolListPresenter;
+import stroom.openai.client.presenter.McpToolListPresenter.McpToolListView;
+import stroom.openai.client.presenter.McpToolServerEditPresenter;
+import stroom.openai.client.presenter.McpToolServerEditPresenter.McpToolServerEditView;
+import stroom.openai.client.presenter.OpenAIModelMcpToolServersPresenter;
+import stroom.openai.client.presenter.OpenAIModelMcpToolServersPresenter.McpToolServersView;
 import stroom.openai.client.presenter.OpenAIModelPresenter;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
+import stroom.openai.client.view.McpToolListViewImpl;
+import stroom.openai.client.view.McpToolServerEditViewImpl;
+import stroom.openai.client.view.McpToolServersViewImpl;
 import stroom.openai.client.view.OpenAIModelSettingsViewImpl;
 
 public class OpenAIModelModule extends PluginModule {
@@ -29,8 +38,16 @@ public class OpenAIModelModule extends PluginModule {
     protected void configure() {
         bindPlugin(OpenAIModelPlugin.class);
         bind(OpenAIModelPresenter.class);
+        bind(OpenAIModelMcpToolServersPresenter.class);
+        bind(McpToolServersView.class).to(McpToolServersViewImpl.class);
+        bindPresenterWidget(McpToolListPresenter.class,
+                McpToolListView.class,
+                McpToolListViewImpl.class);
         bindPresenterWidget(OpenAIModelSettingsPresenter.class,
                 OpenAIModelSettingsView.class,
                 OpenAIModelSettingsViewImpl.class);
+        bindPresenterWidget(McpToolServerEditPresenter.class,
+                McpToolServerEditView.class,
+                McpToolServerEditViewImpl.class);
     }
 }

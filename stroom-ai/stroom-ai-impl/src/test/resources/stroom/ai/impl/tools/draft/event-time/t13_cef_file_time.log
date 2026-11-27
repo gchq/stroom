@@ -1,0 +1,40 @@
+<134>2026-11-06T09:00:14.034+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:00:12 fileCreateTime=Apr 14 2026 09:00:12 fname=f93.pdf src=10.0.3.220 act=not blocked
+<134>2026-11-06T09:00:28.013+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:00:25 fileCreateTime=Jun 06 2026 09:00:25 fname=f67.pdf src=10.0.2.158 act=blocked
+<134>2026-11-06T09:00:37.769+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:00:35 fileCreateTime=May 18 2026 09:00:35 fname=f63.pdf src=10.0.3.211 act=blocked
+<134>2026-11-06T09:00:56.147+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:00:53 fileCreateTime=Jul 04 2026 09:00:53 fname=f13.pdf src=10.0.0.8 act=not blocked
+<134>2026-11-06T09:01:05.674+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:01:04 fileCreateTime=Oct 17 2025 09:01:04 fname=f87.pdf src=10.0.2.5 act=not blocked
+<134>2026-11-06T09:01:12.029+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:01:11 fileCreateTime=Oct 11 2025 09:01:11 fname=f28.pdf src=10.0.0.107 act=blocked
+<134>2026-11-06T09:01:22.717+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:01:21 fileCreateTime=Jan 23 2026 09:01:21 fname=f24.pdf src=10.0.1.201 act=not blocked
+<134>2026-11-06T09:01:24.118+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:01:23 fileCreateTime=Dec 06 2025 09:01:23 fname=f16.pdf src=10.0.2.112 act=not blocked
+<134>2026-11-06T09:01:40.407+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:01:38 fileCreateTime=Sep 02 2026 09:01:38 fname=f44.pdf src=10.0.1.152 act=not blocked
+<134>2026-11-06T09:02:04.187+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:02:02 fileCreateTime=Jun 09 2026 09:02:02 fname=f20.pdf src=10.0.0.233 act=blocked
+<134>2026-11-06T09:02:17.190+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:02:14 fileCreateTime=Mar 24 2026 09:02:14 fname=f47.pdf src=10.0.0.93 act=blocked
+<134>2026-11-06T09:02:43.767+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:02:41 fileCreateTime=Aug 03 2026 09:02:41 fname=f96.pdf src=10.0.0.181 act=blocked
+<134>2026-11-06T09:02:47.674+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:02:45 fileCreateTime=Sep 27 2026 09:02:45 fname=f69.pdf src=10.0.3.129 act=blocked
+<134>2026-11-06T09:02:48.671+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:02:47 fileCreateTime=Dec 20 2025 09:02:47 fname=f93.pdf src=10.0.2.115 act=not blocked
+<134>2026-11-06T09:03:16.642+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:03:14 fileCreateTime=May 02 2026 09:03:14 fname=f21.pdf src=10.0.0.63 act=not blocked
+<134>2026-11-06T09:03:30.045+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:03:29 fileCreateTime=Aug 06 2026 09:03:29 fname=f78.pdf src=10.0.1.194 act=blocked
+<134>2026-11-06T09:03:31.866+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:03:30 fileCreateTime=Aug 31 2026 09:03:30 fname=f2.pdf src=10.0.0.223 act=blocked
+<134>2026-11-06T09:03:48.444+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:03:47 fileCreateTime=May 19 2026 09:03:47 fname=f8.pdf src=10.0.0.43 act=blocked
+<134>2026-11-06T09:04:17.181+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:04:14 fileCreateTime=Sep 25 2026 09:04:14 fname=f96.pdf src=10.0.0.110 act=blocked
+<134>2026-11-06T09:04:36.813+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:04:33 fileCreateTime=Jul 15 2026 09:04:33 fname=f11.pdf src=10.0.3.198 act=blocked
+<134>2026-11-06T09:04:43.044+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:04:42 fileCreateTime=Aug 18 2026 09:04:42 fname=f10.pdf src=10.0.1.201 act=blocked
+<134>2026-11-06T09:04:44.755+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:04:43 fileCreateTime=Jul 25 2026 09:04:43 fname=f94.pdf src=10.0.0.152 act=blocked
+<134>2026-11-06T09:05:01.761+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:05:00 fileCreateTime=Apr 22 2026 09:05:00 fname=f90.pdf src=10.0.1.117 act=blocked
+<134>2026-11-06T09:05:32.242+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:05:30 fileCreateTime=May 14 2026 09:05:30 fname=f82.pdf src=10.0.0.174 act=blocked
+<134>2026-11-06T09:06:00.246+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:05:59 fileCreateTime=Dec 04 2025 09:05:59 fname=f78.pdf src=10.0.2.50 act=blocked
+<134>2026-11-06T09:06:24.897+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:06:24 fileCreateTime=Apr 24 2026 09:06:24 fname=f41.pdf src=10.0.3.84 act=blocked
+<134>2026-11-06T09:06:44.105+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:06:41 fileCreateTime=Feb 23 2026 09:06:41 fname=f51.pdf src=10.0.0.154 act=not blocked
+<134>2026-11-06T09:07:00.365+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:06:59 fileCreateTime=Feb 08 2026 09:06:59 fname=f5.pdf src=10.0.3.176 act=blocked
+<134>2026-11-06T09:07:09.288+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:07:07 fileCreateTime=Aug 13 2026 09:07:07 fname=f64.pdf src=10.0.1.91 act=not blocked
+<134>2026-11-06T09:07:16.411+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:07:14 fileCreateTime=Dec 17 2025 09:07:14 fname=f7.pdf src=10.0.1.140 act=not blocked
+<134>2026-11-06T09:07:28.385+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:07:27 fileCreateTime=Feb 12 2026 09:07:27 fname=f34.pdf src=10.0.2.248 act=blocked
+<134>2026-11-06T09:07:41.909+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:07:39 fileCreateTime=May 25 2026 09:07:39 fname=f98.pdf src=10.0.0.197 act=blocked
+<134>2026-11-06T09:07:43.816+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:07:43 fileCreateTime=Oct 17 2025 09:07:43 fname=f56.pdf src=10.0.0.222 act=not blocked
+<134>2026-11-06T09:07:57.324+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:07:55 fileCreateTime=Jul 17 2026 09:07:55 fname=f69.pdf src=10.0.2.212 act=blocked
+<134>2026-11-06T09:08:07.660+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:08:06 fileCreateTime=Feb 15 2026 09:08:06 fname=f94.pdf src=10.0.3.203 act=not blocked
+<134>2026-11-06T09:08:25.495+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:08:24 fileCreateTime=Nov 06 2025 09:08:24 fname=f86.pdf src=10.0.0.242 act=blocked
+<134>2026-11-06T09:08:42.908+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:08:41 fileCreateTime=Aug 23 2026 09:08:41 fname=f82.pdf src=10.0.1.223 act=blocked
+<134>2026-11-06T09:08:54.353+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:08:52 fileCreateTime=Jan 18 2026 09:08:52 fname=f17.pdf src=10.0.2.90 act=not blocked
+<134>2026-11-06T09:09:13.508+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:09:11 fileCreateTime=Nov 12 2025 09:09:11 fname=f18.pdf src=10.0.0.214 act=not blocked
+<134>2026-11-06T09:09:39.420+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_FILEUPLOAD|6|rt=Nov 06 2026 09:09:36 fileCreateTime=Oct 04 2025 09:09:36 fname=f61.pdf src=10.0.1.198 act=blocked

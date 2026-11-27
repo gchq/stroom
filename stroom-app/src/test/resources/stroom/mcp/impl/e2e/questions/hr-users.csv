@@ -1,0 +1,10 @@
+Username,Department,Status
+alice,Finance,Active
+bob,Finance,Active
+carol,Engineering,Active
+dave,Engineering,Leaver
+erin,Sales,Active
+frank,Sales,Leaver
+gina,Legal,Leaver
+harry,Engineering,Active
+ivan,Marketing,Leaver

@@ -1,0 +1,27 @@
+{
+ "rules": [
+  "web-denied",
+  "web-upload",
+  "web-view"
+ ],
+ "counts": {
+  "read": 39,
+  "kept_as_xpath": 0,
+  "calls_imported_functions": 0,
+  "not_read": 3
+ },
+ "kept_as_xpath": [],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "the records' template (applied with no mode) read as the record template",
+  "an xsl:choose inside the event, read as one rule per branch"
+ ],
+ "not_read": [
+  "rule web-denied: EventSource/User/Id is written only when (data[@name='user']/@value) != '-' (an xsl:if), which no mapping entry says",
+  "rule web-upload: EventSource/User/Id is written only when (data[@name='user']/@value) != '-' (an xsl:if), which no mapping entry says",
+  "rule web-view: EventSource/User/Id is written only when (data[@name='user']/@value) != '-' (an xsl:if), which no mapping entry says"
+ ],
+ "differences": [
+  "record 3: Event/EventSource/User/Id: null -> [-]"
+ ]
+}

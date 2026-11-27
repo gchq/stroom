@@ -105,7 +105,7 @@ class TestElasticFieldStatsService {
         indexFieldCache = new MockIndexFieldCache();
         final ElasticClusterDoc cluster = ElasticClusterDoc.builder()
                 .uuid(CLUSTER_REF.getUuid())
-                .connection(new ElasticConnectionConfig(List.of("http://localhost:9200"), null, null))
+                .connection(new ElasticConnectionConfig(List.of("http://localhost:9200"), null, null, null))
                 .build();
         when(elasticClusterStore.readDocument(CLUSTER_REF)).thenReturn(cluster);
         when(elasticClientCache.contextResult(eq(cluster.getConnection()), any()))
