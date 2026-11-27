@@ -170,8 +170,8 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
         final boolean noPasswordChange = namespace.getBoolean(NO_PASSWORD_CHANGE);
         final boolean neverExpires = namespace.getBoolean(NEVER_EXPIRES_CHANGE_ARG_NAME);
 
-        LOGGER.info("Creating account for user '{}' - email '{}', first name '{}', last name '{}', " +
-                    "no password change '{}', never expires '{}'",
+        info(LOGGER, "Creating account for user '{}' - email '{}', first name '{}', last name '{}', " +
+                     "no password change '{}', never expires '{}'",
                 username, email, firstName, lastName, noPasswordChange, neverExpires);
 
         final CreateAccountRequest createAccountRequest = new CreateAccountRequest(
