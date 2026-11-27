@@ -142,9 +142,9 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     public final TableField<IndexShardRecord, Long> PRUNE_COMMITS_AFTER_MS = createField(DSL.name("prune_commits_after_ms"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.index_shard.recover_pending_streams</code>.
+     * The column <code>stroom.index_shard.writer_id</code>.
      */
-    public final TableField<IndexShardRecord, Byte> RECOVER_PENDING_STREAMS = createField(DSL.name("recover_pending_streams"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
+    public final TableField<IndexShardRecord, String> WRITER_ID = createField(DSL.name("writer_id"), SQLDataType.VARCHAR(255), this, "");
 
     private IndexShard(Name alias, Table<IndexShardRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

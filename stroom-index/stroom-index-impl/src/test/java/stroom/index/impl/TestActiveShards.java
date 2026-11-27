@@ -19,29 +19,40 @@ package stroom.index.impl;
 import stroom.index.mock.MockIndexShardCreator;
 import stroom.index.mock.MockIndexShardDao;
 import stroom.index.shared.AllPartition;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.mock.MockNodeInfo;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.VerificationMode;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -113,6 +124,317 @@ class TestActiveShards {
         runTest(status, indexVolumeBuilder, volumeUseState, documentCount, maxDocsPerShard, never());
     }
 
+    @Test
+    void testShardsOfOtherNodesOnASharedVolume_onlyAsManyAsNeededAreTaken() {
+        // Closed shards with room, left on a shared volume by a node that has gone.
+        final IndexVolume sharedVolume = IndexVolume.builder()
+                .bytesUsed(0L)
+                .bytesTotal(1000L)
+                .state(VolumeUseState.ACTIVE)
+                .volumeType(VolumeType.SHARED)
+                .build();
+        final Set<Long> otherNodesShardIds = new HashSet<>();
+        for (int i = 0; i < 5; i++) {
+            final IndexShard indexShard = indexShardDao.create(
+                    indexShardKey,
+                    sharedVolume,
+                    "otherNode",
+                    LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
+            indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.CLOSED);
+            otherNodesShardIds.add(indexShard.getId());
+        }
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(anotherIndexShardWriter);
+
+        final ActiveShards activeShards = new ActiveShards(nodeInfo, indexShardWriterCache, indexShardDao,
+                indexShardCreator, 2, 100, indexShardKey);
+        for (int i = 0; i < 20; i++) {
+            activeShards.addDocument(new IndexDocument());
+        }
+
+        // Two shards were wanted, so two of the five are written to. The rest are left for other nodes,
+        // and no new shard is created.
+        final ArgumentCaptor<Long> shardIdCaptor = ArgumentCaptor.forClass(Long.class);
+        Mockito.verify(indexShardWriterCache, times(20)).getOrOpenWriter(shardIdCaptor.capture());
+        final Set<Long> usedShardIds = new HashSet<>(shardIdCaptor.getAllValues());
+        assertThat(usedShardIds).hasSize(2);
+        assertThat(otherNodesShardIds).containsAll(usedShardIds);
+    }
+
+    @Test
+    void testWriterFoundToBeUnusable_isClosedAndItsShardOpenedAgain() {
+        // Lucene closed the first writer after an error, so it fails every document it is given.
+        Mockito.doThrow(new IllegalStateException("this IndexWriter is closed"))
+                .when(myIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.isUnusable()).thenReturn(true);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        Mockito.verify(indexShardWriterCache).close(myIndexShardWriter);
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        // There is nothing wrong with the shard, so it is used again and no other is created.
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testDocumentBreaksAUsableWriter_isNotTriedAgain() {
+        // Lucene closes its writer after an error it can't recover from, here caused by the document.
+        final IllegalStateException tragicEvent = new IllegalStateException("tragic event");
+        Mockito.when(myIndexShardWriter.isUnusable()).thenReturn(true);
+        Mockito.when(myIndexShardWriter.isBrokenBy(tragicEvent)).thenReturn(true);
+        Mockito.doThrow(tragicEvent).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                .isInstanceOf(IndexException.class)
+                .hasMessageContaining("tragic event");
+
+        // Tried in one writer only. Tried in others it would break each of them in turn.
+        Mockito.verify(myIndexShardWriter, times(1)).addDocument(any());
+        Mockito.verify(indexShardWriterCache, times(1)).getOrOpenWriter(anyLong());
+        Mockito.verify(indexShardWriterCache).close(myIndexShardWriter);
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testWriterClosedByAnotherThreadWhileAdding_documentIsAddedElsewhere() {
+        // Usable until the document is given to it, when another thread closes it, e.g. as its lease was
+        // lost. The document did not break it.
+        final AtomicBoolean closed = new AtomicBoolean();
+        Mockito.when(myIndexShardWriter.isUnusable()).thenAnswer(invocation -> closed.get());
+        Mockito.doAnswer(invocation -> {
+            closed.set(true);
+            throw new IllegalStateException("this IndexWriter is closed");
+        }).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        Mockito.verify(indexShardWriterCache).close(myIndexShardWriter);
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+    }
+
+    @Test
+    void testDocumentRefusedForWhatIsInIt_noShardIsMadeForIt() {
+        // Lucene refuses the document for an immense term, but its writer is fine. The shard has documents.
+        final IllegalArgumentException immenseTerm = new IllegalArgumentException("immense term");
+        Mockito.doThrow(immenseTerm).when(myIndexShardWriter).addDocument(any());
+        Mockito.lenient().when(myIndexShardWriter.getDocumentCount()).thenReturn(10);
+        Mockito.when(myIndexShardWriter.isFieldTypeClash(immenseTerm)).thenReturn(false);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        for (int i = 0; i < 3; i++) {
+            assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                    .isInstanceOf(DocumentRefusedException.class)
+                    .hasMessageContaining("immense term");
+        }
+
+        // No shard would take it, so none is made however many such documents come, and the writer stays in
+        // use.
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+        Mockito.verify(indexShardWriterCache, never()).close(any());
+    }
+
+    @Test
+    void testFieldTypeClashAlsoWithTheNewShard_noMoreShardsAreMade() {
+        // The new shard also clashes, e.g. as documents of the old type went into it meanwhile.
+        final IllegalArgumentException clash = new IllegalArgumentException("cannot change field");
+        Mockito.doThrow(clash).when(myIndexShardWriter).addDocument(any());
+        Mockito.doThrow(clash).when(anotherIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.isFieldTypeClash(clash)).thenReturn(true);
+        Mockito.when(anotherIndexShardWriter.isFieldTypeClash(clash)).thenReturn(true);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenAnswer(invocation -> invocation.<Long>getArgument(0) == 1L
+                        ? myIndexShardWriter
+                        : anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                .isInstanceOf(DocumentRefusedException.class)
+                .hasMessageContaining("cannot change field");
+
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+        Mockito.verify(indexShardWriterCache, never()).close(any());
+    }
+
+    @Test
+    void testFieldTypeClashWithAShardEmptiedByAPurge_goesToANewShard() {
+        // Every stream has been purged from the shard, so it has no documents, but it keeps the old field types.
+        final IllegalArgumentException clash = new IllegalArgumentException("cannot change field");
+        Mockito.doThrow(clash).when(myIndexShardWriter).addDocument(any());
+        Mockito.lenient().when(myIndexShardWriter.getDocumentCount()).thenReturn(0);
+        Mockito.when(myIndexShardWriter.isFieldTypeClash(clash)).thenReturn(true);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenAnswer(invocation -> invocation.<Long>getArgument(0) == 1L
+                        ? myIndexShardWriter
+                        : anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+    }
+
+    @Test
+    void testPurgeBeforeWritingFindsTheWriterClosing_documentGoesToTheShardsNewWriter() {
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        Mockito.doThrow(new WriterClosingException("closing"))
+                .when(tracker).beforeAdd(anyLong(), Mockito.eq(myIndexShardWriter));
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument(), tracker);
+
+        Mockito.verify(myIndexShardWriter, never()).addDocument(any());
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testPurgeBeforeWritingFindsTheLeaseLost_shardIsTakenOutOfUse() {
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        Mockito.doThrow(new IndexException("no longer holds the lease"))
+                .when(tracker).beforeAdd(anyLong(), Mockito.eq(myIndexShardWriter));
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument(), tracker);
+
+        Mockito.verify(indexShardWriterCache).close(myIndexShardWriter);
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+    }
+
+    @Test
+    void testDocumentRefusedByAShardWhoseFieldTypeHasChanged_goesToANewShard() {
+        // The existing shard holds a field of a type that has since changed.
+        final IllegalArgumentException clash = new IllegalArgumentException("Inconsistency of field data");
+        Mockito.doThrow(clash).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.isFieldTypeClash(clash)).thenReturn(true);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenAnswer(invocation -> invocation.<Long>getArgument(0) == 1L
+                        ? myIndexShardWriter
+                        : anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+    }
+
+    @Test
+    void testWriterClosing_shardStaysInUse() {
+        Mockito.doThrow(new WriterClosingException("closing")).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        // Added to the same shard by its new writer, and no shard is made.
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testRunTrackingFails_shardStaysInUse() {
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        Mockito.doThrow(new RuntimeException("lock wait timeout")).when(tracker).beforeAdd(anyLong(), any());
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument(), tracker))
+                .isInstanceOf(IndexRunTrackingException.class)
+                .hasMessageContaining("lock wait timeout");
+
+        Mockito.verify(myIndexShardWriter, never()).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testRefusedByAnOldShardOnly_isNotTheDocumentsFault() {
+        // The old shard holds a field of a type that has since changed, and no new shard can be opened.
+        final IllegalArgumentException clash = new IllegalArgumentException("Inconsistency of field data");
+        Mockito.doThrow(clash).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.isFieldTypeClash(clash)).thenReturn(true);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenAnswer(invocation -> {
+            if (invocation.<Long>getArgument(0) == 1L) {
+                return myIndexShardWriter;
+            }
+            throw new IndexException("Unable to claim the lease");
+        });
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                .isInstanceOf(IndexException.class)
+                .isNotInstanceOf(DocumentRefusedException.class);
+    }
+
+    @Test
+    void testRunTracker_toldOfEachDocumentAroundTheAdd() {
+        Mockito.when(myIndexShardWriter.getWriterId()).thenReturn("writer");
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument(), tracker);
+
+        final InOrder inOrder = Mockito.inOrder(tracker, myIndexShardWriter);
+        inOrder.verify(tracker).beforeAdd(anyLong(), Mockito.eq(myIndexShardWriter));
+        inOrder.verify(myIndexShardWriter).addDocument(any());
+        inOrder.verify(tracker).added(anyLong(), Mockito.eq("writer"));
+    }
+
+    @Test
+    void testRunTracker_shardFull_toldTheAddFailed() {
+        Mockito.when(myIndexShardWriter.getWriterId()).thenReturn("writer");
+        Mockito.doThrow(new ShardFullException("full")).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument(), tracker);
+
+        Mockito.verify(tracker).addFailed(anyLong(), Mockito.eq("writer"));
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+    }
+
+    @Test
+    void testRunTracker_runStopped_documentIsNotAdded() {
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        Mockito.doThrow(new RunStoppedException("replaced")).when(tracker).beforeAdd(anyLong(), any());
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument(), tracker))
+                .isInstanceOf(RunStoppedException.class);
+
+        Mockito.verify(myIndexShardWriter, never()).addDocument(any());
+        Mockito.verify(indexShardWriterCache, never()).close(any());
+    }
+
+    private ActiveShards createActiveShards() {
+        return new ActiveShards(nodeInfo, indexShardWriterCache, indexShardDao,
+                indexShardCreator, 1, 100, indexShardKey);
+    }
+
     void runTest(
             final IndexShardStatus status,
             final IndexVolume.Builder indexVolumeBuilder,
@@ -128,7 +450,7 @@ class TestActiveShards {
                 nodeInfo.getThisNodeName(),
                 LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
         indexShardDao.setStatus(myIndexShard.getId(), status);
-        indexShardDao.update(myIndexShard.getId(), documentCount, 0L, 0L, 0L);
+        indexShardDao.update(myIndexShard.getId(), documentCount, 0L, 0L, 0L, null);
 
         Mockito.lenient().when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(anotherIndexShardWriter);
         Mockito.lenient().when(indexShardWriterCache.getOrOpenWriter(myIndexShard.getId()))

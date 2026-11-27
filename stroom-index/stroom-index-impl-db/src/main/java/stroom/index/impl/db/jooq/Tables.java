@@ -7,7 +7,8 @@ package stroom.index.impl.db.jooq;
 import stroom.index.impl.db.jooq.tables.IndexField;
 import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
-import stroom.index.impl.db.jooq.tables.IndexShardPendingStream;
+import stroom.index.impl.db.jooq.tables.IndexShardPurge;
+import stroom.index.impl.db.jooq.tables.IndexShardTask;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 
@@ -34,9 +35,14 @@ public class Tables {
     public static final IndexShard INDEX_SHARD = IndexShard.INDEX_SHARD;
 
     /**
-     * The table <code>stroom.index_shard_pending_stream</code>.
+     * The table <code>stroom.index_shard_purge</code>.
      */
-    public static final IndexShardPendingStream INDEX_SHARD_PENDING_STREAM = IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM;
+    public static final IndexShardPurge INDEX_SHARD_PURGE = IndexShardPurge.INDEX_SHARD_PURGE;
+
+    /**
+     * The table <code>stroom.index_shard_task</code>.
+     */
+    public static final IndexShardTask INDEX_SHARD_TASK = IndexShardTask.INDEX_SHARD_TASK;
 
     /**
      * The table <code>stroom.index_volume</code>.

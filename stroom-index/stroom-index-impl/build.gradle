@@ -35,6 +35,7 @@ dependencies {
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
+    implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
@@ -46,6 +47,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard.validation
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
@@ -58,6 +60,7 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
     testImplementation project(':stroom-docstore:stroom-docstore-mock')
     testImplementation project(':stroom-explorer:stroom-collection-mock')

@@ -33,6 +33,7 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldCache;
@@ -93,6 +94,9 @@ class IndexingFilter extends AbstractXMLFilter {
     private final NavigableMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
     private IndexDocument document;
+    private final StreamProcessorHolder streamProcessorHolder;
+    private final IndexRunTrackerFactory indexRunTrackerFactory;
+    private IndexRun indexRun;
 
     private Locator locator;
 
@@ -105,13 +109,17 @@ class IndexingFilter extends AbstractXMLFilter {
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
                    final LuceneIndexDocCache luceneIndexDocCache,
-                   final IndexFieldCache indexFieldCache) {
+                   final IndexFieldCache indexFieldCache,
+                   final StreamProcessorHolder streamProcessorHolder,
+                   final IndexRunTrackerFactory indexRunTrackerFactory) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.indexFieldCache = indexFieldCache;
+        this.streamProcessorHolder = streamProcessorHolder;
+        this.indexRunTrackerFactory = indexRunTrackerFactory;
     }
 
     /**
@@ -120,6 +128,7 @@ class IndexingFilter extends AbstractXMLFilter {
     @Override
     public void startProcessing() {
         try {
+            indexRun = IndexRun.start(streamProcessorHolder, indexRunTrackerFactory);
             if (indexRef == null) {
                 log(Severity.FATAL_ERROR, "Index has not been set", null);
                 throw LoggedException.create("Index has not been set");
@@ -238,7 +247,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 final IndexShardKey indexShardKey =
                         indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKey.createKey(index, k));
 
-                indexer.addDocument(indexShardKey, document);
+                indexRun.addDocument(indexer, indexShardKey, document);
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 // Terminate processing as this is a fatal error.

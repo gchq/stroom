@@ -28,10 +28,19 @@ public interface IndexShardWriterCache {
 
     void flushAll();
 
-    void delete(long indexShardId);
+    /// Marks a shard as deleted and closes any writer this node has for it. A shard another node is writing
+    /// to is not deleted, as that node would not know.
+    ///
+    /// @param indexShardId The id of the shard.
+    /// @return True if the shard has been marked as deleted.
+    boolean delete(long indexShardId);
 
     void sweep();
 
+    /// Takes a writer out of use and closes it. Does nothing if the writer is not the one in use for its
+    /// shard, as it has then been closed already, and the one that replaced it must be left alone.
+    ///
+    /// @param indexShardWriter The writer.
     void close(IndexShardWriter indexShardWriter);
 
     void shutdown();

@@ -18,6 +18,9 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
 
+import java.util.Collection;
+import java.util.function.BooleanSupplier;
+
 public interface IndexShardWriter {
 
     void addDocument(IndexDocument document) throws IndexException;
@@ -33,6 +36,84 @@ public interface IndexShardWriter {
     long getIndexShardId();
 
     long getCreationTime();
+
+    /// Gets the id of this opening of the shard, which is recorded on the shard and on every row of
+    /// `index_shard_task` that this writer is given documents for.
+    ///
+    /// @return The id, or null if none has been given, as for a writer that only prunes.
+    String getWriterId();
+
+    /// Sets the id of this opening of the shard, before it is given any documents.
+    ///
+    /// @param writerId The id.
+    void setWriterId(String writerId);
+
+    /// Deletes every document of the given streams from the shard. Not committed until the writer next
+    /// commits. Lucene applies a delete only to the documents added before it, so documents added afterwards
+    /// are kept.
+    ///
+    /// @param streamIds The ids of the streams.
+    /// @throws IndexException          If the writer can't delete, e.g. as it has lost its lease.
+    /// @throws WriterClosingException If the writer is closed or closing, which leaves the shard fine.
+    default void deleteStreams(final Collection<Long> streamIds) throws IndexException {
+        throw new IndexException("This index shard writer can't delete streams");
+    }
+
+    /// Gives the writer something to tell about each commit it makes while it is open.
+    ///
+    /// @param commitListener What to tell.
+    default void setCommitListener(final IndexShardCommitListener commitListener) {
+        // Writers that keep no record of what they commit have nothing to tell.
+    }
+
+    /// Says whether this writer closed cleanly: it took no document once its close began, and committed
+    /// everything it had been given while it still held any lease on the shard. Only then does the close make
+    /// safe the documents of runs that had not ended.
+    ///
+    /// @return True if it closed cleanly.
+    default boolean isClosedCleanly() {
+        return false;
+    }
+
+    /// Says whether this writer can never be used again, because it has been closed, has given up its shard
+    /// or has been closed by Lucene after an error it could not recover from. Such a writer must be taken
+    /// out of use, or its shard can't be opened by anything else.
+    ///
+    /// @return True if the writer can never be used again.
+    default boolean isUnusable() {
+        return false;
+    }
+
+    /// Gives the writer a way to check that this node still holds the lease on the shard. The writer must
+    /// then refuse to add documents or commit once the lease is no longer held, and discard what it has not
+    /// committed, because another node may by then be writing to the shard. A writer that is never given a
+    /// check, as for a shard on a local volume, always writes.
+    ///
+    /// @param leaseInstanceId The process that holds the lease, which the shard's row is only changed under.
+    /// @param leaseHeld       Returns true while this node holds the lease on the shard.
+    default void setLeaseCheck(final String leaseInstanceId, final BooleanSupplier leaseHeld) {
+        // Writers that can't be used on shared volumes need no lease.
+    }
+
+    /// Says whether an exception thrown by [#addDocument(IndexDocument)] is the one that left this writer
+    /// unusable, so that the document itself broke the writer. False if the writer was already closed, e.g.
+    /// by another thread, when the document was given to it.
+    ///
+    /// @param e The exception thrown while adding a document.
+    /// @return True if the document broke the writer.
+    default boolean isBrokenBy(final Throwable e) {
+        return false;
+    }
+
+    /// Says whether an exception thrown by [#addDocument(IndexDocument)] means that a field of the document
+    /// has a different type from the same field in documents the shard holds or has held, e.g. as the type
+    /// of the index field has been changed since. A new shard would take the document.
+    ///
+    /// @param e The exception thrown while adding a document.
+    /// @return True if the document clashes with the shard's fields.
+    default boolean isFieldTypeClash(final Throwable e) {
+        return false;
+    }
 
     /// Says whether the shard holds commits that this writer has replaced but is keeping for a while, for
     /// the sake of readers on other nodes that may still be using them.

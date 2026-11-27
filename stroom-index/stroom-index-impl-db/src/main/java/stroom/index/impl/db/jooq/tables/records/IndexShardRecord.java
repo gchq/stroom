@@ -257,17 +257,17 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
     }
 
     /**
-     * Setter for <code>stroom.index_shard.recover_pending_streams</code>.
+     * Setter for <code>stroom.index_shard.writer_id</code>.
      */
-    public void setRecoverPendingStreams(Byte value) {
+    public void setWriterId(String value) {
         set(17, value);
     }
 
     /**
-     * Getter for <code>stroom.index_shard.recover_pending_streams</code>.
+     * Getter for <code>stroom.index_shard.writer_id</code>.
      */
-    public Byte getRecoverPendingStreams() {
-        return (Byte) get(17);
+    public String getWriterId() {
+        return (String) get(17);
     }
 
     // -------------------------------------------------------------------------
@@ -293,7 +293,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
     /**
      * Create a detached, initialised IndexShardRecord
      */
-    public IndexShardRecord(Long id, String nodeName, Integer fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs, String leaseInstanceId, Long leaseExpiryMs, Long pruneCommitsAfterMs, Byte recoverPendingStreams) {
+    public IndexShardRecord(Long id, String nodeName, Integer fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs, String leaseInstanceId, Long leaseExpiryMs, Long pruneCommitsAfterMs, String writerId) {
         super(IndexShard.INDEX_SHARD);
 
         setId(id);
@@ -313,7 +313,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
         setLeaseInstanceId(leaseInstanceId);
         setLeaseExpiryMs(leaseExpiryMs);
         setPruneCommitsAfterMs(pruneCommitsAfterMs);
-        setRecoverPendingStreams(recoverPendingStreams);
+        setWriterId(writerId);
         resetTouchedOnNotNull();
     }
 }

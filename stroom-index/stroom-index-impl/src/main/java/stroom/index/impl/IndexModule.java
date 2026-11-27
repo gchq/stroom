@@ -21,6 +21,7 @@ import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.processor.api.ProcessorTaskListener;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.IndexFieldProviders;
@@ -55,6 +56,10 @@ public class IndexModule extends AbstractModule {
         bind(IndexShardCreator.class).to(IndexShardCreatorImpl.class);
         bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
+        bind(IndexRunTrackerFactory.class).to(IndexRunTrackerFactoryImpl.class);
+        // Keeps the record of what each run of a processor task has written in step with how the run ends.
+        GuiceUtil.buildMultiBinder(binder(), ProcessorTaskListener.class)
+                .addBinding(IndexShardTaskListener.class);
         bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
@@ -94,6 +99,13 @@ public class IndexModule extends AbstractModule {
                         .description("Job to set index shards to have a status of deleted that have past their " +
                                      "retention period")
                         .frequencySchedule("10m"))
+                .bindJobTo(IndexShardStreamRecoveryJob.class, builder -> builder
+                        .name("Index Shard Stream Recovery")
+                        .description("Job to take index shards from nodes that have stopped renewing their " +
+                                     "leases, put back indexing tasks whose documents were lost before they were " +
+                                     "committed, complete those that were missed, purge streams from shards " +
+                                     "nobody has open, and remove the records of tasks that are finished with")
+                        .frequencySchedule("1m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
                         .description("Job to remove old index shard writers from the cache")
@@ -137,6 +149,18 @@ public class IndexModule extends AbstractModule {
         @Inject
         IndexShardRetention(final IndexShardManager indexShardManager) {
             super(indexShardManager::checkRetention);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class IndexShardStreamRecoveryJob extends RunnableWrapper {
+
+        @Inject
+        IndexShardStreamRecoveryJob(final IndexShardStreamRecovery indexShardStreamRecovery) {
+            super(indexShardStreamRecovery::exec);
         }
     }
 
