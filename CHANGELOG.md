@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#6130** : Disable Dashboard _Process_ button when no datasource is selected.
+
+
 ## [v7.14-beta.20-parallel-pathways] - 2026-11-26
 
 * Feature **#6079** : Add XSLT sandbox.
